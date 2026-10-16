@@ -13,8 +13,8 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://*.ts.net; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>JANGE · जङ्गे</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preload" href="fonts/michroma-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/cormorant-garamond-latin-500-italic.woff2" as="font" type="font/woff2" crossorigin>
@@ -27,7 +27,6 @@
 </head>
 <body>
 <svg class="sprite" aria-hidden="true" focusable="false">
-  <symbol id="jange-emblem" viewBox="0 0 200 200"><path d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z" fill="currentColor" stroke="none"/><path d="M122 50C129 38 137 25 144 16C152 32 159 50 161 68C148 61 134 54 122 50ZM78 50C71 38 63 25 56 16C48 32 41 50 39 68C52 61 66 54 78 50Z" stroke="none"/><path d="M100 52C106 51 112 51 117 49C116 62 111 76 100 94C89 76 84 62 83 49C88 51 94 51 100 52Z" stroke="none"/><path d="M100 101C106 104 111 112 114 122C118 134 124 144 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C76 144 82 134 86 122C89 112 94 104 100 101Z" stroke="none"/><path d="M113 102.5C117 95 127 92.5 135.5 97C131 105.5 120 108 113 102.5ZM87 102.5C83 95 73 92.5 64.5 97C69 105.5 80 108 87 102.5Z" stroke="none"/><path d="M135.5 98L150 139M150 139L130 152M64.5 98L50 139M50 139L70 152M168 70L150 139M32 70L50 139" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="1.1" stroke-dasharray="none"/><circle cx="124.5" cy="99.2" r="1.1" fill="none" stroke-width="3.4" stroke-dasharray="none"/><circle cx="75.5" cy="99.2" r="1.1" fill="none" stroke-width="3.4" stroke-dasharray="none"/><path d="M100 159C106 158 112 158 116 160C120 164 118 170 113 173C109 175 104 176 100 176C96 176 91 175 87 173C82 170 80 164 84 160C88 158 94 158 100 159Z" fill="currentColor" stroke="none"/><path d="M100 176V181M100 181C104 185 109 185 113 182M100 181C96 185 91 185 87 182" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="none"/><path class="em-outline" d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" pathLength="1"/></symbol>
   <symbol id="jange-wordmark" viewBox="0 0 255.2 44.6"><path d="M6.6 28.3V30.3C6.6 37.3 11.6 42.3 18.6 42.3H26.6C33.6 42.3 38.6 37.3 38.6 30.3V2.3M53.6 42.3L74.6 2.3L95.6 42.3M110.6 42.3V2.3L148.6 42.3V2.3M203.6 11.3C201.6 5.8 196.6 2.3 189.6 2.3H177.6C169.9 2.3 163.6 8.6 163.6 16.3V28.3C163.6 36 169.9 42.3 177.6 42.3H189.6C197.3 42.3 203.6 36 203.6 28.3V23.3H186.6M250.6 2.3H218.6V42.3H250.6M218.6 22.3H243.6" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linejoin="miter" stroke-miterlimit="10"/></symbol>
   <symbol id="i-focus" viewBox="0 0 24 24"><path d="M3.5 7l2 2 3.5-3.5M12 7.5h8.5M3.5 15.5l2 2 3.5-3.5M12 16h8.5"/></symbol>
   <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/></symbol>
@@ -63,7 +62,7 @@
 </svg>
 
 <div id="welcome" class="welcome" aria-hidden="true">
-  <div class="welcome-mark"><span class="welcome-ring"></span><span class="welcome-ring r2"></span><svg class="welcome-emblem" viewBox="0 0 200 200" aria-hidden="true"><path class="em-fill" d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z"/><path class="em-mask" d="M122 50C129 38 137 25 144 16C152 32 159 50 161 68C148 61 134 54 122 50ZM78 50C71 38 63 25 56 16C48 32 41 50 39 68C52 61 66 54 78 50Z"/><path class="em-mask" d="M100 52C106 51 112 51 117 49C116 62 111 76 100 94C89 76 84 62 83 49C88 51 94 51 100 52Z"/><path class="em-mask" d="M100 101C106 104 111 112 114 122C118 134 124 144 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C76 144 82 134 86 122C89 112 94 104 100 101Z"/><path class="em-mask" d="M113 102.5C117 95 127 92.5 135.5 97C131 105.5 120 108 113 102.5ZM87 102.5C83 95 73 92.5 64.5 97C69 105.5 80 108 87 102.5Z"/><path class="em-facets" d="M135.5 98L150 139M150 139L130 152M64.5 98L50 139M50 139L70 152M168 70L150 139M32 70L50 139"/><circle class="em-glint" cx="124.5" cy="99.2" r="2.6"/><circle class="em-glint" cx="75.5" cy="99.2" r="2.6"/><path class="em-fill" d="M100 159C106 158 112 158 116 160C120 164 118 170 113 173C109 175 104 176 100 176C96 176 91 175 87 173C82 170 80 164 84 160C88 158 94 158 100 159Z"/><path class="em-line" d="M100 176V181M100 181C104 185 109 185 113 182M100 181C96 185 91 185 87 182"/><path class="em-outline" d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z" pathLength="1"/></svg></div>
+  <div class="welcome-mark"><span class="welcome-ring"></span><span class="welcome-ring r2"></span><span class="welcome-emblem"><img src="brand/jange-emblem-512.webp" alt="" width="150" height="150" decoding="async" fetchpriority="high"><svg class="em-eyes" viewBox="0 0 1000 1000" aria-hidden="true"><circle class="em-glint" cx="386" cy="441" r="8"/><circle class="em-glint" cx="594" cy="441" r="8"/></svg></span></div>
   <svg class="welcome-word" viewBox="0 0 255.2 44.6"><use href="#jange-wordmark"/></svg>
   <p class="welcome-np" lang="ne">जङ्गे</p>
 </div>
@@ -83,7 +82,7 @@
     </article>
 
     <div class="crown">
-      <a class="brand" href="./" aria-label="JANGE home"><svg class="brand-mark" viewBox="0 0 200 200" aria-hidden="true"><use href="#jange-emblem"/></svg><svg class="brand-word" viewBox="0 0 255.2 44.6" aria-hidden="true"><use href="#jange-wordmark"/></svg></a>
+      <a class="brand" href="./" aria-label="JANGE home"><span class="brand-mark" aria-hidden="true"><img src="brand/jange-head-160.webp" alt="" width="40" height="40" decoding="async"><svg class="em-eyes" viewBox="0 0 1000 1000" aria-hidden="true"><circle cx="364" cy="466" r="20"/><circle cx="612" cy="466" r="20"/></svg></span><svg class="brand-word" viewBox="0 0 255.2 44.6" aria-hidden="true"><use href="#jange-wordmark"/></svg></a>
       <p class="brand-sub"><span lang="ne">जङ्गे</span><span aria-hidden="true">·</span>Personal assistant · 3.1</p>
       <p id="greeting" class="greeting">Good day</p>
       <p class="crown-date"><span id="today-line">—</span><span class="sep" aria-hidden="true">·</span><span id="week-line">—</span></p>
@@ -169,7 +168,7 @@
       <span id="sec-hand" class="sec-hand" aria-hidden="true"></span>
       <span id="ripple" class="ripple" aria-hidden="true"></span>
       <span class="core-text">
-        <span class="core-avatar" aria-hidden="true"><svg viewBox="0 0 200 200"><use href="#jange-emblem"/></svg></span>
+        <span class="core-avatar" aria-hidden="true"><img src="brand/jange-head-160.webp" alt="" width="46" height="46" decoding="async"><svg class="em-eyes" viewBox="0 0 1000 1000" aria-hidden="true"><circle cx="364" cy="466" r="20"/><circle cx="612" cy="466" r="20"/></svg></span>
         <span id="core-state" class="core-state">Initializing</span>
         <span id="core-detail" class="core-detail">Local systems</span>
         <span class="core-rule" aria-hidden="true"></span>
@@ -363,7 +362,7 @@
 
 <dialog id="alarm-ring" class="ring-overlay" role="alertdialog" aria-labelledby="ring-time" aria-describedby="ring-label ring-note">
   <div class="ring-visual" aria-hidden="true"><span class="rv rv1"></span><span class="rv rv2"></span><span class="rv rv3"></span></div>
-  <p class="ring-kicker"><svg class="ring-emblem" viewBox="0 0 200 200" aria-hidden="true"><use href="#jange-emblem"/></svg>Alarm · <span id="ring-zone">Dubai</span> time</p>
+  <p class="ring-kicker"><span class="ring-emblem" aria-hidden="true"><img src="brand/jange-head-160.webp" alt="" width="30" height="30" decoding="async"><svg class="em-eyes" viewBox="0 0 1000 1000" aria-hidden="true"><circle cx="364" cy="466" r="20"/><circle cx="612" cy="466" r="20"/></svg></span>Alarm · <span id="ring-zone">Dubai</span> time</p>
   <p id="ring-time" class="ring-time">--:--</p>
   <p id="ring-label" class="ring-label">Alarm</p>
   <p id="ring-note" class="ring-note"></p>

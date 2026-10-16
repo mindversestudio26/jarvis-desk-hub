@@ -90,3 +90,25 @@ node brand/build.cjs
 ```
 
 That command writes the SVGs. Add `--png` with `PW` set to a Playwright package to rebuild the PNG icons.
+
+## Realistic gold emblem (3.2, awaiting approval)
+
+The owner asked for a realistic, premium canine emblem in place of the outline mark. `realistic/sculpt.py` sculpts a forward-facing German Shepherd head as a height map:
+- skull, brows, eye sockets, a muzzle rising from the stop to the nose, lips, ears with deep hollows, and the neck ruff;
+- fur smeared along the breed's hair flow (line-integral convolution) and fur strands breaking the cheek outline;
+- gold lighting: a studio environment reflected off the surface and mapped through a gold ramp, from deep bronze to pale champagne;
+- the black-and-tan saddle mask in antique gold, with dark glass eyes and nose.
+
+`realistic/export.py` writes these files:
+- `jange-emblem-512.webp`, the full bust for the welcome screen;
+- `jange-head-160.webp`, the head from the low-fur render, used in the header, the core and the alarm screen;
+- `jange-emblem-1024.png`, the master;
+- the app icons and favicon.
+
+The eye glints stay a small SVG overlay in the app, so they keep their live-state colour.
+
+```
+python brand/realistic/sculpt.py 1024 1.0 v13
+python brand/realistic/sculpt.py 1024 0.6 small
+python brand/realistic/export.py
+```

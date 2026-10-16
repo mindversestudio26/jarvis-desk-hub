@@ -6,3 +6,5 @@ node_modules/
 test-results/
 *.log
 brand/symbols.html
+brand/realistic/out/
+brand/realistic/export/

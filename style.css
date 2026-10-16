@@ -134,7 +134,12 @@ button { cursor: pointer; }
    color = tan (gold), fill = mask (obsidian), stroke = eye glint (system state). */
 .emblem { color: var(--gold); fill: #07080a; stroke: var(--accent); }
 .brand { display: flex; align-items: center; gap: 12px; min-height: 44px; color: var(--gold); text-decoration: none; }
-.brand-mark { width: 40px; height: 40px; color: var(--gold); fill: #07080a; stroke: var(--accent); }
+/* The realistic gold emblem is an image; its eye glints are a small overlay that keeps the
+   live-state colour (cyan online, ember offline). */
+.brand-mark, .core-avatar, .ring-emblem, .welcome-emblem { position: relative; display: inline-block; flex: none; }
+.brand-mark img, .core-avatar img, .ring-emblem img, .welcome-emblem img, .em-eyes { position: absolute; inset: 0; width: 100%; height: 100%; }
+.em-eyes circle { fill: var(--accent); opacity: .9; }
+.brand-mark { width: 40px; height: 40px; }
 .brand-word { width: 108px; height: 19px; color: var(--gold); }
 .brand-sub { display: flex; align-items: baseline; gap: 7px; margin: -4px 0 2px; font: 600 9px/1.2 var(--font-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--text-3); }
 .brand-sub [lang="ne"], .welcome-np { font-family: "Kohinoor Devanagari", "Noto Sans Devanagari", "Nirmala UI", sans-serif; letter-spacing: .02em; text-transform: none; }
@@ -577,11 +582,10 @@ button { cursor: pointer; }
    processing (data being acquired), offline / storage problem, PC link
    unavailable. Listening and speaking are reserved for a future voice engine
    and are never set today. */
-.core-avatar { position: relative; display: grid; place-items: center; width: 46px; height: 46px; }
-.core-avatar svg { width: 46px; height: 46px; color: var(--gold); fill: #0d0e10; stroke: var(--accent); }
+.core-avatar { position: relative; display: block; width: 46px; height: 46px; }
 .core-avatar::after { content: ""; position: absolute; inset: -5px; border: 1px solid rgba(217, 192, 142, .35); border-radius: 50%; }
 .hud[data-busy] .core-avatar::after { border-color: rgba(111, 195, 207, .6); animation: avatar-pulse 1.4s ease-in-out infinite; }
-.hud[data-net="offline"] .core-avatar svg, .hud[data-store="error"] .core-avatar svg { stroke: var(--warn); }
+.hud[data-net="offline"] .em-eyes circle, .hud[data-store="error"] .em-eyes circle { fill: var(--warn); }
 .hud[data-net="offline"] .core-avatar::after, .hud[data-store="error"] .core-avatar::after { border-color: rgba(224, 145, 95, .5); }
 .hud[data-pc="unreachable"] .core-avatar::after, .hud[data-pc="auth"] .core-avatar::after { border-style: dashed; }
 .core-state { display: inline-flex; align-items: center; gap: 9px; margin-top: 7px; font: 17px/1.1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: var(--text); }
@@ -851,7 +855,7 @@ dialog.ring-overlay::backdrop { background: #000; }
 .ring-overlay[open] .rv3 { animation-delay: 2s; }
 .ring-overlay > p, .ring-actions { position: relative; }
 .ring-kicker { display: inline-flex; align-items: center; gap: 10px; margin: 0; font: 600 11px/1 var(--font-ui); letter-spacing: .3em; text-transform: uppercase; color: var(--gold); }
-.ring-kicker .ring-emblem { width: 30px; height: 30px; color: var(--gold); fill: #0d0e10; stroke: var(--accent); }
+.ring-kicker .ring-emblem { width: 30px; height: 30px; }
 
 /* ------------------------------------------------------------------ welcome */
 .welcome {
@@ -872,12 +876,9 @@ dialog.ring-overlay::backdrop { background: #000; }
 .welcome-ring { position: absolute; inset: 0; border: 1px solid rgba(217, 192, 142, .45); border-radius: 50%; opacity: 0; animation: wel-ring 1.1s var(--ease-out) .05s both; }
 .welcome-ring.r2 { inset: 14px; border-color: rgba(111, 195, 207, .35); border-style: dashed; animation-delay: .25s; }
 .welcome-emblem { width: 150px; height: 150px; }
-.welcome-emblem .em-fill { fill: var(--gold); opacity: 0; animation: wel-fade .5s ease-out .75s both; }
-.welcome-emblem .em-mask { fill: #0d0e10; opacity: 0; animation: wel-fade .5s ease-out .8s both; }
-.welcome-emblem .em-facets { fill: none; stroke: #000; stroke-opacity: .28; stroke-width: 1.1; opacity: 0; animation: wel-fade .5s ease-out .9s both; }
-.welcome-emblem .em-line { fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; opacity: 0; animation: wel-fade .4s ease-out .9s both; }
-.welcome-emblem .em-outline { fill: none; stroke: var(--gold); stroke-width: 3.2; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: wel-draw .95s cubic-bezier(.6, .1, .3, 1) .1s forwards; }
+.welcome-emblem img { opacity: 0; animation: wel-emblem 1.05s cubic-bezier(.2, .7, .2, 1) .25s both; }
 .welcome-emblem .em-glint { fill: var(--accent); opacity: 0; animation: wel-fade .3s ease-out 1.05s both; }
+@keyframes wel-emblem { from { opacity: 0; transform: scale(.92); filter: brightness(.35); } 60% { opacity: 1; } to { opacity: 1; transform: none; filter: none; } }
 .welcome-word { width: 190px; height: 34px; color: var(--gold); opacity: 0; animation: wel-rise .6s var(--ease-out) 1s both; }
 .welcome-np { margin: -6px 0 0; font-size: 18px; color: var(--text-2); opacity: 0; animation: wel-fade .6s ease-out 1.15s both; }
 
