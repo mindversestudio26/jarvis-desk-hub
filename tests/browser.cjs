@@ -46,12 +46,15 @@ async function checkBrowser(engine, name, baseURL) {
     // ignore only that message, and only once screenshots have started.
     let screenshotsStarted = false;
     page.on('console', m => { if (m.type() === 'error' && /Content Security Policy/.test(m.text()) && !(screenshotsStarted && /apply a stylesheet/.test(m.text()))) errors.push(m.text()); });
-    await page.clock.install({ time: new Date('2026-10-16T18:14:59Z') });
+    // Start early and pause at the boundary, so remote load latency (JARVIS_BASE_URL)
+    // cannot move the first reading past the minute.
+    await page.clock.install({ time: new Date('2026-10-16T18:14:44Z') });
     await page.addInitScript(data => {
       if (!localStorage.getItem('jarvis.desk.v2')) localStorage.setItem('jarvis.desk.v2', JSON.stringify(data));
     }, oldData);
     await page.goto(baseURL);
     await until(async () => await page.locator('#temperature').innerText() === '31°');
+    await page.clock.pauseAt(new Date('2026-10-16T18:14:59Z'));
 
     // Clocks: one instant, two zones, quarter-hour offset, rollover, hidden pause and resume.
     assert.equal(await page.locator('#clock').innerText(), '22:14');
@@ -88,6 +91,7 @@ async function checkBrowser(engine, name, baseURL) {
     assert.equal(await page.locator('#clock').innerText(), '15:23');
     assert.equal(await page.locator('#kathmandu-clock').innerText(), '17:08');
     assert.equal(await page.locator('#seconds').innerText(), await page.locator('#kathmandu-seconds').innerText());
+    await page.clock.resume();
 
     // Weather, including the extended daily fields and the daylight arc.
     assert.equal(await page.locator('#sunrise').innerText(), '06:14');
