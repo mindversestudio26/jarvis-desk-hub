@@ -164,7 +164,82 @@
     return { shifts: next, overrides: nextOverrides };
   }
 
-  const api = { TYPES, WORKING, DEFAULTS, validShift, validSettings, plan, parseICS, merge, classify };
+  /* What the desk shows, so you always know your day: today (the shift you
+     are on — a night shift runs past midnight — today's shift, a day off or
+     holiday, or no shift), tomorrow, and the next working shift. */
+  function shiftName(s) {
+    const m = s.type === 'shift' && /^([a-z]+) shift\b/i.exec(s.note || '');
+    return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() + ' shift' : TYPES[s.type];
+  }
+  // Times are the shift's own; a Kathmandu shift says so on the Dubai desk.
+  const zoneTag = s => s.zone === 'Asia/Dubai' ? '' : ' NPT';
+  const hours = s => s.start ? ' ' + s.start + (s.end ? '–' + s.end : '') + zoneTag(s) : '';
+  const addDay = (d, n) => { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
+  const dayLabel = d => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(d + 'T12:00:00Z'));
+  // No end time means the end is unknown: never invent one.
+  function endInstant(s) {
+    if (!s.end) return null;
+    const start = startInstant(s), [y, m, d] = s.date.split('-').map(Number), [hh, mm] = s.end.split(':').map(Number);
+    let end = A.zonedInstant(s.zone, y, m, d, hh, mm);
+    while (end <= start) end += 864e5;
+    return end;
+  }
+  function deskLines(shifts, nowMs, zone = 'Asia/Dubai') {
+    if (!shifts.length) return [];
+    const today = localDate(nowMs, zone), tomorrow = addDay(today, 1), yesterday = addDay(today, -1);
+    const isWork = s => WORKING.includes(s.type);
+    // Recent and future working shifts with a start, one per zone, date and start.
+    const seen = new Set(), working = [];
+    for (const s of shifts) {
+      if (!isWork(s) || !s.start || s.date < yesterday || seen.has(s.zone + s.date + s.start)) continue;
+      seen.add(s.zone + s.date + s.start);
+      working.push({ s, at: startInstant(s), end: endInstant(s) });
+    }
+    working.sort((x, y) => x.at - y.at);
+    const workOn = d => shifts.some(s => s.date === d && isWork(s));
+    const noTime = d => shifts.find(s => s.date === d && isWork(s) && !s.start);
+    // A day off or holiday, and how long it runs: "Holiday until Fri 23 Oct".
+    const rest = d => {
+      const r = shifts.find(s => s.date === d && !isWork(s));
+      if (!r) return null;
+      let last = d;
+      while (!workOn(addDay(last, 1)) && shifts.some(s => s.date === addDay(last, 1) && s.type === r.type)) last = addDay(last, 1);
+      return { last, text: shiftName(r) + hours(r) + (last !== d ? ' until ' + dayLabel(last) : '') };
+    };
+    // "No shift" only for a day inside the roster's range, never before it starts or after it ends.
+    const rostered = d => shifts.some(s => s.date >= d) && shifts.some(s => s.date <= d);
+    const lines = [], shown = new Set();
+    const current = working.find(w => w.at <= nowMs && w.end !== null && nowMs < w.end);
+    const todays = working.filter(w => w.s.date === today && w !== current);
+    const later = todays.find(w => w.at > nowMs);
+    const done = [...todays].reverse().find(w => w.end !== null && w.end <= nowMs);
+    const started = todays.find(w => w.end === null && w.at <= nowMs);
+    const todayRest = rest(today), todayNoTime = noTime(today);
+    if (current) { shown.add(current.s); lines.push({ kind: 'now', text: 'On shift now · ' + shiftName(current.s) + ' until ' + current.s.end + zoneTag(current.s) }); }
+    else if (later) { shown.add(later.s); lines.push({ kind: 'today', text: 'Today · ' + shiftName(later.s) + hours(later.s) }); }
+    else if (started) lines.push({ kind: 'today', text: 'Today · ' + shiftName(started.s) + hours(started.s) });
+    else if (done) lines.push({ kind: 'today', text: 'Today · ' + shiftName(done.s) + ' done' });
+    else if (todayNoTime) lines.push({ kind: 'today', text: 'Today · ' + shiftName(todayNoTime) + ' (no time)' });
+    else if (todayRest) lines.push({ kind: 'rest', text: 'Today · ' + todayRest.text });
+    else if (rostered(today)) lines.push({ kind: 'today', text: 'Today · No shift' });
+    const next = working.find(w => w.at > nowMs && !shown.has(w.s));
+    const nextLine = () => {
+      const when = next.s.date === today ? (next.s.start >= '17:00' ? 'Tonight · ' : 'Later today · ')
+        : next.s.date === tomorrow ? 'Tomorrow · ' : 'Next shift · ' + dayLabel(next.s.date) + ' · ';
+      lines.push({ kind: 'next', text: when + shiftName(next.s) + hours(next.s) });
+    };
+    if (next && next.s.date === today) nextLine(); // tonight comes before tomorrow
+    if (!(todayRest && todayRest.last >= tomorrow) && !(next && next.s.date === tomorrow)) {
+      const r = rest(tomorrow), nt = noTime(tomorrow);
+      if (nt) lines.push({ kind: 'tomorrow', text: 'Tomorrow · ' + shiftName(nt) + ' (no time)' });
+      else if (r) lines.push({ kind: 'rest', text: 'Tomorrow · ' + r.text });
+      else if (!workOn(tomorrow) && rostered(tomorrow)) lines.push({ kind: 'tomorrow', text: 'Tomorrow · No shift' });
+    }
+    if (next && next.s.date !== today) nextLine();
+    return lines.slice(0, 3);
+  }
+
+  const api = { TYPES, WORKING, DEFAULTS, validShift, validSettings, plan, parseICS, merge, classify, deskLines, shiftName };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JangeShifts = api;
 })(typeof window === 'undefined' ? globalThis : window);

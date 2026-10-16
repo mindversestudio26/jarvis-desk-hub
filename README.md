@@ -20,7 +20,7 @@ JANGE is a dependency-free static desk interface for an iPad 7th Generation, des
 - **Alarms** (supplementary, not a guaranteed wake-up): once, daily, weekdays, weekends or custom days in Dubai or Kathmandu time; synthesised chimes, full-screen ringing with Snooze and Dismiss, missed-alarm reporting, reload/foreground recovery, Add to Calendar (.ics) for important ones. They ring only while JANGE is open in front with the screen on — keep important alarms on your iPhone.
 - **Shift-aware alarms**: enter shifts or import the roster calendar (.ics); each working shift gets an alarm at start − preparation − commute, days off/holidays/travel never ring, missing start times are never guessed, duplicates collapse, per-shift overrides survive re-imports.
 - **Workstation (Windows PC)**: Connected / Warming up / Authentication required / Unreachable / Not paired; CPU, GPU and RAM gauges, temperature and uptime only from real companion samples ("N/A", "No sensor", "Not reported" otherwise); Lock, Sleep, Restart, Shut down and Launch shown but disabled until a secure control backend exists.
-- Focus tasks, a local calendar (Dubai time) with a today peek, shift line and week strip, live system checks, and a command dock (Focus, Calendar, Alarms, Google Calendar, Outlook, GitHub, YouTube, Backup, Settings).
+- Focus tasks, a local calendar (Dubai time) with a today peek, your roster in large type (today — including days off and holidays — tomorrow and the next shift) and a week strip, live system checks, and a command dock (Focus, Calendar, Alarms, Google Calendar, Outlook, GitHub, YouTube, Backup, Settings).
 - Motion: **Cinematic** or **Calm**; iPad **Reduce Motion** removes all animation including the welcome and flips.
 - Installable offline app shell: clocks, quote, tasks, calendar, alarms and shifts work without internet or the PC.
 
@@ -71,7 +71,7 @@ Sources: [Open-Meteo API documentation](https://open-meteo.com/en/docs) and [fre
 
 ## JANGE 3.1 verification and updates
 
-Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.1.1`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every JANGE/Jarvis window and reopen online to activate 3.1; do not clear website data.
+Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.1.2`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every JANGE/Jarvis window and reopen online to activate 3.1; do not clear website data.
 
 Design notes: [docs/jange-3.1-design.md](docs/jange-3.1-design.md) (alarms, shifts and the future backend contract, quote sourcing, location privacy, PC states) and [brand/README.md](brand/README.md). Tests: [tests/README.md](tests/README.md).
 

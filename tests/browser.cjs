@@ -427,8 +427,8 @@ async function upgradeTest(baseURL, baseline) {
     await page.waitForSelector('#alarms-open');
     assert.match(await text(page, '#tasks'), /Preserve my existing task/);
     const caches = await page.evaluate(async () => globalThis.caches.keys());
-    assert(caches.includes('jarvis-desk-v3.1.1'));
-    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.1.1'], 'Old shell caches removed');
+    assert(caches.includes('jarvis-desk-v3.1.2'));
+    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.1.2'], 'Old shell caches removed');
     assert.equal(await page.title(), 'JANGE · जङ्गे');
     results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to 3.1 service-worker upgrade, preserved storage and weather cache, no forced reload, offline 3.1, old cache cleanup' });
     await context.close();

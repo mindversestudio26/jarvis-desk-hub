@@ -116,3 +116,45 @@ test('validation', () => {
   assert.equal(S.validSettings(settings), true);
   assert.equal(S.validSettings({ ...settings, prep: -5 }), false);
 });
+test('desk lines: today and tomorrow always, including days off and holidays, then the next shift', () => {
+  const hols = ['16', '17', '18', '19', '20', '21', '22', '23'].map(d => shift({ id: 'h' + d, date: '2026-10-' + d, type: 'holiday', start: null, end: null, note: 'Holiday (HOLS)' }));
+  const roster = [...hols,
+    shift({ id: 'd', date: '2026-10-25', type: 'shift', start: '07:00', end: '19:00', note: 'Day shift 7am to 7pm' }),
+    shift({ id: 'n', date: '2026-10-29', type: 'night', start: '19:00', end: '07:00', note: 'Night shift 7pm to 7am' }),
+    shift({ id: 'o', date: '2026-11-08', type: 'off', start: '08:00', end: '13:00', note: 'Off 8am to 1pm' })];
+  const at = dubai => Date.parse(dubai + '+04:00');
+  const lines = when => S.deskLines(roster, at(when)).map(l => l.text);
+  assert.deepEqual(lines('2026-10-16T09:00'), ['Today · Holiday until Fri 23 Oct', 'Next shift · Sun 25 Oct · Day shift 07:00–19:00']);
+  assert.deepEqual(lines('2026-10-23T09:00'), ['Today · Holiday', 'Tomorrow · No shift', 'Next shift · Sun 25 Oct · Day shift 07:00–19:00']);
+  assert.deepEqual(lines('2026-10-24T20:00'), ['Today · No shift', 'Tomorrow · Day shift 07:00–19:00']);
+  assert.deepEqual(lines('2026-10-25T05:00'), ['Today · Day shift 07:00–19:00', 'Tomorrow · No shift', 'Next shift · Thu 29 Oct · Night shift 19:00–07:00']);
+  assert.deepEqual(S.deskLines(roster, at('2026-10-25T12:00')).map(l => l.kind), ['now', 'tomorrow', 'next']);
+  assert.deepEqual(lines('2026-10-25T20:00'), ['Today · Day shift done', 'Tomorrow · No shift', 'Next shift · Thu 29 Oct · Night shift 19:00–07:00']);
+  // A night shift runs past midnight: at 03:00 the next day you are still on it.
+  assert.deepEqual(lines('2026-10-30T03:00'), ['On shift now · Night shift until 07:00', 'Tomorrow · No shift']);
+  const twoNights = [...roster, shift({ id: 'n2', date: '2026-10-30', type: 'night', start: '19:00', end: '07:00', note: 'Night shift 7pm to 7am' })];
+  assert.deepEqual(S.deskLines(twoNights, at('2026-10-30T03:00')).map(l => l.text),
+    ['On shift now · Night shift until 07:00', 'Tonight · Night shift 19:00–07:00', 'Tomorrow · No shift'], 'tonight before tomorrow');
+  assert.deepEqual(lines('2026-11-07T09:00'), ['Today · No shift', 'Tomorrow · Day off 08:00–13:00']);
+  assert.deepEqual(lines('2026-11-08T09:00'), ['Today · Day off 08:00–13:00']);
+  assert.deepEqual(lines('2026-11-09T09:00'), [], 'past the end of the roster nothing is guessed');
+  assert.deepEqual(S.deskLines([], at('2026-10-16T09:00')), []);
+  assert.equal(S.shiftName(shift({ type: 'shift', note: 'Kick-off briefing' })), 'Shift');
+});
+test('desk lines: unknown times are never guessed; Kathmandu shifts say NPT; duplicates collapse', () => {
+  const at = dubai => Date.parse(dubai + '+04:00');
+  const text = (roster, when) => S.deskLines(roster, at(when)).map(l => l.text);
+  // A rostered shift with no start time is still a shift, never "No shift".
+  const startless = [shift({ id: 'a', date: '2026-10-16', type: 'night', start: null, end: null, note: 'Night shift' }),
+    shift({ id: 'b', date: '2026-10-17', type: 'night', start: null, end: null, note: 'Night shift' }),
+    shift({ id: 'c', date: '2026-10-20', type: 'night', start: '19:00', end: '07:00', note: 'Night shift' })];
+  assert.deepEqual(text(startless, '2026-10-16T09:00'), ['Today · Night shift (no time)', 'Tomorrow · Night shift (no time)', 'Next shift · Tue 20 Oct · Night shift 19:00–07:00']);
+  // Before the roster starts nothing is claimed about the day.
+  assert.deepEqual(text([shift({ id: 'f', date: '2026-11-01', type: 'night', start: '19:00', end: '07:00', note: 'Night shift' })], '2026-10-16T09:00'), ['Next shift · Sun 1 Nov · Night shift 19:00–07:00']);
+  // No end time: no "until" and no invented "done".
+  assert.deepEqual(text([shift({ id: 'e', date: '2026-10-16', type: 'shift', start: '07:00', end: null, note: 'Day shift' })], '2026-10-16T20:00'), ['Today · Day shift 07:00']);
+  const npt = [shift({ id: 'k', date: '2026-10-16', type: 'shift', start: '07:00', end: '19:00', zone: 'Asia/Kathmandu', note: 'Day shift' })];
+  assert.deepEqual(text(npt, '2026-10-16T12:00'), ['On shift now · Day shift until 19:00 NPT']);
+  const dup = [shift({ id: 'x1', date: '2026-10-16', type: 'shift', start: '19:00', end: '23:00' }), shift({ id: 'x2', date: '2026-10-16', type: 'shift', start: '19:00', end: '23:00' })];
+  assert.deepEqual(text(dup, '2026-10-16T09:00'), ['Today · Shift 19:00–23:00']);
+});

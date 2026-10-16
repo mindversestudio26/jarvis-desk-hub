@@ -389,11 +389,14 @@ function renderPeek() {
   const now = JarvisTime.snapshot(new Date()).dubai, {today, tomorrowKey, upcoming, tomorrow} = upcomingEvents(now);
   const list = $('today-events'), item = (e, cls) => { const line = el('span', 'peek-item' + (cls ? ' ' + cls : '')); line.append(el('b', '', e.time), el('span', '', e.text)); list.append(line); };
   list.replaceChildren();
-  const todayShift = shiftStore.shifts.find(s => s.date === now.day), tomorrowShift = shiftStore.shifts.find(s => s.date === tomorrowKey), sh = todayShift || tomorrowShift;
-  if (sh) list.append(el('span', 'peek-shift', (todayShift ? 'Today · ' : 'Tomorrow · ') + SH.TYPES[sh.type] + (sh.start ? ' ' + sh.start + (sh.end ? '–' + sh.end : '') : '')));
-  if (!upcoming.length) list.append(el('span', 'peek-empty', today.length ? 'Today’s events are complete.' : 'Nothing scheduled today.'));
-  upcoming.slice(0, 4).forEach(e => item(e));
-  const room = Math.max(0, 5 - Math.min(upcoming.length, 4) - (upcoming.length ? 0 : 1));
+  // Your roster on the desk: the current or today's shift, then the next working shift.
+  const shiftLines = SH.deskLines(shiftStore.shifts, Date.now());
+  shiftLines.forEach((s, i) => list.append(el('span', 'peek-shift ' + s.kind + (i ? '' : ' lead') + (i === shiftLines.length - 1 ? ' last' : ''), s.text)));
+  const max = Math.max(1, 4 - shiftLines.length);
+  // With shift lines showing, the footer already says whether there are events today.
+  if (!upcoming.length && !shiftLines.length) list.append(el('span', 'peek-empty', today.length ? 'Today’s events are complete.' : 'Nothing scheduled today.'));
+  upcoming.slice(0, max).forEach(e => item(e));
+  const room = Math.max(0, max + 1 - Math.min(upcoming.length, max) - (upcoming.length ? 0 : 1));
   if (tomorrow.length && room > 1) {
     list.append(el('span', 'peek-head', 'Tomorrow · ' + dubai(new Date(tomorrowKey + 'T12:00:00+04:00'), {weekday:'long'})));
     tomorrow.slice(0, room - 1).forEach(e => item(e, 'later'));
@@ -404,7 +407,7 @@ function renderPeek() {
     const key = new Date(monday + i * 864e5).toISOString().slice(0, 10), cell = el('span', 'wd' + (key === now.day ? ' today' : '') + (state.events.some(e => e.date === key) ? ' ev' : ''), 'MTWTFSS'[i]);
     cell.append(el('b', '', Number(key.slice(8, 10)))); strip.append(cell);
   }
-  const hidden = Math.max(0, upcoming.length - 4);
+  const hidden = Math.max(0, upcoming.length - max);
   $('agenda-count').textContent = (today.length ? today.length + ' event' + (today.length === 1 ? '' : 's') + ' today' : 'No events today') + (hidden ? ' · ' + hidden + ' more' : '');
 }
 $('event-form').onsubmit = e => {
