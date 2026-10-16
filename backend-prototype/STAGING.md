@@ -1,6 +1,22 @@
 # Hostinger staging evidence and installation boundary
 
-## Disposable verification preparation — 2026-10-16
+## Actual private Hostinger core verification — 2026-10-16
+
+After the owner entered the existing verification credential directly into the private 0600 file, the CLI fixture ran on Hostinger. Its sanitized result reports **PASS, 25 checks**, PHP **8.3.35**, database **11.8.9-MariaDB-log**. This verifies actual native Sodium authenticated encryption/decryption and tamper rejection, PDO connection/schema checks, restricted grant allowlist/no visible global privileges, initially empty tables, rollback, idempotent retry, tombstone preservation, stale-write conflict, generation rejection before retry lookup, core CSRF validation, hashed session-token authentication, expiry/revocation and independent PDO-connection owner locking. Only synthetic fixture data was inserted.
+
+The host-generated 32-byte key, credential, claims and reports remain outside public_html with restrictive permissions. Actual schema grants include the two disclosed metadata/history privileges; this is not an exactly-four-grant result. Separate website roots/0700 files do not establish isolation from another process running as the same Unix account.
+
+Automatic approval review initially rejected a recurring every-minute schedule as broader than a one-shot execution. No job was created by that rejected action. The owner then explicitly approved a temporary every-minute private test cron with removal after results. One incorrectly saved hourly definition was removed before running; the corrected every-minute job produced the report and was then removed. The three pre-existing automation schedules remained unchanged. No web access exception was introduced; public staging stayed denied.
+
+**Not verified by this CLI result:** real HTTPS login/cookies/security headers, concurrent HTTP requests, browser offline/multi-tab behavior on Hostinger, physical iPad Safari, password recovery/key rotation on Hostinger or a separate hosted database restore. The fixture's two independent connections prove owner-row lock exclusion, not concurrent HTTP scheduling. Local browser and restore results remain separate evidence. The old staging database and its earlier schema remain untouched; the current schema exists only in the disposable verification database.
+
+The unchanged existing `bin/backup.php export` was then executed through a separately guarded private verifier against the same synthetic database. **Seven hosted checks PASS:** export, authenticated format 2, owner/records/retry history matching the source, excluded sessions/rate buckets, nested ciphertext authentication, archive tamper rejection and unchanged archive after verification. The archive/key/report remain private (0600); no archive or key was published. No hosted restore occurred. The temporary backup cron was removed after the result; only the original three jobs remain.
+
+Independent review identified a check-then-act race in the backup verifier's first draft, where overlapping schedules could overwrite a PASS report with FAIL. Before hosted execution, it was replaced by exclusive `backup.claim` creation. Two parallel local processes now prove one claimant succeeds, the other exits without writes, and later runs preserve the report. Local PHP 8.3.35/MariaDB 11.8.9 transaction/concurrent-writer/new-key-restore drills passed again after this fix; independent re-review found no remaining actionable issue.
+
+Next gates: design/review a private HTTPS test path without relaxing the existing public deny-all gate; provision a separately approved empty restore target and narrowly reviewed hosted restore tool; assess the two residual MariaDB grants, same-Unix-account isolation, private logging/rotation and separate key custody. Production remains unready. Rollback requires stopping only these test schedules (already removed), retaining private evidence/archive/key and the public gate, and leaving the original database/site untouched. No automatic migration or restore over an existing database is authorized.
+
+## Earlier disposable verification preparation — 2026-10-16 (superseded above)
 
 The owner created the separate `jarvis_verify` database and `jvverify` user. Only this empty disposable database received the current five-table schema, including immutable subject/workspace and restore-generation columns. Authenticated SQL verified MariaDB 11.8.9, all five tables using InnoDB/utf8mb4_bin, and an INSERT/UPDATE/ROLLBACK drill leaving zero fixture rows. The older staging database was preserved.
 

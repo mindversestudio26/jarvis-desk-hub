@@ -68,6 +68,22 @@ with tempfile.TemporaryDirectory(prefix='jange-mariadb-') as directory:
         repeated = subprocess.run(php + [str(release / 'tests/hosted.php')], env=runtime, cwd=release, capture_output=True)
         assert repeated.returncode == 0 and b'already claimed' in repeated.stdout
         assert (release / 'result.json').read_bytes() == saved_result
+        (release / 'bin').mkdir()
+        shutil.copyfile(ROOT / 'bin/backup.php', release / 'bin/backup.php')
+        shutil.copyfile(ROOT / 'tests/hosted_backup.php', release / 'tests/hosted_backup.php')
+        exporters = [subprocess.Popen(php + [str(release / 'tests/hosted_backup.php')], env=runtime, cwd=release, stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(2)]
+        export_outputs = []
+        for exporter in exporters:
+            stdout, _ = exporter.communicate(timeout=15)
+            assert exporter.returncode == 0, stdout.decode('utf-8', errors='replace')
+            export_outputs.append(stdout)
+        assert sum(b'already claimed' in value for value in export_outputs) == 1
+        export_result = json.loads(next(value for value in export_outputs if value.startswith(b'{')))
+        assert export_result['result'] == 'PASS'
+        export_report = (release / 'backup-result.json').read_bytes()
+        export_again = subprocess.run(php + [str(release / 'tests/hosted_backup.php')], env=runtime, cwd=release, capture_output=True)
+        assert export_again.returncode == 0 and b'already claimed' in export_again.stdout
+        assert (release / 'backup-result.json').read_bytes() == export_report
         contract = json.loads(run('tests/mysql_contract.php', ['contract'], runtime))
         original = json.loads(run('tests/mysql_contract.php', ['inspect'], runtime))
         binding = {key: original['owner'][0][key] for key in ['subject_id', 'workspace_id', 'generation']}
@@ -106,6 +122,7 @@ with tempfile.TemporaryDirectory(prefix='jange-mariadb-') as directory:
         output = Path(os.environ.get('JARVIS_TEST_OUTPUT', ROOT / 'test-results'))
         output.mkdir(parents=True, exist_ok=True)
         (output / 'hosted-runner-local-results.json').write_text(json.dumps(hosted_result, indent=2), encoding='utf-8')
+        (output / 'hosted-backup-local-results.json').write_text(json.dumps(export_result, indent=2), encoding='utf-8')
         (output / 'mysql-results.json').write_text(json.dumps(contract, indent=2), encoding='utf-8')
         print(json.dumps(contract, indent=2))
     finally:
