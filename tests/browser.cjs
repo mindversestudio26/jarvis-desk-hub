@@ -176,6 +176,9 @@ async function upgradeTest(baseURL) {
     await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration()).waiting);
     assert.equal(await page.locator('#kathmandu-clock').count(), 0, 'Old open client not force-reloaded');
     await page.close();
+    // Let the browser finish activation after the old document detaches. No
+    // document in this origin is opened while the waiting worker takes over.
+    await new Promise(resolve => setTimeout(resolve, 1000));
     page = await context.newPage();
     await page.goto(baseURL);
     await page.waitForSelector('#kathmandu-clock');
