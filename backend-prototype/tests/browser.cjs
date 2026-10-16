@@ -29,15 +29,18 @@ async function signIn(page,name){
       await signIn(pa,name+' Windows fixture');await signIn(pb,name+' iPad fixture');
       const task=name+' shared task';
       await pa.locator('#task-text').fill(task);await pa.getByRole('button',{name:'Add task',exact:true}).click();
+      await until(async()=>await pa.locator('#task-text').inputValue()==='');
       await until(async()=>await pa.evaluate(()=>JarvisSync.state.pending.length===0));
       await pb.getByRole('button',{name:'Sync now',exact:true}).click();
       await until(async()=>(await pb.locator('#tasks').innerText()).includes(task));
       await pa.locator('#event-text').fill(name+' shared event');await pa.locator('#event-date').fill('2026-10-17');await pa.locator('#event-time').fill('10:15');await pa.getByRole('button',{name:'Add event',exact:true}).click();
+      await until(async()=>await pa.locator('#event-text').inputValue()==='');
       await until(async()=>await pa.evaluate(()=>JarvisSync.state.pending.length===0));
       await pb.getByRole('button',{name:'Sync now',exact:true}).click();
       await until(async()=>(await pb.locator('#events').innerText()).includes(name+' shared event'));
       // Queue two concurrent edits against the same revision before either syncs.
       for(const p of [pa,pb])await p.locator('#tasks .row').filter({hasText:task}).getByRole('button',{name:'Complete',exact:true}).click();
+      for(const p of [pa,pb])await until(async()=>await p.evaluate(()=>JarvisSync.state.pending.length===1));
       await pa.getByRole('button',{name:'Sync now',exact:true}).click();await until(async()=>await pa.evaluate(()=>JarvisSync.state.pending.length===0));
       await pb.getByRole('button',{name:'Sync now',exact:true}).click();await until(async()=>await pb.evaluate(()=>JarvisSync.state.conflicts.length===1));
       assert.match(await pb.locator('#conflicts').innerText(),new RegExp(task));

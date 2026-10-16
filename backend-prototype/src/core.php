@@ -82,6 +82,25 @@ function transaction(PDO $db, callable $fn): mixed {
         return $result;
     } catch (Throwable $e) { if ($sqlite) $db->exec('ROLLBACK'); else $db->rollBack(); throw $e; }
 }
+// Binding is metadata, never a credential. Compare under the owner transaction lock.
+function workspace_binding(PDO $db): array {
+    $row=query($db,'SELECT subject_id,workspace_id,generation FROM owner WHERE id = ?',['owner'])->fetch();
+    if (!$row) throw new RuntimeException('Workspace initialization required');
+    foreach ($row as $value) if (!is_string($value) || !preg_match('/^[a-f0-9]{32}$/D',$value)) throw new RuntimeException('Workspace migration required');
+    return $row;
+}
+function assert_binding(PDO $db,mixed $binding): array {
+    $current=workspace_binding($db);
+    if (!is_array($binding) || count($binding)!==3) throw new ApiError(428,'Workspace binding required',['code'=>'binding_required']);
+    foreach ($current as $key=>$value) if (!isset($binding[$key]) || !is_string($binding[$key]) || !hash_equals($value,$binding[$key])) throw new ApiError(412,'Workspace or restore generation changed; preserve local drafts',['code'=>'binding_mismatch']);
+    return $current;
+}
+function session_view(PDO $db,array $session): array {
+    return transaction($db,function() use($db,$session) {
+        assert_session_active($db,$session);
+        return ['identity'=>'owner','binding'=>workspace_binding($db),'csrf'=>$session['csrf'],'session_id'=>$session['id'],'expires'=>(int)$session['expires']];
+    });
+}
 function encrypt_value(array $value, string $context, array $c): string {
     $nonce=random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
     return base64_encode($nonce.sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(json_encode($value,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),$context,$nonce,$c['key']));
@@ -150,15 +169,17 @@ function mutate(PDO $db,array $c,array $op,?array $session=null): array {
     $opId=text_field($op,'operation_id',36);$id=text_field($op,'id',100);$kind=$op['kind']??'';$base=$op['base_revision']??null;$deleted=$op['deleted']??false;
     if (!preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/D',$opId) || !preg_match('/^[a-z0-9_-]{1,100}$/D',$id) || !in_array($kind,['task','event','preference','memory'],true) || !is_int($base) || $base<0 || !is_bool($deleted)) throw new ApiError(422,'Invalid operation');
     $data=$deleted?[]:validate_record($kind,$op['data']??null);
+    $binding=$op['binding']??null;
     $requestHash=hash('sha256',json_encode([$id,$kind,$base,$deleted,$data],JSON_THROW_ON_ERROR));
-    return transaction($db,function() use($db,$c,$opId,$id,$kind,$base,$deleted,$data,$requestHash,$session) {
+    return transaction($db,function() use($db,$c,$opId,$id,$kind,$base,$deleted,$data,$requestHash,$session,$binding) {
         if ($session) assert_session_active($db,$session);
+        $currentBinding=assert_binding($db,$binding);
         $seen=query($db,'SELECT * FROM operations WHERE id = ?',[$opId])->fetch();
         if ($seen) {
             if (!hash_equals($seen['request_hash'],$requestHash)) throw new ApiError(409,'Operation ID already used');
             $current=query($db,'SELECT * FROM records WHERE kind = ? AND id = ?',[$kind,$id])->fetch();
             if (!$current) throw new RuntimeException('Retry history without record');
-            return ['record'=>public_record($current,$c)];
+            return ['binding'=>$currentBinding,'record'=>public_record($current,$c)];
         }
         $old=query($db,'SELECT * FROM records WHERE kind = ? AND id = ?',[$kind,$id])->fetch();
         if (($old?(int)$old['revision']:0)!==$base) throw new ApiError(409,'Record changed on another device',['current'=>$old?public_record($old,$c):null]);
@@ -173,7 +194,7 @@ function mutate(PDO $db,array $c,array $op,?array $session=null): array {
         $box=encrypt_value($data,record_context($record),$c);
         if ($old) query($db,'UPDATE records SET revision=?, deleted=?, box=?, size=?, updated=? WHERE kind=? AND id=?',[$revision,(int)$deleted,$box,$size,time(),$kind,$id]);
         else query($db,'INSERT INTO records (kind,id,revision,deleted,box,size,updated) VALUES (?,?,?,?,?,?,?)',[$kind,$id,$revision,(int)$deleted,$box,$size,time()]);
-        $result=['record'=>$record+['data'=>$deleted?null:$data]];
+        $result=['binding'=>$currentBinding,'record'=>$record+['data'=>$deleted?null:$data]];
         query($db,'INSERT INTO operations (id,request_hash,box,created) VALUES (?,?,?,?)',[$opId,$requestHash,encrypt_value($result,'operation:'.$opId,$c),time()]);
         return $result;
     });
@@ -194,7 +215,7 @@ function snapshot(PDO $db,array $c,array $session,bool $memory): array {
     return transaction($db,function() use($db,$c,$session,$memory) {
         assert_session_active($db,$session);
         $rows=query($db,$memory?'SELECT * FROM records WHERE kind = ? ORDER BY revision':'SELECT * FROM records WHERE kind <> ? ORDER BY revision',['memory'])->fetchAll();
-        return ['revision'=>(int)query($db,'SELECT revision FROM owner WHERE id = ?',['owner'])->fetchColumn(),'records'=>array_map(fn($r)=>public_record($r,$c),$rows)];
+        return ['binding'=>workspace_binding($db),'revision'=>(int)query($db,'SELECT revision FROM owner WHERE id = ?',['owner'])->fetchColumn(),'records'=>array_map(fn($r)=>public_record($r,$c),$rows)];
     });
 }
 function security_event(string $event,int $status): void {

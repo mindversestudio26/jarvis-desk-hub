@@ -36,16 +36,19 @@ try {
         if (!$verified || !hash_equals($owner['username'],$name)) throw new ApiError(401,'Invalid credentials');
         $device=text_field($body,'device_name',80);
         $token=bin2hex(random_bytes(32));$id=bin2hex(random_bytes(16));$expiry=time()+43200;
-        transaction($db,function() use($db,$token,$id,$expiry,$device) {
+        $loginBinding=transaction($db,function() use($db,$token,$id,$expiry,$device,$owner) {
+            $fresh=query($db,'SELECT pw_hash FROM owner WHERE id = ?',['owner'])->fetchColumn();
+            if (!hash_equals($owner['pw_hash'],$fresh)) throw new ApiError(401,'Credentials changed; sign in again');
             query($db,'DELETE FROM sessions WHERE expires <= ? OR last_seen < ?',[time(),time()-1800]);
             if ((int)query($db,'SELECT COUNT(*) FROM sessions')->fetchColumn()>=20) throw new ApiError(429,'Session limit reached');
             query($db,'INSERT INTO sessions (id,token_hash,name,created,expires,last_seen) VALUES (?,?,?,?,?,?)',[$id,hash('sha256',$token),$device,time(),$expiry,time()]);
+            return workspace_binding($db);
         });
         session_cookie($token,$c,$expiry);
-        response(['identity'=>'owner','session_id'=>$id,'csrf'=>csrf($token,$c),'expires'=>$expiry]);
+        response(['identity'=>'owner','binding'=>$loginBinding,'session_id'=>$id,'csrf'=>csrf($token,$c),'expires'=>$expiry]);
     }
     $s=require_session($db,$c,$write);
-    if ($path==='/api/v1/session' && !$write) response(['identity'=>'owner','csrf'=>$s['csrf'],'session_id'=>$s['id'],'expires'=>(int)$s['expires']]);
+    if ($path==='/api/v1/session' && !$write) response(session_view($db,$s));
     if ($path==='/api/v1/auth/logout' && $write) {revoke_session($db,$s,$s['id']);session_cookie('',$c,time()-3600);response(['ok'=>true]);}
     if ($path==='/api/v1/sessions' && !$write) response(['sessions'=>query($db,'SELECT id,name,created,expires,last_seen FROM sessions WHERE expires > ? AND last_seen > ?',[time(),time()-1800])->fetchAll()]);
     if ($path==='/api/v1/sessions/revoke' && $write) {revoke_session($db,$s,text_field($body,'id',36));security_event('session_revoked',200);response(['ok'=>true]);}

@@ -18,6 +18,12 @@ try {
         $result['storage_contract']=true;
     }
     $result['connected']=true;
+    query($db,'SELECT subject_id,workspace_id,generation FROM owner LIMIT 0');
+    $result['binding_schema']=true;
+    $result['owner_initialized']=(int)query($db,'SELECT COUNT(*) FROM owner')->fetchColumn()===1;
+    if ($result['owner_initialized']) workspace_binding($db);
 } catch (Throwable) {$result['connected']=false;}
+$result['ready']=($result['connected']??false) && ($result['binding_schema']??false) && ($result['owner_initialized']??false);
 echo json_encode($result,JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR).PHP_EOL;
-exit(($result['connected']??false)?0:1);
+// A reachable legacy/empty DB is not ready.
+exit($result['ready']?0:1);

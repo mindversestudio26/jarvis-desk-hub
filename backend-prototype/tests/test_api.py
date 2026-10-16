@@ -1,5 +1,6 @@
 """Isolated API tests. All credentials and content are disposable fixtures."""
 import base64
+from contextlib import closing
 import http.client
 import json
 import os
@@ -94,7 +95,9 @@ class API(unittest.TestCase):
         return headers['Set-Cookie'].split(';')[0], value['csrf'], value['session_id']
 
     def op(self, kind='task', text='Disposable test task', base=0, item=None):
-        return {'operation_id': str(uuid.uuid4()), 'kind': kind, 'id': item or str(uuid.uuid4()), 'base_revision': base, 'deleted': False, 'data': {'text': text, 'done': False}}
+        with closing(sqlite3.connect(self.database)) as db, db:
+            row = db.execute('SELECT subject_id,workspace_id,generation FROM owner').fetchone()
+        return {'binding': dict(zip(['subject_id','workspace_id','generation'],row)), 'operation_id': str(uuid.uuid4()), 'kind': kind, 'id': item or str(uuid.uuid4()), 'base_revision': base, 'deleted': False, 'data': {'text': text, 'done': False}}
 
     def test_01_authentication_required(self):
         self.assertEqual(self.call('GET', '/api/v1/sync')[0], 401)
@@ -255,14 +258,14 @@ class API(unittest.TestCase):
 
     def test_20_absolute_expiry(self):
         cookie, _, sid = self.login()
-        with sqlite3.connect(self.database) as db:
+        with closing(sqlite3.connect(self.database)) as db, db:
             db.execute('UPDATE sessions SET expires=? WHERE id=?', (int(time.time())-1, sid))
         db.close()
         self.assertEqual(self.call('GET', '/api/v1/session', cookie=cookie)[0], 401)
 
     def test_21_idle_expiry(self):
         cookie, _, sid = self.login()
-        with sqlite3.connect(self.database) as db:
+        with closing(sqlite3.connect(self.database)) as db, db:
             db.execute('UPDATE sessions SET last_seen=? WHERE id=?', (int(time.time())-1802, sid))
         db.close()
         self.assertEqual(self.call('GET', '/api/v1/session', cookie=cookie)[0], 401)
@@ -306,7 +309,11 @@ class API(unittest.TestCase):
         self.assertEqual(db.execute('SELECT COUNT(*) FROM sessions').fetchone()[0], 0)
         self.assertEqual(db.execute('SELECT deleted FROM records WHERE id=?', (removed['id'],)).fetchone()[0], 1)
         db.close()
-        self.assertEqual(durable_rows(target), original_rows)
+        restored = durable_rows(target)
+        self.assertEqual(restored['records'], original_rows['records'])
+        self.assertEqual(restored['operations'], original_rows['operations'])
+        self.assertEqual(restored['owner'][0][:-1], original_rows['owner'][0][:-1])
+        self.assertNotEqual(restored['owner'][0][-1], original_rows['owner'][0][-1])
         self.assertEqual(durable_rows(self.database), original_rows)
         self.assertNotEqual(subprocess.run(command + ['restore-local', str(archive)], env=env, cwd=ROOT, capture_output=True).returncode, 0)
         corrupt = Path(self.temp.name) / 'corrupt.backup'
@@ -414,6 +421,112 @@ class API(unittest.TestCase):
         accepted = subprocess.run(command + [str(private_archive)], env=self.env, cwd=release, capture_output=True)
         self.assertEqual(accepted.returncode, 0, accepted.stderr)
         self.assertTrue(private_archive.is_file())
+
+    def test_33_binding_required_and_mismatch_rejected_without_writes(self):
+        cookie, csrf, _ = self.login()
+        op = self.op()
+        unbound = dict(op)
+        del unbound['binding']
+        self.assertEqual(self.call('POST', '/api/v1/sync', unbound, cookie, csrf)[0], 428)
+        for field in ['subject_id', 'workspace_id', 'generation']:
+            wrong = dict(op, binding=dict(op['binding'], **{field: '0' * 32}))
+            self.assertEqual(self.call('POST', '/api/v1/sync', wrong, cookie, csrf)[0], 412)
+        with closing(sqlite3.connect(self.database)) as db, db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM operations WHERE id=?', (op['operation_id'],)).fetchone()[0], 0)
+
+    def test_34_generation_checked_even_for_idempotent_retry(self):
+        cookie, csrf, _ = self.login()
+        op = self.op()
+        self.assertEqual(self.call('POST', '/api/v1/sync', op, cookie, csrf)[0], 200)
+        old = op['binding']['generation']
+        try:
+            with closing(sqlite3.connect(self.database)) as db, db:
+                db.execute('UPDATE owner SET generation=?', (secrets.token_hex(16),))
+            self.assertEqual(self.call('POST', '/api/v1/sync', op, cookie, csrf)[0], 412)
+        finally:
+            with closing(sqlite3.connect(self.database)) as db, db:
+                db.execute('UPDATE owner SET generation=?', (old,))
+
+    def test_35_password_rotation_recovery_and_all_session_revocation(self):
+        cookie, _, _ = self.login()
+        with closing(sqlite3.connect(self.database)) as db, db:
+            original_hash, workspace = db.execute('SELECT pw_hash,workspace_id FROM owner').fetchone()
+        env = dict(self.env, JARVIS_ADMIN_WORKSPACE=workspace, JARVIS_NEW_PASSWORD=secrets.token_urlsafe(24))
+        command = self.php + [str(ROOT / 'bin/admin.php')]
+        try:
+            wrong = subprocess.run(command + ['rotate-password'], env=dict(env, JARVIS_CURRENT_PASSWORD='wrong'), cwd=ROOT, capture_output=True)
+            self.assertNotEqual(wrong.returncode, 0)
+            self.assertEqual(self.call('GET', '/api/v1/session', cookie=cookie)[0], 200)
+            changed = subprocess.run(command + ['rotate-password'], env=dict(env, JARVIS_CURRENT_PASSWORD=self.password), cwd=ROOT, capture_output=True)
+            self.assertEqual(changed.returncode, 0, changed.stderr)
+            self.assertEqual(self.call('GET', '/api/v1/session', cookie=cookie)[0], 401)
+            body = {'username': 'owner', 'password': self.password, 'device_name': 'rotation fixture'}
+            self.assertEqual(self.call('POST', '/api/v1/auth/login', body)[0], 401)
+            self.assertEqual(self.call('POST', '/api/v1/auth/login', dict(body, password=env['JARVIS_NEW_PASSWORD']))[0], 200)
+            rejected = subprocess.run(command + ['recover-password'], env=dict(env, JARVIS_NEW_PASSWORD=self.password), cwd=ROOT, capture_output=True)
+            self.assertNotEqual(rejected.returncode, 0)
+            recovered = subprocess.run(command + ['recover-password'], env=dict(env, JARVIS_NEW_PASSWORD=self.password, JARVIS_ADMIN_CONFIRM='LOCAL-RECOVERY-REVOKE-ALL'), cwd=ROOT, capture_output=True)
+            self.assertEqual(recovered.returncode, 0, recovered.stderr)
+            self.login()
+        finally:
+            with closing(sqlite3.connect(self.database)) as db, db:
+                db.execute('UPDATE owner SET pw_hash=?', (original_hash,))
+
+    def test_36_restore_new_key_and_generation_source_unchanged(self):
+        archive = Path(self.temp.name) / 'rotation.backup'
+        target = Path(self.temp.name) / 'new-key.sqlite'
+        command = self.php + [str(ROOT / 'bin/backup.php')]
+        self.assertEqual(subprocess.run(command + ['export', str(archive)], env=self.env, cwd=ROOT, capture_output=True).returncode, 0)
+        before = self.database.read_bytes()
+        env = dict(self.env, JARVIS_DSN='sqlite:' + str(target), JARVIS_BACKUP_DATA_KEY=self.env['JARVIS_DATA_KEY'], JARVIS_DATA_KEY=base64.b64encode(secrets.token_bytes(32)).decode())
+        restored = subprocess.run(command + ['restore-local', str(archive)], env=env, cwd=ROOT, capture_output=True)
+        self.assertEqual(restored.returncode, 0, restored.stderr)
+        code = "require 'src/core.php';$c=config();$db=database($c);foreach(query($db,'SELECT * FROM records')->fetchAll() as $r)decrypt_value($r['box'],record_context($r),$c);echo workspace_binding($db)['generation'];"
+        checked = subprocess.run(self.php + ['-r', code], env=env, cwd=ROOT, capture_output=True)
+        self.assertEqual(checked.returncode, 0, checked.stderr)
+        wrong = subprocess.run(self.php + ['-r', code], env=dict(env, JARVIS_DATA_KEY=self.env['JARVIS_DATA_KEY']), cwd=ROOT, capture_output=True)
+        self.assertNotEqual(wrong.returncode, 0)
+        with closing(sqlite3.connect(self.database)) as db, db:
+            self.assertNotEqual(checked.stdout.decode(), db.execute('SELECT generation FROM owner').fetchone()[0])
+        self.assertEqual(self.database.read_bytes(), before)
+
+    def test_37_legacy_archive_migration_and_old_queue_rejection(self):
+        archive = Path(self.temp.name) / 'legacy.backup'
+        code = "require 'src/core.php';$c=config();$db=database($c);$data=['format'=>1,'tables'=>[]];foreach(['owner','records','operations'] as $table)$data['tables'][$table]=query($db,'SELECT * FROM '.$table)->fetchAll();foreach(['subject_id','workspace_id','generation'] as $field)unset($data['tables']['owner'][0][$field]);file_put_contents(getenv('JARVIS_TEST_ARCHIVE'),encrypt_value($data,'jarvis-backup-v1',$c));"
+        result = subprocess.run(self.php + ['-r', code], env=dict(self.env, JARVIS_TEST_ARCHIVE=str(archive)), cwd=ROOT, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        target = Path(self.temp.name) / 'legacy-restored.sqlite'
+        env = dict(self.env, JARVIS_DSN='sqlite:' + str(target))
+        restored = subprocess.run(self.php + [str(ROOT / 'bin/backup.php'), 'restore-local', str(archive)], env=env, cwd=ROOT, capture_output=True)
+        self.assertEqual(restored.returncode, 0, restored.stderr)
+        old_op = self.op()
+        replay = "require 'src/core.php';$c=config();$db=database($c);try{mutate($db,$c,json_decode(getenv('JARVIS_TEST_OPERATION'),true));exit(5);}catch(ApiError $e){echo $e->status;}"
+        rejected = subprocess.run(self.php + ['-r', replay], env=dict(env, JARVIS_TEST_OPERATION=json.dumps(old_op)), cwd=ROOT, capture_output=True)
+        self.assertEqual(rejected.returncode, 0, rejected.stderr)
+        self.assertEqual(rejected.stdout, b'412')
+        with closing(sqlite3.connect(target)) as db, db:
+            row = db.execute('SELECT subject_id,workspace_id,generation FROM owner').fetchone()
+            for field, value in zip(['subject_id', 'workspace_id', 'generation'], row):
+                self.assertNotEqual(value, old_op['binding'][field])
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM sessions').fetchone()[0], 0)
+
+    def test_38_preflight_rejects_legacy_and_uninitialized_schema(self):
+        command = self.php + [str(ROOT / 'bin/preflight.php')]
+        current = subprocess.run(command, env=self.env, cwd=ROOT, capture_output=True)
+        self.assertEqual(current.returncode, 0, current.stderr)
+        self.assertTrue(json.loads(current.stdout)['ready'])
+        legacy = Path(self.temp.name) / 'preflight-legacy.sqlite'
+        with closing(sqlite3.connect(legacy)) as db, db:
+            db.execute('CREATE TABLE owner (id TEXT,revision INTEGER)')
+        rejected = subprocess.run(command, env=dict(self.env, JARVIS_DSN='sqlite:' + str(legacy)), cwd=ROOT, capture_output=True)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertFalse(json.loads(rejected.stdout)['ready'])
+        empty = Path(self.temp.name) / 'preflight-empty.sqlite'
+        with closing(sqlite3.connect(empty)) as db, db:
+            db.executescript((ROOT / 'schema.sql').read_text())
+        rejected = subprocess.run(command, env=dict(self.env, JARVIS_DSN='sqlite:' + str(empty)), cwd=ROOT, capture_output=True)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertFalse(json.loads(rejected.stdout)['owner_initialized'])
 
 if __name__ == '__main__':
     unittest.main()

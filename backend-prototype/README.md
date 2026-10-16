@@ -4,7 +4,7 @@ Current backend hardening, updated test evidence, API retry semantics and stagin
 
 Actual Hostinger staging provisioning and evidence, including remaining deployment blockers: [STAGING.md](STAGING.md). The staging URL currently denies access; it is not a verified running backend.
 
-Claude's implemented v1 integration boundary, error handling and unresolved workspace/restore gates: [API-CONTRACT.md](API-CONTRACT.md).
+Claude's implemented v1 integration boundary, error handling and workspace/generation and multi-tab contract: [API-CONTRACT.md](API-CONTRACT.md).
 
 This directory is additive. It does not change Jarvis's dashboard, service worker, storage key, Pages deployment or Claude's UI. Nothing here has been deployed to Hostinger. The console is a test harness, not a replacement design.
 
@@ -23,7 +23,7 @@ Encryption is **server-side, not end-to-end**. Someone controlling the hosting a
 
 ## Local start
 
-Requires PHP 8.3+ with PDO SQLite and sodium; alternatively the PDO MySQL path needs a dedicated database and validation. The executed tests used PHP 8.5.10 and SQLite. SQL/locking support for MySQL is present but **not integration-tested**.
+Requires PHP 8.3+ with PDO SQLite and sodium; alternatively the PDO MySQL path needs a dedicated database and validation. Local compatibility is tested on PHP 8.3.35/SQLite. The separate disposable loopback MariaDB 11.8.9/PDO suite validates InnoDB transactions, concurrent writers, least-privilege runtime and empty-target encrypted restore. These are not Hostinger integration tests.
 
 From this directory, create an ignored `state/` directory outside `public/`. Set process environment variables using a local secret-handling method:
 
@@ -51,11 +51,12 @@ Open `http://127.0.0.1:8787` and sign in. Never bind the development server to `
 ```powershell
 python -m unittest discover -s tests -v
 python tests/run_browser.py
+python tests/run_browser.py multitab.cjs
 ```
 
 API tests create a disposable private database, generate temporary credentials in memory, launch a loopback PHP process and clean up. `JARVIS_PHP_EXT_DIR` optionally points to installed DLLs/modules for CLI tests. Browser tests use Playwright from normal Node resolution or `JARVIS_PLAYWRIGHT`; `JARVIS_CHROME_CHANNEL=chrome` selects installed Chrome. `JARVIS_TEST_OUTPUT` controls fixture-only screenshots/results. No user credentials are required.
 
-Eighteen API tests pass, including restart persistence and invalid production HTTP/private-path configuration. Chromium and Windows WebKit pass the two-session functional suite. Chromium verifies offline reload/queued synchronization. Windows WebKit's offline simulator is not verified; its cookie-inspection API reports `None` despite the actual response header specifying `SameSite=Strict`. Both engines confirm HttpOnly isolation. Production HTTPS and physical Safari remain mandatory checks.
+38 API regressions cover restart persistence, binding/generation, session/password recovery, new-key restore, legacy archives and production HTTP/private-path guards. The two-tab suite tests durable queue serialization, lost acknowledgements and late responses after logout at 1080×810, including Windows WebKit without BroadcastChannel. Chromium and Windows WebKit pass the two-session functional suite. Chromium verifies offline reload/queued synchronization. Windows WebKit's offline simulator is not verified; its cookie-inspection API reports `None` despite the actual response header specifying `SameSite=Strict`. Both engines confirm HttpOnly isolation. Production HTTPS and physical Safari remain mandatory checks.
 
 ## API / integration boundary for Claude's UI
 
@@ -65,14 +66,14 @@ Use the same origin for UI and API. Direct third-party cookie calls from GitHub 
 - `GET /api/v1/session`: session metadata and fresh derived CSRF token.
 - `POST /api/v1/auth/logout`, `GET /api/v1/sessions`, `POST /api/v1/sessions/revoke` with `{id}`.
 - `GET /api/v1/sync`: non-memory records, including tombstones and revisions.
-- `POST /api/v1/sync`: `{operation_id,kind,id,base_revision,deleted,data}`. IDs are lowercase ASCII letters/digits/hyphen/underscore, ≤100 characters. Operation IDs are UUID-shaped. Request ≤16 KiB. Conflict → 409 with the current record; retain the draft.
+- `POST /api/v1/sync`: `{binding,operation_id,kind,id,base_revision,deleted,data}`. IDs are lowercase ASCII letters/digits/hyphen/underscore, ≤100 characters. Operation IDs are UUID-shaped. Request ≤16 KiB. Conflict → 409 with the current record; retain the draft.
 - `GET /api/v1/memory`: explicit online-only note retrieval.
 - `GET /api/v1/devices`: browser session activity, never inferred CPU/power statistics.
 - `POST /api/v1/ai`: disabled, 501. `/api/v1/control...`: denied, 403 after authentication.
 
 Every POST requires exact Origin, JSON and (except login) `X-CSRF-Token`. Production requires HTTPS and removes the local-dev exception. Sessions use cookies, not frontend bearer storage. Tasks use `{text,done}`; events use `{text,date,time}` and are normalized to Dubai time; preferences currently support `{language:'en-GB'|'ne-NP'}`; notes use `{text}`. The existing dashboard's version-2 backups are accepted through explicit console import, without writing to `jarvis.desk.v2`. Import a backup only once; imports add fresh IDs.
 
-This is a **single-owner, single-database prototype**, not a multi-user account system. Do not switch an origin to a different owner's database with old cached edits present. Unique account/workspace binding, passkeys/MFA, password recovery/rotation, detailed security audit events, encrypted offline cache, production deployment tooling and backup/restore drills remain hardening work. Forgotten-password recovery must not expose a public reset shortcut.
+This is a **single-owner, single-database prototype**, not a multi-user account system. Do not switch an origin to a different owner's database with old cached edits present. Immutable subject/workspace/generation binding and IDB multi-tab coordination are implemented in the prototype adapter. CLI password rotation/recovery and new-key copy/restore are limited to isolated drills. Passkeys/MFA, persistent-device refresh sessions, encrypted offline cache, private host log rotation and production administration remain release gates. See [SECURITY-OPERATIONS.md](SECURITY-OPERATIONS.md) for migration, recovery, retention, grants and reviewed future-session proposals. No public reset shortcut exists.
 
 Limits: 1,000 retained records/tombstones, 5 MiB of current plaintext-equivalent record content, 10,000 encrypted retry-history entries, 20 sessions, 10 login attempts per IP/15 minutes and 100 aggregate/15 minutes, 600 requests per session/10 minutes. Retry history is currently retained until reviewed maintenance; deleting a note creates a tombstone but does not erase historical encrypted retry entries/backups. No permanent-erasure promise is made. A maintenance/retention policy is required before real personal memory is enabled. Record caps deliberately stop writes rather than silently purge offline tombstones.
 
@@ -83,3 +84,5 @@ Keep the current beauty website and DNS intact. After explicit owner approval, c
 For MySQL use an isolated InnoDB database and DSN with `charset=utf8mb4`, then run the entire test contract against it. Verify sodium and PDO driver activation, HTTPS cookie behavior, bypass CDN caching/challenges for authenticated API paths, test backups and review file permissions. Current shared-host defaults are not a substitute for application session settings. Never deploy the engineering console on top of the existing website, copy secrets into the public GitHub repository, enable Funnel, change mail DNS, or merge without review.
 
 See [architecture](architecture.md), [AI and voice feasibility](ai-voice-feasibility.md), and [security review](security-review.md).
+
+Portable MySQL drill: set JARVIS_MARIADB_BIN and JARVIS_PHP_BIN to verified official Windows binaries, then run `python tests/run_mysql.py`. The harness creates its own authenticated loopback server/databases/runtime user, tests transactions and restores, then shuts it down. It does not accept an existing hosting DSN or install a Windows service. Never use personal data.

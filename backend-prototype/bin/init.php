@@ -11,5 +11,5 @@ $schema=$db->getAttribute(PDO::ATTR_DRIVER_NAME)==='mysql'?'schema.mysql.sql':'s
 $db->exec(file_get_contents(dirname(__DIR__).'/'.$schema));
 verify_storage($db);
 if ((int)query($db,'SELECT COUNT(*) FROM owner')->fetchColumn()!==0) throw new RuntimeException('Owner already exists; refusing to overwrite');
-query($db,'INSERT INTO owner (id,username,pw_hash,revision) VALUES (?,?,?,0)',['owner',$username,password_hash($password,PASSWORD_BCRYPT,['cost'=>12])]);
+query($db,'INSERT INTO owner (id,username,pw_hash,revision,subject_id,workspace_id,generation) VALUES (?,?,?,0,?,?,?)',['owner',$username,password_hash($password,PASSWORD_BCRYPT,['cost'=>12]),bin2hex(random_bytes(16)),bin2hex(random_bytes(16)),bin2hex(random_bytes(16))]);
 echo "Initialized one owner. No credentials printed.\n";
