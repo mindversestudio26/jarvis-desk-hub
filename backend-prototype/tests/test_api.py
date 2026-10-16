@@ -245,5 +245,75 @@ class API(unittest.TestCase):
         self.assertEqual(self.call('POST', '/api/v1/sync', pref, cookie, csrf)[0], 200)
 
 
+    def test_19_retry_returns_latest_record(self):
+        cookie, csrf, _ = self.login()
+        op = self.op()
+        first = self.call('POST', '/api/v1/sync', op, cookie, csrf)[2]['record']
+        edit = dict(op, operation_id=str(uuid.uuid4()), base_revision=first['revision'], data={'text': 'Newer edit', 'done': True})
+        latest = self.call('POST', '/api/v1/sync', edit, cookie, csrf)[2]['record']
+        self.assertEqual(self.call('POST', '/api/v1/sync', op, cookie, csrf)[2]['record'], latest)
+
+    def test_20_absolute_expiry(self):
+        cookie, _, sid = self.login()
+        with sqlite3.connect(self.database) as db:
+            db.execute('UPDATE sessions SET expires=? WHERE id=?', (int(time.time())-1, sid))
+        db.close()
+        self.assertEqual(self.call('GET', '/api/v1/session', cookie=cookie)[0], 401)
+
+    def test_21_idle_expiry(self):
+        cookie, _, sid = self.login()
+        with sqlite3.connect(self.database) as db:
+            db.execute('UPDATE sessions SET last_seen=? WHERE id=?', (int(time.time())-1802, sid))
+        db.close()
+        self.assertEqual(self.call('GET', '/api/v1/session', cookie=cookie)[0], 401)
+
+    def test_22_malformed_uuid(self):
+        cookie, csrf, _ = self.login()
+        op = dict(self.op(), operation_id='-' * 36)
+        self.assertEqual(self.call('POST', '/api/v1/sync', op, cookie, csrf)[0], 422)
+
+    def test_23_revoked_write_denied(self):
+        a, ca, _ = self.login()
+        b, cb, bid = self.login()
+        self.call('POST', '/api/v1/sessions/revoke', {'id': bid}, a, ca)
+        self.assertEqual(self.call('POST', '/api/v1/sync', self.op(), b, cb)[0], 401)
+
+    def test_24_encrypted_backup_restore_and_refuse_overwrite(self):
+        cookie, csrf, _ = self.login()
+        op = self.op(text='Backup restoration fixture')
+        current = self.call('POST', '/api/v1/sync', op, cookie, csrf)[2]['record']
+        archive = Path(self.temp.name) / 'fixture.backup'
+        command = self.php + [str(ROOT / 'bin/backup.php')]
+        result = subprocess.run(command + ['export', str(archive)], env=self.env, cwd=ROOT, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn(b'Backup restoration fixture', archive.read_bytes())
+        target = Path(self.temp.name) / 'restored.sqlite'
+        env = dict(self.env, JARVIS_DSN='sqlite:' + str(target))
+        result = subprocess.run(command + ['restore-local', str(archive)], env=env, cwd=ROOT, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        db = sqlite3.connect(target)
+        self.assertEqual(db.execute('SELECT revision FROM records WHERE id=?', (op['id'],)).fetchone()[0], current['revision'])
+        self.assertEqual(db.execute('SELECT COUNT(*) FROM sessions').fetchone()[0], 0)
+        db.close()
+        self.assertNotEqual(subprocess.run(command + ['restore-local', str(archive)], env=env, cwd=ROOT, capture_output=True).returncode, 0)
+        corrupt = Path(self.temp.name) / 'corrupt.backup'
+        raw = bytearray(archive.read_bytes())
+        raw[40] = ord('A') if raw[40] != ord('A') else ord('B')
+        corrupt.write_bytes(raw)
+        bad_env = dict(self.env, JARVIS_DSN='sqlite:' + str(Path(self.temp.name) / 'bad.sqlite'))
+        self.assertNotEqual(subprocess.run(command + ['restore-local', str(corrupt)], env=bad_env, cwd=ROOT, capture_output=True).returncode, 0)
+
+    def test_25_concurrent_database_writers_preserve_conflict(self):
+        op = self.op()
+        other = dict(op, operation_id=str(uuid.uuid4()), data={'text': 'Concurrent edit', 'done': False})
+        script = "require 'src/core.php'; $c=config();$db=database($c);try {mutate($db,$c,json_decode(getenv('JARVIS_TEST_OPERATION'),true));echo '200';}catch(ApiError $e){echo $e->status;}"
+        processes = [subprocess.Popen(self.php + ['-r', script], env=dict(self.env, JARVIS_TEST_OPERATION=json.dumps(value)), cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE) for value in [op, other]]
+        statuses = []
+        for process in processes:
+            stdout, stderr = process.communicate(timeout=10)
+            self.assertEqual(process.returncode, 0, stderr)
+            statuses.append(stdout.decode())
+        self.assertEqual(sorted(statuses), ['200', '409'])
+
 if __name__ == '__main__':
     unittest.main()

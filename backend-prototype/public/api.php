@@ -46,14 +46,12 @@ try {
     }
     $s=require_session($db,$c,$write);
     if ($path==='/api/v1/session' && !$write) response(['identity'=>'owner','csrf'=>$s['csrf'],'session_id'=>$s['id'],'expires'=>(int)$s['expires']]);
-    if ($path==='/api/v1/auth/logout' && $write) {query($db,'DELETE FROM sessions WHERE id = ?',[$s['id']]);session_cookie('',$c,time()-3600);response(['ok'=>true]);}
+    if ($path==='/api/v1/auth/logout' && $write) {revoke_session($db,$s,$s['id']);session_cookie('',$c,time()-3600);response(['ok'=>true]);}
     if ($path==='/api/v1/sessions' && !$write) response(['sessions'=>query($db,'SELECT id,name,created,expires,last_seen FROM sessions WHERE expires > ? AND last_seen > ?',[time(),time()-1800])->fetchAll()]);
-    if ($path==='/api/v1/sessions/revoke' && $write) {query($db,'DELETE FROM sessions WHERE id = ?',[text_field($body,'id',36)]);response(['ok'=>true]);}
-    if ($path==='/api/v1/sync' && $write) response(mutate($db,$c,$body));
+    if ($path==='/api/v1/sessions/revoke' && $write) {revoke_session($db,$s,text_field($body,'id',36));security_event('session_revoked',200);response(['ok'=>true]);}
+    if ($path==='/api/v1/sync' && $write) response(mutate($db,$c,$body,$s));
     if (($path==='/api/v1/sync' || $path==='/api/v1/memory') && !$write) {
-        $memory=$path==='/api/v1/memory';
-        $rows=query($db,$memory?'SELECT * FROM records WHERE kind = ? ORDER BY revision':'SELECT * FROM records WHERE kind <> ? ORDER BY revision',['memory'])->fetchAll();
-        response(['revision'=>(int)query($db,'SELECT revision FROM owner WHERE id = ?',['owner'])->fetchColumn(),'records'=>array_map(fn($r)=>public_record($r,$c),$rows)]);
+        response(snapshot($db,$c,$s,$path==='/api/v1/memory'));
     }
     if ($path==='/api/v1/devices' && !$write) {
         $sessions=query($db,'SELECT id,name,last_seen FROM sessions WHERE expires > ?',[time()])->fetchAll();
@@ -62,5 +60,5 @@ try {
     if ($path==='/api/v1/ai' && $write) throw new ApiError(501,'AI provider not connected; no external data transmission or billing');
     if (str_starts_with($path,'/api/v1/control')) throw new ApiError(403,'Device control is not implemented or authorized');
     throw new ApiError(404,'Not found');
-} catch (ApiError $e) { response(['error'=>$e->getMessage()]+$e->details,$e->status); }
-catch (Throwable) { response(['error'=>'Service unavailable; check server configuration'],503); }
+} catch (ApiError $e) { security_event('request_rejected',$e->status);response(['error'=>$e->getMessage()]+$e->details,$e->status); }
+catch (Throwable) { security_event('internal_failure',503);response(['error'=>'Service unavailable; check server configuration'],503); }

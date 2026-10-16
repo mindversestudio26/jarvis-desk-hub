@@ -75,6 +75,7 @@ function require_session(PDO $db,array $c,bool $write): array {
     if (!$s || (int)$s['expires']<=time() || time()-(int)$s['last_seen']>1800) throw new ApiError(401,'Session expired or revoked');
     if ($write && !hash_equals(csrf($token,$c),$_SERVER['HTTP_X_CSRF_TOKEN']??'')) throw new ApiError(403,'Invalid CSRF token');
     transaction($db,function() use($db,$s) {
+        assert_session_active($db,$s);
         limited($db,'session:'.$s['id'],600,600);
         query($db,'UPDATE sessions SET last_seen = ? WHERE id = ?',[time(),$s['id']]);
     });
@@ -103,16 +104,19 @@ function validate_record(string $kind,mixed $value): array {
     if ($kind==='memory') return ['text'=>text_field($value,'text',4000)];
     throw new ApiError(422,'Unsupported record type');
 }
-function mutate(PDO $db,array $c,array $op): array {
+function mutate(PDO $db,array $c,array $op,?array $session=null): array {
     $opId=text_field($op,'operation_id',36);$id=text_field($op,'id',100);$kind=$op['kind']??'';$base=$op['base_revision']??null;$deleted=$op['deleted']??false;
-    if (!preg_match('/^[a-f0-9-]{36}$/D',$opId) || !preg_match('/^[a-z0-9_-]{1,100}$/D',$id) || !in_array($kind,['task','event','preference','memory'],true) || !is_int($base) || $base<0 || !is_bool($deleted)) throw new ApiError(422,'Invalid operation');
+    if (!preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/D',$opId) || !preg_match('/^[a-z0-9_-]{1,100}$/D',$id) || !in_array($kind,['task','event','preference','memory'],true) || !is_int($base) || $base<0 || !is_bool($deleted)) throw new ApiError(422,'Invalid operation');
     $data=$deleted?[]:validate_record($kind,$op['data']??null);
     $requestHash=hash('sha256',json_encode([$id,$kind,$base,$deleted,$data],JSON_THROW_ON_ERROR));
-    return transaction($db,function() use($db,$c,$opId,$id,$kind,$base,$deleted,$data,$requestHash) {
+    return transaction($db,function() use($db,$c,$opId,$id,$kind,$base,$deleted,$data,$requestHash,$session) {
+        if ($session) assert_session_active($db,$session);
         $seen=query($db,'SELECT * FROM operations WHERE id = ?',[$opId])->fetch();
         if ($seen) {
             if (!hash_equals($seen['request_hash'],$requestHash)) throw new ApiError(409,'Operation ID already used');
-            return decrypt_value($seen['box'],'operation:'.$opId,$c);
+            $current=query($db,'SELECT * FROM records WHERE kind = ? AND id = ?',[$kind,$id])->fetch();
+            if (!$current) throw new RuntimeException('Retry history without record');
+            return ['record'=>public_record($current,$c)];
         }
         $old=query($db,'SELECT * FROM records WHERE kind = ? AND id = ?',[$kind,$id])->fetch();
         if (($old?(int)$old['revision']:0)!==$base) throw new ApiError(409,'Record changed on another device',['current'=>$old?public_record($old,$c):null]);
@@ -131,4 +135,27 @@ function mutate(PDO $db,array $c,array $op): array {
         query($db,'INSERT INTO operations (id,request_hash,box,created) VALUES (?,?,?,?)',[$opId,$requestHash,encrypt_value($result,'operation:'.$opId,$c),time()]);
         return $result;
     });
+}
+
+// Call under the same owner lock used by writes and revocation.
+function assert_session_active(PDO $db,array $session): void {
+    $fresh=query($db,'SELECT * FROM sessions WHERE id = ? AND token_hash = ?',[$session['id'],$session['token_hash']])->fetch();
+    if (!$fresh || (int)$fresh['expires']<=time() || time()-(int)$fresh['last_seen']>1800) throw new ApiError(401,'Session expired or revoked');
+}
+function revoke_session(PDO $db,array $actor,string $target): void {
+    transaction($db,function() use($db,$actor,$target) {
+        assert_session_active($db,$actor);
+        query($db,'DELETE FROM sessions WHERE id = ?',[$target]);
+    });
+}
+function snapshot(PDO $db,array $c,array $session,bool $memory): array {
+    return transaction($db,function() use($db,$c,$session,$memory) {
+        assert_session_active($db,$session);
+        $rows=query($db,$memory?'SELECT * FROM records WHERE kind = ? ORDER BY revision':'SELECT * FROM records WHERE kind <> ? ORDER BY revision',['memory'])->fetchAll();
+        return ['revision'=>(int)query($db,'SELECT revision FROM owner WHERE id = ?',['owner'])->fetchColumn(),'records'=>array_map(fn($r)=>public_record($r,$c),$rows)];
+    });
+}
+function security_event(string $event,int $status): void {
+    // Fixed event names/status only: never include credentials, body, IP or exceptions.
+    error_log(json_encode(['component'=>'jarvis-api','event'=>$event,'status'=>$status,'time'=>gmdate('c')],JSON_THROW_ON_ERROR));
 }

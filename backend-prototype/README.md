@@ -1,5 +1,7 @@
 # Jarvis shared-backend prototype — isolated development only
 
+Current backend hardening, updated test evidence, API retry semantics and staging gates: [HARDENING.md](HARDENING.md). The original baseline notes below remain historical where superseded by that report.
+
 This directory is additive. It does not change Jarvis's dashboard, service worker, storage key, Pages deployment or Claude's UI. Nothing here has been deployed to Hostinger. The console is a test harness, not a replacement design.
 
 ## Implemented
