@@ -218,7 +218,10 @@ function snapshot(PDO $db,array $c,array $session,bool $memory): array {
         return ['binding'=>workspace_binding($db),'revision'=>(int)query($db,'SELECT revision FROM owner WHERE id = ?',['owner'])->fetchColumn(),'records'=>array_map(fn($r)=>public_record($r,$c),$rows)];
     });
 }
-function security_event(string $event,int $status): void {
+function security_event(string $event,int $status): bool {
     // Fixed event names/status only: never include credentials, body, IP or exceptions.
-    error_log(json_encode(['component'=>'jarvis-api','event'=>$event,'status'=>$status,'time'=>gmdate('c')],JSON_THROW_ON_ERROR));
+    $directory=setting('JARVIS_SECURITY_LOG_DIR');
+    if ($directory==='') return false;
+    require_once __DIR__.'/private-log.php';
+    return private_audit($directory,$event,$status);
 }

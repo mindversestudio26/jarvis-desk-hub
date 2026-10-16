@@ -13,6 +13,8 @@ try {
     if (($_SERVER['HTTP_HOST']??'')!==$c['host']) throw new ApiError(403,'Host rejected');
     if (!$c['local'] && ($_SERVER['HTTPS']??'')!=='on') throw new ApiError(426,'HTTPS required');
     if ($c['local'] && !in_array($_SERVER['REMOTE_ADDR']??'',['127.0.0.1','::1'],true)) throw new ApiError(403,'Loopback development only');
+    // Hosted authentication must not run with missing/broken private auditing.
+    if (!$c['local'] && !security_event('request_started',200)) throw new RuntimeException('Private audit unavailable');
     if (!in_array($method,['GET','POST'],true)) throw new ApiError(405,'Method not allowed');
     $write=$method==='POST';$body=[];
     if (isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN']!==$c['origin']) throw new ApiError(403,'Origin rejected');

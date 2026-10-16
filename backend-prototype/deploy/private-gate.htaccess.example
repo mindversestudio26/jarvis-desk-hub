@@ -1,0 +1,16 @@
+# INERT REVIEW TEMPLATE. Do not replace the live deny-all file without approval.
+Options -Indexes
+Require all denied
+RewriteEngine On
+RewriteRule ^api/v1/(?:auth/(?:login|logout)|session|sessions(?:/revoke)?|sync|memory|devices)$ api.php [END]
+<Files "api.php">
+  # This narrow PHP entry exception requires explicit owner approval.
+  # PHP independently requires exact peer IP + token + <=2h deadline + HTTPS.
+  Require all granted
+</Files>
+<IfModule mod_headers.c>
+Header always set Cache-Control "no-store"
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "no-referrer"
+Header always set X-Frame-Options "DENY"
+</IfModule>

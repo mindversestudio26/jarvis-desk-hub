@@ -1,5 +1,9 @@
 # Hostinger staging evidence and installation boundary
 
+## Release preparation after hosted fixtures — 2026-10-16
+
+See RELEASE-READINESS.md for the subsequent local-only private logging, bounded API gate, strict HTTPS client, grants renderer and read-only restore-preparation tools. The 25/7 hosted tests below were reviewed rather than repeated. Read-only reinspection confirmed 0700/0600 private modes and only the original three cron jobs. At 08:15 Dubai, Glow root/www returned 200 and staging root/API/key-path attempts returned 403. No new backend files, access exception, credentials, grants, cron or database were installed/changed during this release-preparation round. New source remains pending explicit gate/deployment approval.
+
 ## Actual private Hostinger core verification — 2026-10-16
 
 After the owner entered the existing verification credential directly into the private 0600 file, the CLI fixture ran on Hostinger. Its sanitized result reports **PASS, 25 checks**, PHP **8.3.35**, database **11.8.9-MariaDB-log**. This verifies actual native Sodium authenticated encryption/decryption and tamper rejection, PDO connection/schema checks, restricted grant allowlist/no visible global privileges, initially empty tables, rollback, idempotent retry, tombstone preservation, stale-write conflict, generation rejection before retry lookup, core CSRF validation, hashed session-token authentication, expiry/revocation and independent PDO-connection owner locking. Only synthetic fixture data was inserted.

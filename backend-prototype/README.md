@@ -1,4 +1,6 @@
-# Jarvis shared-backend prototype — isolated development only
+# JANGE shared-backend prototype — isolated development only
+
+Current release preparation and exact approval boundary: [RELEASE-READINESS.md](RELEASE-READINESS.md). New private logging/gate/audit/restore-preparation source is locally tested and not installed on Hostinger. Earlier private CLI fixtures passed hosted core/export checks; HTTPS authentication remains blocked by the intentional public 403 gate.
 
 Current backend hardening, updated test evidence, API retry semantics and staging gates: [HARDENING.md](HARDENING.md). The original baseline notes below remain historical where superseded by that report.
 
@@ -6,7 +8,7 @@ Actual Hostinger staging provisioning and evidence, including remaining deployme
 
 Claude's implemented v1 integration boundary, error handling and workspace/generation and multi-tab contract: [API-CONTRACT.md](API-CONTRACT.md).
 
-This directory is additive. It does not change Jarvis's dashboard, service worker, storage key, Pages deployment or Claude's UI. Nothing here has been deployed to Hostinger. The console is a test harness, not a replacement design.
+This directory is additive. It does not change JANGE's dashboard, service worker, storage key, Pages deployment or Claude's UI. Selected private CLI fixture files were deployed for the documented hosted tests; the authenticated HTTP API has not been exposed. The console is a test harness, not a replacement design.
 
 ## Implemented
 
@@ -35,6 +37,7 @@ From this directory, create an ignored `state/` directory outside `public/`. Set
 | `JARVIS_DATA_KEY` | Base64 of 32 cryptographically random bytes, generated once and kept privately |
 | `JARVIS_INITIAL_PASSWORD` | Owner-chosen 14–72 UTF-8 bytes for first initialization only |
 | `JARVIS_OWNER_NAME` | Optional login name; defaults to `owner` |
+| `JARVIS_SECURITY_LOG_DIR` | Existing dedicated private directory; mandatory for hosted API, optional locally. See bounded rotation/approval policy in RELEASE-READINESS.md. |
 
 Generate a new development key locally with `php -r "echo base64_encode(random_bytes(32));"`. Do not paste keys/passwords into chat or Git. Preserve the key separately from database backups; regenerating it makes existing ciphertext unreadable. Initialization refuses to overwrite an existing owner.
 
@@ -55,6 +58,8 @@ python tests/run_browser.py multitab.cjs
 ```
 
 API tests create a disposable private database, generate temporary credentials in memory, launch a loopback PHP process and clean up. `JARVIS_PHP_EXT_DIR` optionally points to installed DLLs/modules for CLI tests. Browser tests use Playwright from normal Node resolution or `JARVIS_PLAYWRIGHT`; `JARVIS_CHROME_CHANNEL=chrome` selects installed Chrome. `JARVIS_TEST_OUTPUT` controls fixture-only screenshots/results. No user credentials are required.
+
+The three release tests additionally use installed OpenSSL (`JARVIS_OPENSSL_BIN` can select it) for an isolated loopback TLS fixture; no OS/browser CA trust changes occur. The complete local suite is now 41 tests. `tests/hosted_https.py` is inert without `--execute`; no hosted execution is authorized by running the local suite.
 
 38 API regressions cover restart persistence, binding/generation, session/password recovery, new-key restore, legacy archives and production HTTP/private-path guards. The two-tab suite tests durable queue serialization, lost acknowledgements and late responses after logout at 1080×810, including Windows WebKit without BroadcastChannel. Chromium and Windows WebKit pass the two-session functional suite. Chromium verifies offline reload/queued synchronization. Windows WebKit's offline simulator is not verified; its cookie-inspection API reports `None` despite the actual response header specifying `SameSite=Strict`. Both engines confirm HttpOnly isolation. Production HTTPS and physical Safari remain mandatory checks.
 

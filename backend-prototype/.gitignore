@@ -3,3 +3,9 @@ test-results/
 *.sqlite*
 *.env
 config.local.php
+gate.local.php
+db-password.txt
+*.key
+*.backup
+audit.jsonl*
+audit.lock

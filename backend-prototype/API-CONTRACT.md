@@ -1,5 +1,7 @@
 # Claude integration contract — current backend, not deployed
 
+Release preparation now requires `JARVIS_SECURITY_LOG_DIR` pointing to an existing private log directory; hosted API requests fail with generic 503 if private auditing cannot write. API routes/payloads/cookie names and workspace rules remain unchanged. Temporary infrastructure gate tokens must never enter Claude's frontend. See RELEASE-READINESS.md for the approval-gated HTTPS plan, logging retention and unverified hosted/browser/restore checks.
+
 This documents the implemented v1 API. It does not authorize production integration. Existing dashboard/Claude UI, storage keys and visual assets remain untouched. Use same-origin HTTPS; cross-site credential requests from GitHub Pages are intentionally unsupported. The staging 403 gate remains until independently approved setup is complete.
 
 ## Authentication and sessions
