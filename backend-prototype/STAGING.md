@@ -1,5 +1,15 @@
 # Hostinger staging evidence and installation boundary
 
+## Conditional sodium activation check — 2026-10-16 03:26–03:29 UTC
+
+The owner explicitly authorized sodium activation on staging only, conditional on no shared-worker impact. Read-only reinspection found PHP 8.3.35 and active PDO MySQL/OpenSSL module sections; no sodium section was present in the authenticated PHP Info diagnostic. The PHP extensions page was inspected without toggling anything; Save remained disabled. A local non-secret snapshot of 128 extension controls was retained as a pre-change baseline, not a full hosting/files/database backup.
+
+Normal certificate-verified HTTPS requests returned 200 for Glow With Imane and its www alias, and the intentional 403 for staging. These observations establish those endpoints' availability, not all hosted websites' health or absence of potential worker impact. No unrelated website/repository was changed.
+
+Dwi's reviewed answer confirms per-selected-website extension settings and no customer-managed php.ini/FPM pool. It does not explicitly answer whether sodium saving can reload workers serving other websites. A focused read-only human follow-up was submitted; Kirby's review is pending. Support was explicitly denied permission to activate, restart, deploy, upgrade or change settings. Pending that account-specific worker statement, the owner's safety condition is not satisfied: no activation, shared PHP change, access-gate exception, backend deployment or hosted application test was performed. Do not treat conditional staging approval as permission to accept uncertain shared impact.
+
+The last implementation remains the tested binding/recovery backend. Hosted API/authentication/cookies/CSRF, runtime-user grants, concurrent PDO writes, encryption/tamper and separate-database restore are still unverified. Earlier local tests and MariaDB integration must not be presented as new hosted successes. Continue only after written worker scope is resolved; then apply the already-authorized staging-only sodium change within its verified scope and verify actual runtime before installing a securely gated test environment. Runtime credential entry remains an owner handoff; no public API/auth route is authorized.
+
 ## Actual infrastructure, 2026-10-16
 
 The owner authorized isolated staging, not production. A separate empty PHP/HTML website was provisioned on the existing plan at `jarvis-staging.glowwithimane.com`; the old website's subfolder-based subdomain flow was avoided. Its scoped file manager shows a separate `public_html` with a new default placeholder. The absolute server path and OS-level isolation are not yet verified. Separate website roots do not imply separate Unix accounts.
