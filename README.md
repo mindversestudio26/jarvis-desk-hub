@@ -1,12 +1,12 @@
-# Jarvis Desk Hub 2.0
+# Jarvis Desk Hub 3.0
 
-A dependency-free static dashboard for an iPad 7th Generation, designed around the 1080 × 810 CSS-pixel landscape viewport. No build step, account, API key or paid service is required for the dashboard.
+A dependency-free static desk interface for an iPad 7th Generation, designed as a fixed 1080 × 810 CSS-pixel landscape canvas: a central animated core flanked by two split-flap clocks, environment and workstation telemetry, and a command dock. No build step, account, API key or paid service is required.
 
 ## Install on iPad
 
 1. Open https://mindversestudio26.github.io/jarvis-desk-hub/ in **Safari**.
 2. Tap **Share → Add to Home Screen → Add**.
-3. Open the new **Jarvis** icon while online. Wait for **Offline app ready** in the footer.
+3. Open the new **Jarvis** icon while online. Wait for the **Offline app ready** chip in the top bar.
 4. Rotate to landscape. If rotation is locked, unlock it in Control Center.
 5. Enable **Settings → General → Date & Time → Set Automatically** for an accurate device clock. Both clocks share the same device time source: `Asia/Dubai` (UTC+04:00) and `Asia/Kathmandu` (UTC+05:45), independently of the iPad timezone.
 
@@ -14,12 +14,15 @@ The home-screen app runs without browser chrome. Safari controls orientation; th
 
 ## Features
 
-- Prominent Dubai and Kathmandu clocks with independent dates, seconds and explicit timezone labels. Both sample the same instant, reuse Intl formatters, pause their timer when hidden and refresh immediately on foreground/pageshow.
-- A compact landscape workspace, 44-pixel calendar targets, day-agenda dialog, static cyan/purple lighting and a brief reduced-motion-aware entrance. No continuous animation, blur, external fonts or frontend dependencies.
-- Sharjah weather from Open-Meteo every 15 minutes, with 12-second timeout, refresh, error and explicitly labelled saved-weather states. Temperature is Celsius and wind is km/h.
-- Add, complete and delete tasks; persistent local storage; JSON backup export and validated merge restore.
-- Monthly calendar: tap a date or the day summary to edit Dubai-local events and time. These are local notes, not cloud calendar synchronization or notifications.
-- Google Calendar, Outlook, GitHub and YouTube shortcuts.
+- **Split-flap clocks** for Dubai (`Asia/Dubai`) and Kathmandu (`Asia/Kathmandu`): matte tiles with a centre split, hinge pins and shaded leaves. A digit flips in 3D only when its own value changes (minutes first, a 40 ms mechanical stagger), so 09:59 → 10:00 flips four tiles while 11:44 → 11:45 flips one. Both clocks sample the same instant, snap to the current time when Safari resumes, and offer 24-hour (default) or 12-hour display in Settings. Seconds and full dates sit under the tiles.
+- **Core**: a 24-hour dial (noon at the top) with Dubai and Kathmandu markers, today's Sharjah daylight arc from the weather feed, a Dubai day-progress arc, a seconds bezel, and a focus ring showing completed/total tasks. The centre names the first open task and a status derived only from real checks (online, offline, storage problem, PC link, weather feed). Tap the core to open tasks.
+- **Reactive, not decorative**: the outer ring turns only while the network is online, the inner ring speeds up only while the PC companion is delivering samples, a scan sweep runs while data is being acquired, link arcs light (or turn amber and dashed) for the weather feed and PC link, and completing a task sends a ripple through the core.
+- Sharjah weather from Open-Meteo every 15 minutes: temperature, feels-like, humidity, wind speed and direction, today's high/low, sunrise, sunset and UV maximum. 12-second timeout, refresh, error and explicitly labelled saved-weather states. A 2.0 weather cache without daily fields still loads.
+- Focus tasks panel: add, complete and delete tasks; persistent local storage; JSON backup export and validated merge restore.
+- Calendar panel: month grid and day agenda side by side for Dubai-local events. The left wing shows today's upcoming events, tomorrow's, and a week strip. These are local notes, not cloud calendar synchronization or notifications.
+- Systems panel with live checks for network, weather feed, offline shell, PC companion and storage.
+- Command dock: Focus, Calendar, Google Calendar, Outlook, GitHub, YouTube, Backup, Settings.
+- Motion: **Cinematic** (default) or **Calm** (no rotating rings or breathing glow). iPad **Reduce Motion** turns off all animation, including flips.
 - Installable offline app shell. Once cached, clock, tasks and local calendar work without the PC or internet. Weather needs internet for fresh data; external shortcuts need their own connection.
 - Optional authenticated read-only PC connection with automatic retry every 10 seconds. A successful fresh response means online. An unsuccessful connection means **unreachable**, which cannot distinguish shutdown, sleep, network failure or bad credentials.
 
@@ -66,10 +69,10 @@ Reference repositories consulted for concepts only: local `ai-resources/system-d
 Sources: [Open-Meteo API documentation](https://open-meteo.com/en/docs) and [free non-commercial usage](https://open-meteo.com/en/pricing), [GitHub Pages availability](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages), [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve), [psutil](https://pypi.org/project/psutil/7.2.2/).
 
 
-## Jarvis 2.0 verification and updates
+## Jarvis 3.0 verification and updates
 
-The `jarvis.desk.v2` storage key, task/event schema, legacy `jarvis_tasks` migration, `jarvis.weather.v1` cache and version-2 JSON backup format are unchanged. No data-clearing migration is performed. The shell cache is `jarvis-desk-v2.0.0` and includes `clocks.js`. Existing open windows stay on the old complete shell until closed. Close all Jarvis Safari tabs and the home-screen app, then reopen online to activate 2.0; do not clear website data.
+The `jarvis.desk.v2` storage key, task/event schema, legacy `jarvis_tasks` migration, `jarvis.weather.v1` cache and version-2 JSON backup format are unchanged. Display preferences (motion, 12/24-hour) live in a separate `jarvis.prefs.v1` key and are not part of backups. No data-clearing migration is performed. The shell cache is `jarvis-desk-v3.0.0` and adds the self-hosted Michroma display font (SIL Open Font License, `fonts/OFL.txt`). Existing open windows stay on the old complete shell until closed. Close all Jarvis Safari tabs and the home-screen app, then reopen online to activate 3.0; do not clear website data.
 
-See [design critique and decisions](docs/jarvis-2-design.md) and [regression test instructions](tests/README.md). The default five-week calendar view fits 1080 × 810 CSS pixels at default text size in Chromium and WebKit. Six-week months, larger system text, browser chrome and shorter/portrait viewports may require vertical scrolling. Content is never clipped to force a fit.
+See [3.0 design decisions](docs/jarvis-3-design.md) and [regression test instructions](tests/README.md). The landscape desk fits 1080 × 810, 1080 × 740 (Safari with toolbars) and 1024 × 768 without scrolling; on shorter screens the agenda list clips rather than the page scrolling. Portrait and phone layouts scroll.
 
-Windows Playwright WebKit reports an internal engine error for simulated service-worker offline navigation. Chromium verifies offline reload and upgrade from `d0851b9`; WebKit verifies both clocks, rollover/resume, task/event persistence, old backup restore, weather failure states, touch targets and responsive geometry. Physical iPadOS 18.7.3 installation, Safari offline behavior, visual performance and private companion pairing remain device checks.
+Windows Playwright WebKit reports an internal engine error for simulated service-worker offline navigation, and it composites in software, so its frame rate is not representative of an iPad. Chromium verifies offline reload and the upgrade from the installed 2.0 build (`9ddff13`); both Chromium and WebKit verify clocks, split-flap transitions, rollover/resume, persistence, backup restore, weather states, touch targets and layout. Physical iPadOS 18.7.3 frame rate, Safari offline behaviour and private companion pairing remain device checks.

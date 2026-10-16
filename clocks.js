@@ -26,6 +26,7 @@
         time: fields.hour + ':' + fields.minute,
         seconds: fields.second,
         hour: Number(fields.hour),
+        minute: Number(fields.minute),
         date: fullDate.format(date),
         day: parts.year + '-' + parts.month + '-' + parts.day,
         iso: date.toISOString(),
