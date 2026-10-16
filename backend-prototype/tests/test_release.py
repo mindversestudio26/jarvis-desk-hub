@@ -39,6 +39,13 @@ class Release(unittest.TestCase):
         php = [shutil.which('php') or 'php']
         with tempfile.TemporaryDirectory(prefix='jange-release-') as directory:
             env = dict(os.environ, JARVIS_RELEASE_TEST_DIR=directory)
+            # An incomplete bundle must not throw again inside the API error handler.
+            isolated = Path(directory) / 'isolated/src'
+            isolated.mkdir(parents=True)
+            shutil.copyfile(ROOT / 'src/core.php', isolated / 'core.php')
+            quiet = subprocess.run(php + ['-r', "require getenv('JANGE_CORE_FIXTURE');echo security_event('internal_failure',503)?'true':'false';"], env=dict(env, JANGE_CORE_FIXTURE=str(isolated / 'core.php'), JARVIS_SECURITY_LOG_DIR=directory), capture_output=True, check=True)
+            self.assertEqual(quiet.stdout, b'false')
+            self.assertEqual(quiet.stderr, b'')
             value = subprocess.run(php + [str(ROOT / 'tests/release_contract.php')], env=env, capture_output=True, check=True)
             result = json.loads(value.stdout)
             self.assertEqual(result['result'], 'PASS')

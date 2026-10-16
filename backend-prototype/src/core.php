@@ -220,8 +220,10 @@ function snapshot(PDO $db,array $c,array $session,bool $memory): array {
 }
 function security_event(string $event,int $status): bool {
     // Fixed event names/status only: never include credentials, body, IP or exceptions.
-    $directory=setting('JARVIS_SECURITY_LOG_DIR');
-    if ($directory==='') return false;
-    require_once __DIR__.'/private-log.php';
-    return private_audit($directory,$event,$status);
+    try {
+        $directory=setting('JARVIS_SECURITY_LOG_DIR');
+        if ($directory==='' || !is_file(__DIR__.'/private-log.php')) return false;
+        require_once __DIR__.'/private-log.php';
+        return private_audit($directory,$event,$status);
+    } catch(Throwable) {return false;}
 }
