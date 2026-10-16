@@ -1,5 +1,13 @@
 # Hostinger staging evidence and installation boundary
 
+## Native sodium enabled — 2026-10-16 03:32 UTC
+
+The owner subsequently instructed "enable sodium and go on, we will revert if needed", superseding the worker-uncertainty hold for the selected staging website. Only sodium was selected on jarvis-staging.glowwithimane.com's extension page: a before/after comparison of all 128 controls found exactly one change. Save completed after dismissing a feedback overlay; no PHP version/options/reset action was used. Authenticated PHP Info then reported PHP 8.3.35, sodium support enabled and libsodium headers/library 1.0.18. This is native runtime evidence, not merely a checked UI box. Runtime encryption roundtrip/application integration remains a separate test.
+
+Before activation at 03:30 UTC and after at 03:32 UTC, normal TLS checks returned 200 for Glow With Imane/root+www and the intentional 403 for staging. No observed endpoint error required rollback. This does not certify no transient worker reload or every website's health. The original website, mail/DNS and other PHP settings were not edited.
+
+Hosted PHP Info lists system/exec/shell_exec/passthru/popen/proc_open among disabled functions. The authenticated cron panel provides a private PHP execution option; its existing automation jobs were inspected as inventory only and not changed. No public authentication/API exception or new cron was created. A fresh disposable verification database form was prepared with suffix jarvis_verify and user jvverify, preserving the prior staging database. Its password was left blank for owner-controlled creation; no new credential was generated, entered or submitted by the agent. Actual PDO application tests still require that credential, private config/execution setup and verified runtime grants. Native sodium activation alone is not a successful application test or production-readiness certification.
+
 ## Conditional sodium activation check — 2026-10-16 03:26–03:29 UTC
 
 The owner explicitly authorized sodium activation on staging only, conditional on no shared-worker impact. Read-only reinspection found PHP 8.3.35 and active PDO MySQL/OpenSSL module sections; no sodium section was present in the authenticated PHP Info diagnostic. The PHP extensions page was inspected without toggling anything; Save remained disabled. A local non-secret snapshot of 128 extension controls was retained as a pre-change baseline, not a full hosting/files/database backup.
