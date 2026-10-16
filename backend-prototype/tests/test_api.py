@@ -315,5 +315,28 @@ class API(unittest.TestCase):
             statuses.append(stdout.decode())
         self.assertEqual(sorted(statuses), ['200', '409'])
 
+    def test_26_private_config_and_webroot_guard(self):
+        private = Path(self.temp.name) / 'config-fixture'
+        (private / 'src').mkdir(parents=True)
+        (private / 'public').mkdir()
+        shutil.copyfile(ROOT / 'src/core.php', private / 'src/core.php')
+        (private / 'config.local.php').write_text("<?php return ['JARVIS_ORIGIN'=>'https://fixture.example'];", encoding='utf-8')
+        env = dict(self.env)
+        env.pop('JARVIS_ORIGIN', None)
+        code = "require 'src/core.php';echo setting('JARVIS_ORIGIN');"
+        result = subprocess.run(self.php + ['-r', code], env=env, cwd=private, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, b'https://fixture.example')
+        override = subprocess.run(self.php + ['-r', code], env=self.env, cwd=private, capture_output=True)
+        self.assertEqual(override.stdout.decode(), self.origin)
+        guarded = "$_SERVER['DOCUMENT_ROOT']=getcwd();" + code
+        self.assertNotEqual(subprocess.run(self.php + ['-r', guarded], env=env, cwd=private, capture_output=True).returncode, 0)
+
+    def test_27_mysql_missing_charset_rejected_before_connection(self):
+        code = "require 'src/core.php';try {database(['dsn'=>'mysql:host=127.0.0.1;dbname=fixture']);}catch(RuntimeException $e){echo $e->getMessage();exit(7);}"
+        result = subprocess.run(self.php + ['-r', code], env=self.env, cwd=ROOT, capture_output=True)
+        self.assertEqual(result.returncode, 7)
+        self.assertEqual(result.stdout, b'MySQL requires explicit utf8mb4')
+
 if __name__ == '__main__':
     unittest.main()

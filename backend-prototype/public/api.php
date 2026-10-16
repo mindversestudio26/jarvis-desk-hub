@@ -25,7 +25,7 @@ try {
         try {$body=json_decode($raw,true,16,JSON_THROW_ON_ERROR);} catch (JsonException) {throw new ApiError(400,'Invalid JSON');}
         if (!is_array($body) || !str_starts_with(ltrim($raw),'{')) throw new ApiError(400,'JSON object required');
     }
-    $db=database($c);
+    $db=database($c);verify_storage($db);
     if ($path==='/api/v1/auth/login' && $write) {
         // Rate writes commit even when credential verification fails.
         transaction($db,function() use($db) {query($db,'DELETE FROM limits WHERE started < ?',[time()-86400]);limited($db,'login-ip:'.($_SERVER['REMOTE_ADDR']??''),10,900);limited($db,'login-global',100,900);});

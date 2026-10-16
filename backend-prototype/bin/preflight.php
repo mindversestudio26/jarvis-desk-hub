@@ -14,6 +14,8 @@ try {
         $result['version']=$db->query('SELECT VERSION()')->fetchColumn();
         $tables=$db->query("SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('owner','sessions','records','operations','limits')")->fetchAll();
         $result['all_tables_innodb']=count($tables)===5 && count(array_filter($tables,fn($t)=>strtoupper($t['ENGINE'])!=='INNODB'))===0;
+        verify_storage($db);
+        $result['storage_contract']=true;
     }
     $result['connected']=true;
 } catch (Throwable) {$result['connected']=false;}

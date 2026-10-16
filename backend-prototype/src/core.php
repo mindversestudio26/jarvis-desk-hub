@@ -6,11 +6,33 @@ final class ApiError extends RuntimeException {
     public function __construct(public int $status, string $message, public array $details = []) { parent::__construct($message); }
 }
 
+function setting(string $name): string {
+    $value=getenv($name);
+    if ($value!==false) return $value;
+    static $private=null;
+    if ($private===null) {
+        $private=[];
+        $file=dirname(__DIR__).'/config.local.php';
+        if (is_file($file)) {
+            $resolved=realpath($file);
+            foreach ([dirname(__DIR__).'/public',dirname(__DIR__).'/public_html',$_SERVER['DOCUMENT_ROOT']??''] as $root) {
+                $root=$root!==''?realpath($root):false;
+                if ($root && str_starts_with(strtolower($resolved),strtolower($root).DIRECTORY_SEPARATOR)) throw new RuntimeException('Configuration must be outside the document root');
+            }
+            $private=require $file;
+            if (!is_array($private)) throw new RuntimeException('Invalid private configuration');
+        }
+    }
+    $value=$private[$name]??'';
+    if (!is_string($value)) throw new RuntimeException('Invalid configuration value');
+    return $value;
+}
+
 function config(): array {
-    $origin = getenv('JARVIS_ORIGIN') ?: '';
-    $dsn = getenv('JARVIS_DSN') ?: '';
-    $key = base64_decode(getenv('JARVIS_DATA_KEY') ?: '', true);
-    $local = getenv('JARVIS_LOCAL_DEV') === '1';
+    $origin = setting('JARVIS_ORIGIN');
+    $dsn = setting('JARVIS_DSN');
+    $key = base64_decode(setting('JARVIS_DATA_KEY'), true);
+    $local = setting('JARVIS_LOCAL_DEV') === '1';
     if (!extension_loaded('sodium') || !$key || strlen($key) !== 32 || !$dsn) throw new RuntimeException('Missing secure configuration');
     if (str_starts_with($dsn,'sqlite:')) {
         $directory=realpath(dirname(substr($dsn,7)));
@@ -25,9 +47,16 @@ function config(): array {
 }
 
 function database(array $c): PDO {
-    $db = new PDO($c['dsn'], getenv('JARVIS_DB_USER') ?: null, getenv('JARVIS_DB_PASSWORD') ?: null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES=>false]);
+    if (str_starts_with($c['dsn'],'mysql:') && !preg_match('/(?:^mysql:|;)charset=utf8mb4(?:;|$)/',$c['dsn'])) throw new RuntimeException('MySQL requires explicit utf8mb4');
+    $db = new PDO($c['dsn'], setting('JARVIS_DB_USER') ?: null, setting('JARVIS_DB_PASSWORD') ?: null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES=>false]);
     if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') { $db->exec('PRAGMA busy_timeout=5000'); $db->exec('PRAGMA foreign_keys=ON'); }
     return $db;
+}
+function verify_storage(PDO $db): void {
+    if ($db->getAttribute(PDO::ATTR_DRIVER_NAME)!=='mysql') return;
+    $rows=$db->query("SELECT ENGINE,TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('owner','sessions','records','operations','limits')")->fetchAll();
+    if (count($rows)!==5) throw new RuntimeException('Incomplete MySQL schema');
+    foreach ($rows as $row) if (strtoupper($row['ENGINE'])!=='INNODB' || $row['TABLE_COLLATION']!=='utf8mb4_bin') throw new RuntimeException('InnoDB and utf8mb4_bin required');
 }
 function query(PDO $db, string $sql, array $params=[]): PDOStatement { $q=$db->prepare($sql); $q->execute($params); return $q; }
 function transaction(PDO $db, callable $fn): mixed {
