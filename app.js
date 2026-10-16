@@ -80,8 +80,39 @@ try {
     shiftStore.overrides = cleanMap(raw.overrides, validOverride, 1000);
     shiftStore.runtime = cleanMap(raw.runtime, validRuntime, 1000);
     if (AL.instant(raw.updated)) shiftStore.updated = raw.updated;
+    if (typeof raw.roster === 'string' && raw.roster.length <= 40) shiftStore.roster = raw.roster;
   }
 } catch {}
+/* Your roster ships with JANGE (roster.js), so it shows without importing a file. Each
+   roster version is applied once and replaces the previous version's shifts; shifts you
+   add on the iPad, holidays you import and alarm overrides stay. Past alarms of new
+   shifts never ring. */
+function rosterTiming() {
+  // The roster's alarm timing (2 h 30 min before a shift), unless you changed it from the defaults.
+  const R = typeof JangeRoster === 'object' ? JangeRoster : null, s = shiftStore.settings;
+  const timing = R && R.alarm && {...s, prep:R.alarm.prep, commute:R.alarm.commute};
+  if (!timing || !SH.validSettings(timing) || s.prep !== SH.DEFAULTS.prep || s.commute !== SH.DEFAULTS.commute) return;
+  if (timing.prep === s.prep && timing.commute === s.commute) return;
+  shiftStore.settings = timing;
+  // New lead times move every shift alarm; restart their windows so none rings instantly.
+  const now = Date.now();
+  for (const x of shiftStore.shifts) { const k = 'shift:' + x.id; if (!(shiftStore.runtime[k] && shiftStore.runtime[k].snoozeUntil)) shiftStore.runtime[k] = {anchor:now, snoozeUntil:null, missedAt:null}; }
+}
+(function applyBundledRoster() {
+  try {
+    const R = typeof JangeRoster === 'object' ? JangeRoster : null;
+    if (!R || typeof SH.rosterMerge !== 'function' || shiftStore.roster === R.version) return;
+    const merged = SH.rosterMerge(shiftStore.shifts, shiftStore.overrides, R);
+    if (!merged) return;
+    shiftStore.shifts = merged.shifts.slice(0, 1000);
+    shiftStore.overrides = cleanMap(merged.overrides, validOverride, 1000);
+    const now = Date.now();
+    for (const x of merged.incoming) if (!shiftStore.runtime['shift:' + x.id]) shiftStore.runtime['shift:' + x.id] = {anchor:now, snoozeUntil:null, missedAt:null};
+    rosterTiming();
+    shiftStore.roster = R.version;
+    saveShifts();
+  } catch {} // a bad roster file must never stop the desk
+})();
 function saveShifts() {
   try { localStorage.setItem(SHIFTS, JSON.stringify({version:1, ...shiftStore})); }
   catch { notice('Could not save the shift schedule. Keep this page open and use Backup.'); }
@@ -1278,6 +1309,7 @@ $('import-file').onchange = async e => {
       shiftStore.shifts = merge(shiftStore.shifts, sp.shifts.map(shiftFields)).slice(0, 1000);
       shiftStore.overrides = cleanMap({...shiftStore.overrides, ...sp.overrides}, validOverride, 1000);
       shiftStore.settings = {...sp.settings};
+      rosterTiming(); // an older backup at the default timing keeps the roster's 2 h 30 min
       shiftStore.updated = Date.now();
       saveShifts(); replan(); renderShifts();
     }

@@ -17,12 +17,13 @@ const oldData = { tasks: [{ id: 'existing-task', text: 'Preserve my existing tas
 const PC = 'https://jarvis-fixture.example.ts.net';
 const results = [];
 let serveBaseline = null;
+let rosterOverride = null; // a newer roster.js, as if only that file had been deployed
 const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.webp': 'image/webp', '.ics': 'text/calendar' };
 const server = http.createServer((req, res) => {
   const file = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).slice(1) || 'index.html';
   if (file.includes('..') || file.startsWith('.git')) { res.writeHead(403).end(); return; }
   try {
-    const data = serveBaseline
+    const data = file === 'roster.js' && rosterOverride ? Buffer.from(rosterOverride) : serveBaseline
       ? execFileSync('git', ['show', serveBaseline + ':' + file], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] })
       : fs.readFileSync(path.join(root, file));
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' }).end(data);
@@ -256,6 +257,14 @@ async function checkBrowser(engine, name, baseURL) {
       await offlinePage.goto(baseURL);
       await offlinePage.waitForFunction(() => document.querySelector('#offline-ready').textContent === 'Offline app ready');
       await offlinePage.waitForFunction(() => !!navigator.serviceWorker.controller);
+      // A roster update deployed on its own (same shell, same cache name) reaches the installed app.
+      const rosterOf = () => offlinePage.evaluate(() => { const s = JSON.parse(localStorage.getItem('jarvis.shifts.v1')); return [s.roster, s.shifts.some(x => x.date === '2026-12-12')]; });
+      assert.deepEqual(await rosterOf(), ['2026-10-16', false]);
+      rosterOverride = fs.readFileSync(path.join(root, 'roster.js'), 'utf8').replace("version: '2026-10-16'", "version: 'test-v2'").replace("'2026-12-04', '2026-12-05',", "'2026-12-04', '2026-12-05', '2026-12-12',");
+      await offlinePage.reload();
+      await offlinePage.waitForFunction(() => JSON.parse(localStorage.getItem('jarvis.shifts.v1')).roster === 'test-v2');
+      assert.deepEqual(await rosterOf(), ['test-v2', true], 'the new roster version was fetched and applied without a new shell');
+      rosterOverride = null;
       await offlineContext.setOffline(true);
       await offlinePage.reload();
       assert.equal(await offlinePage.locator('.task-row').count(), 3);
@@ -430,8 +439,8 @@ async function upgradeTest(baseURL, baseline) {
     await page.waitForSelector('#alarms-open');
     assert.match(await text(page, '#tasks'), /Preserve my existing task/);
     const caches = await page.evaluate(async () => globalThis.caches.keys());
-    assert(caches.includes('jarvis-desk-v3.2.0'));
-    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.2.0'], 'Old shell caches removed');
+    assert(caches.includes('jarvis-desk-v3.2.1'));
+    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.2.1'], 'Old shell caches removed');
     assert.equal(await page.title(), 'JANGE · जङ्गे');
     results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to 3.1 service-worker upgrade, preserved storage and weather cache, no forced reload, offline 3.1, old cache cleanup' });
     await context.close();

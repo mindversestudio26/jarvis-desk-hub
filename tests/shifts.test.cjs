@@ -124,7 +124,7 @@ test('desk lines: today and tomorrow always, including days off and holidays, th
     shift({ id: 'o', date: '2026-11-08', type: 'off', start: '08:00', end: '13:00', note: 'Off 8am to 1pm' })];
   const at = dubai => Date.parse(dubai + '+04:00');
   const lines = when => S.deskLines(roster, at(when)).map(l => l.text);
-  assert.deepEqual(lines('2026-10-16T09:00'), ['Today · Holiday until Fri 23 Oct', 'Next shift · Sun 25 Oct · Day shift 07:00–19:00']);
+  assert.deepEqual(lines('2026-10-16T09:00'), ['Today · Holiday until Fri 23 Oct', 'Tomorrow · Holiday', 'Next shift · Sun 25 Oct · Day shift 07:00–19:00'], 'tomorrow always has its own line');
   assert.deepEqual(lines('2026-10-23T09:00'), ['Today · Holiday', 'Tomorrow · No shift', 'Next shift · Sun 25 Oct · Day shift 07:00–19:00']);
   assert.deepEqual(lines('2026-10-24T20:00'), ['Today · No shift', 'Tomorrow · Day shift 07:00–19:00']);
   assert.deepEqual(lines('2026-10-25T05:00'), ['Today · Day shift 07:00–19:00', 'Tomorrow · No shift', 'Next shift · Thu 29 Oct · Night shift 19:00–07:00']);
@@ -157,4 +157,48 @@ test('desk lines: unknown times are never guessed; Kathmandu shifts say NPT; dup
   assert.deepEqual(text(npt, '2026-10-16T12:00'), ['On shift now · Day shift until 19:00 NPT']);
   const dup = [shift({ id: 'x1', date: '2026-10-16', type: 'shift', start: '19:00', end: '23:00' }), shift({ id: 'x2', date: '2026-10-16', type: 'shift', start: '19:00', end: '23:00' })];
   assert.deepEqual(text(dup, '2026-10-16T09:00'), ['Today · Shift 19:00–23:00']);
+});
+test('bundled roster: valid entries with import-compatible ids, nothing guessed', () => {
+  const roster = require('../roster.js');
+  const shifts = S.fromRoster(roster);
+  const total = roster.day.length + roster.night.length + roster.off.length;
+  assert.equal(shifts.length, total, 'every roster date is a valid shift');
+  assert.equal(new Set(shifts.map(s => s.date)).size, total, 'no date is listed twice');
+  assert.ok(shifts.every(S.validShift));
+  const d = shifts.find(s => s.date === '2026-10-25');
+  assert.deepEqual([d.id, d.type, d.start, d.end, d.zone], ['ddf-day-20261025@jange-roster|2026-10-25', 'shift', '07:00', '19:00', 'Asia/Dubai']);
+  const n = shifts.find(s => s.date === '2026-10-29');
+  assert.deepEqual([n.type, n.start, n.end], ['night', '19:00', '07:00']);
+  assert.equal(shifts.some(s => s.type === 'holiday'), false, 'the public roster carries no holidays');
+  // Same ids as a calendar import of the same roster, so applying both never duplicates.
+  const ics = ['BEGIN:VEVENT', 'UID:ddf-day-20261025@jange-roster', 'DTSTART;TZID=Asia/Dubai:20261025T070000', 'DTEND;TZID=Asia/Dubai:20261025T190000', 'SUMMARY:Day shift 7am to 7pm', 'END:VEVENT'].join('\r\n');
+  assert.equal(S.parseICS(ics).shifts[0].id, d.id);
+  const merged = S.merge(S.parseICS(ics).shifts, shifts, {}).shifts;
+  assert.equal(merged.filter(s => s.date === '2026-10-25').length, 1);
+  // Alarm timing: 2 h 30 min before each start.
+  const { alarms } = S.plan(shifts, { ...settings, prep: roster.alarm.prep, commute: roster.alarm.commute }, {}, Date.parse('2026-10-24T12:00:00Z'), 10);
+  assert.deepEqual(alarms.slice(0, 3).map(a => a.date + ' ' + a.time), ['2026-10-25 04:30', '2026-10-26 04:30', '2026-10-29 16:30']);
+  assert.ok(S.validSettings({ ...settings, ...roster.alarm }));
+  // Malformed input is skipped, never guessed.
+  assert.deepEqual(S.fromRoster(null), []);
+  assert.deepEqual(S.fromRoster({ version: 'x', zone: 'Europe/Paris', day: ['2026-10-25'] }), []);
+  assert.deepEqual(S.fromRoster({ version: 'x', zone: 'Asia/Dubai', day: ['2026-02-30', 'soon'] }), []);
+});
+test('roster versions: a dropped date loses its shift; holidays, iPad shifts and other dates stay', () => {
+  const v1 = { version: 'v1', zone: 'Asia/Dubai', day: ['2026-11-10', '2026-11-11'], night: ['2026-11-14'], off: [] };
+  const v2 = { version: 'v2', zone: 'Asia/Dubai', day: ['2026-11-11'], night: ['2026-11-10', '2026-11-14'], off: [] }; // 10 Nov becomes a night
+  const hols = shift({ id: 'ddf-hols-20261112@jange-roster|2026-11-12', date: '2026-11-12', type: 'holiday', start: null, end: null, source: 'ics' });
+  const mine = shift({ id: 'manual-1', date: '2026-11-13', type: 'shift', start: '10:00', end: '14:00' });
+  const before = shift({ id: 'ddf-day-20261001@jange-roster|2026-10-01', date: '2026-10-01', type: 'shift', start: '07:00', end: '19:00', source: 'ics' });
+  const first = S.rosterMerge([hols, mine, before], {}, v1);
+  const overrides = { 'ddf-day-20261110@jange-roster|2026-11-10': { off: true } };
+  const second = S.rosterMerge(first.shifts, overrides, v2);
+  const on = d => second.shifts.filter(s => s.date === d).map(s => s.type);
+  assert.deepEqual(on('2026-11-10'), ['night'], 'the day shift dropped from v2 is gone, the new night is there');
+  assert.deepEqual(second.removed, ['ddf-day-20261110@jange-roster|2026-11-10']);
+  assert.equal(second.overrides['ddf-day-20261110@jange-roster|2026-11-10'], undefined, 'its override goes with it');
+  assert.deepEqual(on('2026-11-12'), ['holiday'], 'imported holidays are never removed');
+  assert.deepEqual(on('2026-11-13'), ['shift'], 'shifts added on the iPad stay');
+  assert.deepEqual(on('2026-10-01'), ['shift'], 'roster shifts outside the new version\'s dates stay');
+  assert.equal(S.rosterMerge([], {}, { version: 'x', zone: 'Asia/Dubai' }), null);
 });

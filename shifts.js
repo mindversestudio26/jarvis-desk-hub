@@ -164,6 +164,41 @@
     return { shifts: next, overrides: nextOverrides };
   }
 
+  /* The roster that ships with JANGE (roster.js) as shift entries. Ids match a
+     calendar import of the same roster, so applying both never duplicates a
+     shift. Anything malformed is skipped, never guessed. */
+  const ROSTER_KINDS = {
+    day: { type: 'shift', start: '07:00', end: '19:00', note: 'Day shift 7am to 7pm' },
+    night: { type: 'night', start: '19:00', end: '07:00', note: 'Night shift 7pm to 7am' },
+    off: { type: 'off', start: '08:00', end: '13:00', note: 'Off 8am to 1pm' },
+  };
+  function fromRoster(r) {
+    if (!r || typeof r.version !== 'string' || !Object.prototype.hasOwnProperty.call(ZONES, r.zone)) return [];
+    const out = [];
+    for (const kind of Object.keys(ROSTER_KINDS)) {
+      for (const date of Array.isArray(r[kind]) ? r[kind] : []) {
+        const s = { id: 'ddf-' + kind + '-' + String(date).replace(/-/g, '') + '@jange-roster|' + date, date, zone: r.zone, source: 'ics', ...ROSTER_KINDS[kind] };
+        if (validShift(s)) out.push(s);
+      }
+    }
+    return out;
+  }
+  /* Apply a roster version. Its shifts replace the previous version's within the roster's
+     dates, so a date dropped from the roster loses its shift and alarm. Everything else is
+     kept: shifts added on the iPad, imported holidays (ddf-hols-…), calendar entries outside
+     the roster's dates, and overrides of shifts that remain. */
+  const ROSTER_ID = /^ddf-(day|night|off)-\d{8}@jange-roster\|/;
+  function rosterMerge(existing, overrides, r) {
+    const incoming = fromRoster(r);
+    if (!incoming.length) return null;
+    const ids = new Set(incoming.map(s => s.id)), dates = incoming.map(s => s.date).sort();
+    const first = dates[0], last = dates[dates.length - 1];
+    const stale = new Set(existing.filter(s => ROSTER_ID.test(s.id) && !ids.has(s.id) && s.date >= first && s.date <= last).map(s => s.id));
+    const keptOverrides = Object.create(null);
+    for (const [k, v] of Object.entries(overrides || {})) if (!stale.has(k)) keptOverrides[k] = v;
+    return { ...merge(existing.filter(s => !stale.has(s.id)), incoming, keptOverrides), incoming, removed: [...stale] };
+  }
+
   /* What the desk shows, so you always know your day: today (the shift you
      are on — a night shift runs past midnight — today's shift, a day off or
      holiday, or no shift), tomorrow, and the next working shift. */
@@ -204,7 +239,8 @@
       if (!r) return null;
       let last = d;
       while (!workOn(addDay(last, 1)) && shifts.some(s => s.date === addDay(last, 1) && s.type === r.type)) last = addDay(last, 1);
-      return { last, text: shiftName(r) + hours(r) + (last !== d ? ' until ' + dayLabel(last) : '') };
+      const base = shiftName(r) + hours(r);
+      return { last, base, text: base + (last !== d ? ' until ' + dayLabel(last) : '') };
     };
     // "No shift" only for a day inside the roster's range, never before it starts or after it ends.
     const rostered = d => shifts.some(s => s.date >= d) && shifts.some(s => s.date <= d);
@@ -229,17 +265,19 @@
       lines.push({ kind: 'next', text: when + shiftName(next.s) + hours(next.s) });
     };
     if (next && next.s.date === today) nextLine(); // tonight comes before tomorrow
-    if (!(todayRest && todayRest.last >= tomorrow) && !(next && next.s.date === tomorrow)) {
+    // Tomorrow always gets its own line (a working shift tomorrow is the next-shift line below).
+    if (!(next && next.s.date === tomorrow)) {
       const r = rest(tomorrow), nt = noTime(tomorrow);
+      const continued = todayRest && todayRest.last >= tomorrow; // "Today · Holiday until …" already says how long
       if (nt) lines.push({ kind: 'tomorrow', text: 'Tomorrow · ' + shiftName(nt) + ' (no time)' });
-      else if (r) lines.push({ kind: 'rest', text: 'Tomorrow · ' + r.text });
+      else if (r) lines.push({ kind: 'rest', text: 'Tomorrow · ' + (continued ? r.base : r.text) });
       else if (!workOn(tomorrow) && rostered(tomorrow)) lines.push({ kind: 'tomorrow', text: 'Tomorrow · No shift' });
     }
     if (next && next.s.date !== today) nextLine();
     return lines.slice(0, 3);
   }
 
-  const api = { TYPES, WORKING, DEFAULTS, validShift, validSettings, plan, parseICS, merge, classify, deskLines, shiftName };
+  const api = { TYPES, WORKING, DEFAULTS, validShift, validSettings, plan, parseICS, merge, classify, deskLines, shiftName, fromRoster, rosterMerge };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JangeShifts = api;
 })(typeof window === 'undefined' ? globalThis : window);

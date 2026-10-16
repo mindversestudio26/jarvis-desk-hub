@@ -27,9 +27,11 @@ async function until(fn, label) {
   for (let n = 0; n < 100; n++) { if (await fn()) return; await new Promise(r => setTimeout(r, 100)); }
   throw Error('Timed out waiting: ' + (label || 'expected state'));
 }
-async function open(browser, baseURL, { time, motion = 'reduce', geo = null, setup } = {}) {
+async function open(browser, baseURL, { time, motion = 'reduce', geo = null, setup, roster = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 1080, height: 810 }, timezoneId: 'America/New_York', reducedMotion: motion, serviceWorkers: 'block', ...(geo ? { geolocation: geo, permissions: ['geolocation'] } : {}) });
   const calls = [];
+  // Tests start from an empty roster unless they ask for the owner's bundled one.
+  if (!roster) await context.route('**/roster.js', r => r.fulfill({ contentType: 'application/javascript', body: '/* no bundled roster in this test */' }));
   await context.route('https://api.open-meteo.com/**', r => { calls.push(r.request().url()); return r.fulfill({ json: fixture }); });
   await context.route('https://api.bigdatacloud.net/**', r => { calls.push(r.request().url()); return r.fulfill({ json: { city: 'Kathmandu', locality: 'Thamel', countryName: 'Nepal' } }); });
   await context.route('https://geocoding-api.open-meteo.com/**', r => { calls.push(r.request().url()); return r.fulfill({ json: { results: [{ name: 'Kathmandu', admin1: 'Bagmati Province', country: 'Nepal', latitude: 27.70169, longitude: 85.3206 }] } }); });
@@ -269,6 +271,32 @@ async function locationTest(engine, name, baseURL) {
   } finally { await browser.close(); }
 }
 
+// The owner's roster ships with JANGE: a fresh install shows it on the desk with no import,
+// alarms come 2 h 30 min before each shift, an alarm already past never rings, and a reload
+// never applies the roster twice.
+async function bundledRosterTest(engine, name, baseURL) {
+  const browser = await engine.launch();
+  try {
+    const t = await open(browser, baseURL, { time: '2026-10-25T01:00:00Z', roster: true }); // 05:00 in Dubai
+    const desk = () => t.page.locator('.peek-shift').allInnerTexts();
+    await until(async () => (await desk()).length > 0, 'roster on the desk');
+    assert.deepEqual(await desk(), ['Today · Day shift 07:00–19:00', 'Tomorrow · Day shift 07:00–19:00']);
+    assert.match(await t.page.locator('#next-alarm-dubai').innerText(), /04:30/, 'next alarm 2 h 30 min before the 07:00 start');
+    assert.equal(await ringing(t.page), false, 'the 04:30 alarm, already past at first run, does not ring');
+    const stored = () => t.page.evaluate(() => JSON.parse(localStorage.getItem('jarvis.shifts.v1')));
+    let s = await stored();
+    assert.deepEqual([s.shifts.length, s.settings.prep, s.settings.commute, s.roster], [32, 120, 30, '2026-10-16']);
+    assert.equal(s.shifts.some(x => x.type === 'holiday'), false);
+    await t.page.reload();
+    await until(async () => (await desk()).length > 0, 'roster after reload');
+    s = await stored();
+    assert.equal(s.shifts.length, 32, 'applied once, not duplicated');
+    assert.deepEqual(t.errors, []);
+    results.push({ engine: name, suite: 'bundled roster', result: 'PASS', checks: 'fresh install shows today/tomorrow shifts, alarm 04:30, past alarm silent, applied once' });
+    await t.context.close();
+  } finally { await browser.close(); }
+}
+
 async function welcomeTest(engine, name, baseURL) {
   const browser = await engine.launch();
   try {
@@ -298,6 +326,7 @@ async function welcomeTest(engine, name, baseURL) {
     await quoteTest(engine, name, baseURL);
     await locationTest(engine, name, baseURL);
     await welcomeTest(engine, name, baseURL);
+    await bundledRosterTest(engine, name, baseURL);
   }
   const report = { result: 'PASS', baseURL, results };
   console.log(JSON.stringify(report, null, 2));
