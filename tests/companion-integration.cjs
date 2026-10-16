@@ -69,11 +69,13 @@ async function until(fn, label) { for (let n = 0; n < 150; n++) { if (await fn()
     const cpu = await read('cpu'), ram = await read('ram');
     assert.match(cpu, /^\d{1,3}%$/, 'real CPU percentage');
     assert.match(ram, /^\d{1,3}%$/, 'real RAM percentage');
-    assert.equal(await read('gpu'), 'N/A', 'companion reports no GPU; nothing is estimated');
-    assert.equal(await read('temp'), 'No sensor');
-    assert.equal(await read('uptime'), 'Not reported');
+    // GPU and temperature come from nvidia-smi when this PC has an NVIDIA GPU, otherwise they stay unavailable.
+    const gpu = await read('gpu'), temp = await read('temp'), uptime = await read('uptime');
+    if (gpu === 'N/A') assert.equal(temp, 'No sensor', 'no GPU reading, so no temperature is estimated');
+    else { assert.match(gpu, /^\d{1,3}%$/, 'real GPU percentage'); assert.match(temp, /^\d{1,3}°C · GPU$/, 'GPU temperature, labelled'); }
+    assert.match(uptime, /^\d+ (d \d+ h|h \d+ min|min)$/, 'real uptime');
     assert.equal(await read('pc-status'), 'Connected');
-    steps.push('connected with real telemetry (CPU ' + cpu + ', RAM ' + ram + ')');
+    steps.push('connected with real telemetry (CPU ' + cpu + ', RAM ' + ram + ', GPU ' + gpu + ', temp ' + temp + ', uptime ' + uptime + ')');
     // Wrong token: the companion answers 401, the panel says so and stops polling.
     await pair(crypto.randomBytes(32).toString('base64url'));
     await until(async () => (await state()) === 'auth', 'authentication required');

@@ -105,9 +105,9 @@ Weather follows the iPad's location when allowed. Otherwise it uses a chosen cit
 | Unreachable | Any network or CORS failure |
 | Not paired | No companion is set up |
 
-CPU, GPU and RAM gauges and temperature appear only from validated samples. A null GPU shows "N/A" and a null temperature shows "No sensor". **Uptime** is displayed only if the companion sends an optional `uptime_seconds`, which the current companion does not, so it shows "Not reported".
+CPU, GPU and RAM gauges and temperature appear only from validated samples. A null GPU shows "N/A" and a null temperature shows "No sensor". **Uptime** is displayed only if the companion sends the optional `uptime_seconds` (otherwise "Not reported"). A temperature with `temperature_source: "gpu"` is labelled "· GPU"; the Windows companion cannot read CPU temperature without admin rights.
 
-The five controls (Lock, Sleep, Restart, Shut down, Launch) are styled but disabled until a secure control backend exists. The companion code is unchanged in 3.1.
+The five controls (Lock, Sleep, Restart, Shut down, Launch) are styled but disabled until a secure control backend exists. From 3.1.1 the companion also reports NVIDIA GPU load, GPU temperature and uptime (see `companion/README.md`); it still has no control endpoint.
 
 ## Performance and accessibility
 

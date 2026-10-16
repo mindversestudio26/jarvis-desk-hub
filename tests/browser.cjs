@@ -192,6 +192,17 @@ async function checkBrowser(engine, name, baseURL) {
       assert.equal(await text(page, '#pc-status'), 'Connected');
       assert.equal(await page.locator('#core-detail').innerText(), 'PC linked · read-only');
       assert.equal(await page.locator('#cpu-spark').getAttribute('points'), '200.0,19.8');
+      // The Windows companion's NVIDIA reading: GPU load, the GPU's temperature labelled as such, uptime.
+      sample = { ...sample, gpu_percent: 29, temperature_c: 42, temperature_source: 'gpu', uptime_seconds: 17024 };
+      await page.evaluate(() => pollPC());
+      await until(async () => await page.locator('#temp').innerText() === '42°C · GPU');
+      assert.equal(await page.locator('#gpu').innerText(), '29%');
+      assert.equal(await page.locator('#uptime').innerText(), '4 h 43 min');
+      const tempBox = await page.locator('#temp').evaluate(e => [e.scrollWidth, e.clientWidth]);
+      assert(tempBox[0] <= tempBox[1], 'GPU temperature label fits its slot');
+      sample = { ...sample, temperature_source: 'chipset<b>' };
+      await page.evaluate(() => pollPC());
+      await until(async () => await page.locator('#temp').innerText() === '42°C'); // an unknown source is not shown
       // 503: companion reached but has no sample yet.
       let status = 503;
       await context.unroute(PC + '/**');
@@ -416,8 +427,8 @@ async function upgradeTest(baseURL, baseline) {
     await page.waitForSelector('#alarms-open');
     assert.match(await text(page, '#tasks'), /Preserve my existing task/);
     const caches = await page.evaluate(async () => globalThis.caches.keys());
-    assert(caches.includes('jarvis-desk-v3.1.0'));
-    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.1.0'], 'Old shell caches removed');
+    assert(caches.includes('jarvis-desk-v3.1.1'));
+    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.1.1'], 'Old shell caches removed');
     assert.equal(await page.title(), 'JANGE · जङ्गे');
     results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to 3.1 service-worker upgrade, preserved storage and weather cache, no forced reload, offline 3.1, old cache cleanup' });
     await context.close();

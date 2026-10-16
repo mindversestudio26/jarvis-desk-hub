@@ -28,7 +28,7 @@ Storage is specific to this origin and Safari installation. Data from a differen
 
 ## PC companion
 
-See [companion/README.md](companion/README.md). It reports actual CPU and RAM using `psutil`. GPU and temperature are null until a trusted sensor adapter is implemented; the dashboard displays `—`. No synthetic metrics or PC-control operations are implemented. Lock, sleep, shutdown and launch buttons are deliberately disabled.
+See [companion/README.md](companion/README.md). It reports actual CPU and RAM using `psutil`, plus NVIDIA GPU load and GPU temperature from `nvidia-smi` when present (otherwise null, shown as N/A / No sensor), and uptime. `companion/windows/` installs it for the current user with a DPAPI-encrypted token and publishes it to the tailnet with Tailscale Serve. No synthetic metrics or PC-control operations are implemented. Lock, sleep, shutdown and launch buttons are deliberately disabled.
 
 No companion, scheduled task, firewall rule, Tailscale account or privileged control was installed/activated by this repository. The loopback service is not directly reachable from an iPad. A tailnet HTTPS reverse proxy is required. Read-only credentials are held only in page memory, so pairing is repeated on reload. Background Safari tabs may suspend polling; foregrounding immediately resumes it.
 
@@ -71,7 +71,7 @@ Sources: [Open-Meteo API documentation](https://open-meteo.com/en/docs) and [fre
 
 ## JANGE 3.1 verification and updates
 
-Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.1.0`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every JANGE/Jarvis window and reopen online to activate 3.1; do not clear website data.
+Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.1.1`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every JANGE/Jarvis window and reopen online to activate 3.1; do not clear website data.
 
 Design notes: [docs/jange-3.1-design.md](docs/jange-3.1-design.md) (alarms, shifts and the future backend contract, quote sourcing, location privacy, PC states) and [brand/README.md](brand/README.md). Tests: [tests/README.md](tests/README.md).
 

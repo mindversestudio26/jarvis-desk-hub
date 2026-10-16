@@ -1211,7 +1211,9 @@ async function pollPC() {
     $('cpu').textContent = cpu === null ? '—' : Math.round(cpu) + '%';
     $('ram').textContent = ram === null ? '—' : Math.round(ram) + '%';
     $('gpu').textContent = gpu === null ? 'N/A' : Math.round(gpu) + '%';
-    stat('temp', temp === null ? 'No sensor' : Math.round(temp) + '°C', temp === null);
+    // The Windows companion reads the GPU's sensor (CPU temperature needs admin rights), so say whose it is.
+    const source = data.temperature_source === 'gpu' ? ' · GPU' : data.temperature_source === 'cpu' ? ' · CPU' : '';
+    stat('temp', temp === null ? 'No sensor' : Math.round(temp) + '°C' + source, temp === null);
     stat('uptime', uptime === null ? 'Not reported' : formatUptime(uptime), uptime === null);
     setGauge('gauge-cpu', cpu); setGauge('gauge-gpu', gpu); setGauge('gauge-ram', ram);
     if (cpu !== null) { cpuHistory.push(cpu); if (cpuHistory.length > 30) cpuHistory.shift(); drawSpark(); }

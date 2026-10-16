@@ -71,6 +71,33 @@ class AgentTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             agent.make_server(0, "short", self.origin, "pc.tail123.ts.net")
 
+    def test_nvidia_parse(self):
+        self.assertEqual(agent.parse_nvidia("12, 54\n"), (12, 54))
+        self.assertEqual(agent.parse_nvidia("12, 54\n99, 70\n"), (12, 54), "first GPU only")
+        self.assertEqual(agent.parse_nvidia("[N/A], 54"), (None, 54), "each field stands alone")
+        self.assertEqual(agent.parse_nvidia("50, [N/A]"), (50, None))
+        self.assertEqual(agent.parse_nvidia("garbage"), (None, None))
+        self.assertEqual(agent.parse_nvidia("150, 54"), (None, 54), "out-of-range utilisation is dropped")
+        self.assertEqual(agent.parse_nvidia(""), (None, None))
+
+    def test_sample_fields(self):
+        # One real sampling pass: CPU/RAM/uptime from psutil, GPU null unless a fresh reading exists.
+        with agent.gpu_lock:
+            agent.gpu_reading.update(gpu_percent=None, temperature_c=None, at=0.0)
+        thread = threading.Thread(target=agent.sample, daemon=True)
+        thread.start()
+        deadline = datetime.datetime.now() + datetime.timedelta(seconds=5)
+        while datetime.datetime.now() < deadline:
+            with agent.snapshot_lock:
+                data = dict(agent.snapshot)
+            if "uptime_seconds" in data:
+                break
+        self.assertGreaterEqual(data["uptime_seconds"], 0)
+        self.assertTrue(0 <= data["cpu_percent"] <= 100)
+        self.assertIsNone(data["gpu_percent"], "a stale/absent GPU reading is never reported")
+        self.assertIsNone(data["temperature_source"])
+        self.assertFalse(data["control_enabled"])
+
 
 if __name__ == "__main__":
     unittest.main()
