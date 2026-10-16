@@ -1,0 +1,5 @@
+state/
+test-results/
+*.sqlite*
+*.env
+config.local.php
