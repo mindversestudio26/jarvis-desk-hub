@@ -8,7 +8,7 @@ const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const out = path.resolve(process.env.JARVIS_TEST_OUTPUT || path.join(root, 'test-results'));
 fs.mkdirSync(out, { recursive: true });
-const BASELINE = '9ddff13'; // Jarvis 2.0, the build installed before 3.0
+const BASELINES = { '9ddff13': 'Jarvis 2.0', '4d91835': 'Jarvis 3.0' }; // builds already installed on devices
 const fixture = {
   current: { temperature_2m: 31, relative_humidity_2m: 45, apparent_temperature: 34.6, is_day: 1, weather_code: 0, wind_speed_10m: 8, wind_direction_10m: 300, time: '2026-10-16T22:15' },
   daily: { time: ['2026-10-16'], temperature_2m_max: [36.2], temperature_2m_min: [26.8], sunrise: ['2026-10-16T06:14'], sunset: ['2026-10-16T17:48'], uv_index_max: [7.4] },
@@ -16,14 +16,14 @@ const fixture = {
 const oldData = { tasks: [{ id: 'existing-task', text: 'Preserve my existing task', done: false }], events: [{ id: 'existing-event', date: '2026-10-16', time: '09:00', text: 'Preserve my existing event' }] };
 const PC = 'https://jarvis-fixture.example.ts.net';
 const results = [];
-let serveBaseline = false;
-const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
+let serveBaseline = null;
+const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.ics': 'text/calendar' };
 const server = http.createServer((req, res) => {
   const file = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).slice(1) || 'index.html';
   if (file.includes('..') || file.startsWith('.git')) { res.writeHead(403).end(); return; }
   try {
     const data = serveBaseline
-      ? execFileSync('git', ['show', BASELINE + ':' + file], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] })
+      ? execFileSync('git', ['show', serveBaseline + ':' + file], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] })
       : fs.readFileSync(path.join(root, file));
     res.writeHead(200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' }).end(data);
   } catch { res.writeHead(404).end(); }
@@ -145,7 +145,7 @@ async function checkBrowser(engine, name, baseURL) {
     await download.saveAs(backupPath);
     const backup = JSON.parse(fs.readFileSync(backupPath));
     assert.equal(backup.version, 2);
-    assert.deepEqual(Object.keys(backup).sort(), ['events', 'exported', 'tasks', 'version']);
+    assert.deepEqual(Object.keys(backup).sort(), ['alarms', 'events', 'exported', 'shiftPlan', 'tasks', 'version']);
     assert.equal(backup.tasks.length, 2);
     assert.equal(backup.events.length, 2);
     await page.locator('#settings-open').click();
@@ -167,8 +167,8 @@ async function checkBrowser(engine, name, baseURL) {
     await page.locator('#connect-form .primary').click();
     assert.match(await page.locator('#connect-result').innerText(), /Use a Tailscale/);
     await page.getByRole('button', { name: 'Close settings', exact: true }).click();
-    for (const id of ['cpu', 'gpu', 'ram', 'temp']) assert.equal(await page.locator('#' + id).innerText(), '—');
-    assert.equal(await page.locator('.pc-actions button:disabled').count(), 4);
+    for (const id of ['cpu', 'gpu', 'ram', 'temp', 'uptime']) assert.equal(await page.locator('#' + id).innerText(), '—');
+    assert.equal(await page.locator('.pc-controls button:disabled').count(), 5, 'Lock, Sleep, Restart, Shut down, Launch stay disabled');
     assert.equal(await page.locator('#hud').getAttribute('data-pc'), 'off');
     if (name === 'chromium') {
       let sample = { protocol: 1, cpu_percent: 37.4, ram_percent: 61.2, gpu_percent: null, temperature_c: null, control_enabled: false };
@@ -186,12 +186,33 @@ async function checkBrowser(engine, name, baseURL) {
       await page.getByRole('button', { name: 'Close settings', exact: true }).click();
       assert.equal(await page.locator('#cpu').innerText(), '37%');
       assert.equal(await page.locator('#ram').innerText(), '61%');
-      assert.equal(await page.locator('#gpu').innerText(), '—', 'Null sensor stays unavailable');
-      assert.equal(await page.locator('#temp').innerText(), '—');
+      assert.equal(await page.locator('#gpu').innerText(), 'N/A', 'Null GPU is shown as unavailable, never estimated');
+      assert.equal(await page.locator('#temp').innerText(), 'No sensor');
+      assert.equal(await page.locator('#uptime').innerText(), 'Not reported');
+      assert.equal(await text(page, '#pc-status'), 'Connected');
       assert.equal(await page.locator('#core-detail').innerText(), 'PC linked · read-only');
       assert.equal(await page.locator('#cpu-spark').getAttribute('points'), '200.0,19.8');
-      sample = null;
+      // 503: companion reached but has no sample yet.
+      let status = 503;
+      await context.unroute(PC + '/**');
+      await context.route(PC + '/**', route => status ? route.fulfill({ status, json: {}, headers: { 'Access-Control-Allow-Origin': '*' } }) : route.abort());
       await page.evaluate(() => pollPC());
+      await until(async () => await page.locator('#hud').getAttribute('data-pc') === 'warming');
+      // 401: token rejected, polling stops until re-paired.
+      status = 401;
+      await page.evaluate(() => pollPC());
+      await until(async () => await page.locator('#hud').getAttribute('data-pc') === 'auth');
+      assert.equal(await text(page, '#pc-status'), 'Authentication required');
+      status = 0;
+      await page.evaluate(() => pollPC());
+      await new Promise(r => setTimeout(r, 300));
+      assert.equal(await page.locator('#hud').getAttribute('data-pc'), 'auth', 'No polling after a rejected token');
+      // Re-pair, then the PC disappears: unreachable, telemetry cleared.
+      await page.locator('#connect-open').click();
+      await page.locator('#agent-url').fill(PC);
+      await page.locator('#agent-token').fill('fixture_token_for_tests_only_000000000');
+      await page.locator('#connect-form .primary').click();
+      await page.getByRole('button', { name: 'Close settings', exact: true }).click();
       await until(async () => await page.locator('#hud').getAttribute('data-pc') === 'unreachable');
       for (const id of ['cpu', 'ram']) assert.equal(await page.locator('#' + id).innerText(), '—', 'No stale telemetry after failure');
       assert.equal(await page.locator('#cpu-spark').getAttribute('points'), '');
@@ -244,7 +265,7 @@ async function checkBrowser(engine, name, baseURL) {
           width: document.documentElement.scrollWidth,
           height: document.documentElement.scrollHeight,
           calendar: box('.calendar button'),
-          targets: box('.dock-btn, #weather-retry, #connect-open, #agenda-open, #core, dialog[open] .close'),
+          targets: box('.dock-btn, #weather-retry, #locate, #connect-open, #agenda-open, #core, dialog[open] .close'),
           motion: getComputedStyle(document.querySelector('.ring-a')).animationName,
         };
       });
@@ -261,7 +282,7 @@ async function checkBrowser(engine, name, baseURL) {
     await page.reload();
     assert.equal(await page.evaluate(() => document.documentElement.classList.contains('calm')), true, 'Calm motion preference persisted');
     assert.deepEqual(errors, []);
-    results.push({ engine: name, result: 'PASS', scenarios: 'clocks, dial markers, midnight, resume, hidden pause, weather daily fields, core focus, persistence, backup restore, motion preference, tailnet-only pairing, ' + (name === 'chromium' ? 'mocked companion online/unreachable/disconnect, ' : '') + 'saved weather, offline core state, responsive, touch targets, reduced motion', offline: name === 'chromium' ? 'PASS: service-worker offline reload' : 'Not verified: Windows WebKit offline reload produced an internal engine error; physical Safari check required', sizes });
+    results.push({ engine: name, result: 'PASS', scenarios: 'clocks, dial markers, midnight, resume, hidden pause, weather daily fields, core focus, persistence, backup restore, motion preference, tailnet-only pairing, ' + (name === 'chromium' ? 'mocked companion connected/warming/auth-required/unreachable/disconnect, ' : '') + 'saved weather, offline core state, responsive, touch targets, reduced motion', offline: name === 'chromium' ? 'PASS: service-worker offline reload' : 'Not verified: Windows WebKit offline reload produced an internal engine error; physical Safari check required', sizes });
     await context.close();
   } finally { await browser.close(); }
 }
@@ -356,12 +377,12 @@ async function flipTest(engine, name, baseURL) {
   } finally { await browser.close(); }
 }
 
-async function upgradeTest(baseURL) {
+async function upgradeTest(baseURL, baseline) {
   const browser = await chromium.launch({ headless: true, ...(process.env.JARVIS_CHROME_CHANNEL ? { channel: process.env.JARVIS_CHROME_CHANNEL } : {}) });
   try {
     const context = await browser.newContext();
     await context.route('https://api.open-meteo.com/**', route => route.fulfill({ json: { current: fixture.current } }));
-    serveBaseline = true;
+    serveBaseline = baseline;
     let page = await context.newPage();
     await page.goto(baseURL);
     await page.evaluate(data => localStorage.setItem('jarvis.desk.v2', JSON.stringify(data)), oldData);
@@ -369,11 +390,11 @@ async function upgradeTest(baseURL) {
     await page.reload();
     // The 2.0 weather cache (current only) must remain readable by 3.0.
     await page.waitForFunction(() => !!localStorage.getItem('jarvis.weather.v1'));
-    assert.equal(await page.locator('#core').count(), 0);
-    serveBaseline = false;
+    assert.equal(await page.locator('#alarms-open').count(), 0);
+    serveBaseline = null;
     await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
     await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration()).waiting);
-    assert.equal(await page.locator('#core').count(), 0, 'Old open client not force-reloaded');
+    assert.equal(await page.locator('#alarms-open').count(), 0, 'Old open client not force-reloaded');
     await page.close();
     // Let the browser finish activation after the old document detaches. No
     // document in this origin is opened while the waiting worker takes over.
@@ -382,7 +403,7 @@ async function upgradeTest(baseURL) {
     await context.route('https://api.open-meteo.com/**', route => route.abort());
     page = await context.newPage();
     await page.goto(baseURL);
-    await page.waitForSelector('#core');
+    await page.waitForSelector('#alarms-open');
     await until(async () => (await page.locator('#weather-description').innerText()).includes('last saved'));
     assert.equal(await page.locator('#temperature').innerText(), '31°', '2.0 weather cache shown as saved');
     assert.equal(await page.locator('#sunrise').innerText(), '—', 'Missing daily fields stay unavailable');
@@ -392,14 +413,15 @@ async function upgradeTest(baseURL) {
     await page.getByRole('button', { name: 'Close calendar' }).click();
     await context.setOffline(true);
     await page.reload();
-    await page.waitForSelector('#core');
+    await page.waitForSelector('#alarms-open');
     assert.match(await text(page, '#tasks'), /Preserve my existing task/);
     const caches = await page.evaluate(async () => globalThis.caches.keys());
-    assert(caches.includes('jarvis-desk-v3.0.0'));
-    assert(!caches.includes('jarvis-desk-v2.0.0'));
-    results.push({ engine: 'chromium', result: 'PASS', scenario: BASELINE + ' (2.0) service-worker upgrade, preserved storage and weather cache, no forced reload, offline 3.0, old cache cleanup' });
+    assert(caches.includes('jarvis-desk-v3.1.0'));
+    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.1.0'], 'Old shell caches removed');
+    assert.equal(await page.title(), 'JANGE · जङ्गे');
+    results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to 3.1 service-worker upgrade, preserved storage and weather cache, no forced reload, offline 3.1, old cache cleanup' });
     await context.close();
-  } finally { serveBaseline = false; await browser.close(); }
+  } finally { serveBaseline = null; await browser.close(); }
 }
 
 (async () => {
@@ -410,7 +432,7 @@ async function upgradeTest(baseURL) {
   await checkBrowser(webkit, 'webkit', baseURL);
   await flipTest(chromium, 'chromium', baseURL);
   await flipTest(webkit, 'webkit', baseURL);
-  await upgradeTest(localURL);
+  for (const baseline of Object.keys(BASELINES)) await upgradeTest(localURL, baseline);
   console.log(JSON.stringify({ result: 'PASS', baseURL, results }, null, 2));
   fs.writeFileSync(path.join(out, 'results.json'), JSON.stringify({ result: 'PASS', baseURL, results }, null, 2));
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => server.close());

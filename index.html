@@ -1,29 +1,37 @@
 <!doctype html>
-<html lang="en" class="boot">
+<html lang="en" class="boot with-welcome">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#03070d">
+<meta name="theme-color" content="#07080a">
+<meta name="description" content="JANGE (जङ्गे): a personal desk assistant interface.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Jarvis">
+<meta name="apple-mobile-web-app-title" content="JANGE">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.open-meteo.com https://*.ts.net; object-src 'none'; base-uri 'self'; form-action 'self'">
-<title>Jarvis 3.0 · Desk Interface</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://*.ts.net; object-src 'none'; base-uri 'self'; form-action 'self'">
+<title>JANGE · जङ्गे</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preload" href="fonts/michroma-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/cormorant-garamond-latin-500-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 <script src="clocks.js" defer></script>
+<script src="alarms.js" defer></script>
+<script src="shifts.js" defer></script>
+<script src="quotes.js" defer></script>
 <script src="app.js" defer></script>
 </head>
 <body>
 <svg class="sprite" aria-hidden="true" focusable="false">
-  <symbol id="i-reactor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></symbol>
+  <symbol id="jange-emblem" viewBox="0 0 200 200"><path d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z" fill="currentColor" stroke="none"/><path d="M122 50C129 38 137 25 144 16C152 32 159 50 161 68C148 61 134 54 122 50ZM78 50C71 38 63 25 56 16C48 32 41 50 39 68C52 61 66 54 78 50Z" stroke="none"/><path d="M100 52C106 51 112 51 117 49C116 62 111 76 100 94C89 76 84 62 83 49C88 51 94 51 100 52Z" stroke="none"/><path d="M100 101C106 104 111 112 114 122C118 134 124 144 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C76 144 82 134 86 122C89 112 94 104 100 101Z" stroke="none"/><path d="M113 102.5C117 95 127 92.5 135.5 97C131 105.5 120 108 113 102.5ZM87 102.5C83 95 73 92.5 64.5 97C69 105.5 80 108 87 102.5Z" stroke="none"/><path d="M135.5 98L150 139M150 139L130 152M64.5 98L50 139M50 139L70 152M168 70L150 139M32 70L50 139" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="1.1" stroke-dasharray="none"/><circle cx="124.5" cy="99.2" r="1.1" fill="none" stroke-width="3.4" stroke-dasharray="none"/><circle cx="75.5" cy="99.2" r="1.1" fill="none" stroke-width="3.4" stroke-dasharray="none"/><path d="M100 159C106 158 112 158 116 160C120 164 118 170 113 173C109 175 104 176 100 176C96 176 91 175 87 173C82 170 80 164 84 160C88 158 94 158 100 159Z" fill="currentColor" stroke="none"/><path d="M100 176V181M100 181C104 185 109 185 113 182M100 181C96 185 91 185 87 182" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="none"/><path class="em-outline" d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" pathLength="1"/></symbol>
+  <symbol id="jange-wordmark" viewBox="0 0 255.2 44.6"><path d="M6.6 28.3V30.3C6.6 37.3 11.6 42.3 18.6 42.3H26.6C33.6 42.3 38.6 37.3 38.6 30.3V2.3M53.6 42.3L74.6 2.3L95.6 42.3M110.6 42.3V2.3L148.6 42.3V2.3M203.6 11.3C201.6 5.8 196.6 2.3 189.6 2.3H177.6C169.9 2.3 163.6 8.6 163.6 16.3V28.3C163.6 36 169.9 42.3 177.6 42.3H189.6C197.3 42.3 203.6 36 203.6 28.3V23.3H186.6M250.6 2.3H218.6V42.3H250.6M218.6 22.3H243.6" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linejoin="miter" stroke-miterlimit="10"/></symbol>
   <symbol id="i-focus" viewBox="0 0 24 24"><path d="M3.5 7l2 2 3.5-3.5M12 7.5h8.5M3.5 15.5l2 2 3.5-3.5M12 16h8.5"/></symbol>
   <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/></symbol>
   <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4.5l-3 15"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3.5"/><path d="M10 9v6l5-3z"/></symbol>
@@ -34,6 +42,12 @@
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M8.8 12l2.2 2.2 4.3-4.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/></symbol>
+  <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v5h5"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3.5v8M7 6.5a7.5 7.5 0 1 0 10 0"/></symbol>
+  <symbol id="i-app" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><path d="M16.75 14v5.5M14 16.75h5.5"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 20V4M6.5 9.5L12 4l5.5 5.5"/></symbol>
   <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6"/></symbol>
   <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
@@ -48,22 +62,16 @@
   <symbol id="wx-none" viewBox="0 0 32 32"><circle cx="16" cy="16" r="9" stroke-dasharray="3 3"/></symbol>
 </svg>
 
+<div id="welcome" class="welcome" aria-hidden="true">
+  <div class="welcome-mark"><span class="welcome-ring"></span><span class="welcome-ring r2"></span><svg class="welcome-emblem" viewBox="0 0 200 200" aria-hidden="true"><path class="em-fill" d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z"/><path class="em-mask" d="M122 50C129 38 137 25 144 16C152 32 159 50 161 68C148 61 134 54 122 50ZM78 50C71 38 63 25 56 16C48 32 41 50 39 68C52 61 66 54 78 50Z"/><path class="em-mask" d="M100 52C106 51 112 51 117 49C116 62 111 76 100 94C89 76 84 62 83 49C88 51 94 51 100 52Z"/><path class="em-mask" d="M100 101C106 104 111 112 114 122C118 134 124 144 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C76 144 82 134 86 122C89 112 94 104 100 101Z"/><path class="em-mask" d="M113 102.5C117 95 127 92.5 135.5 97C131 105.5 120 108 113 102.5ZM87 102.5C83 95 73 92.5 64.5 97C69 105.5 80 108 87 102.5Z"/><path class="em-facets" d="M135.5 98L150 139M150 139L130 152M64.5 98L50 139M50 139L70 152M168 70L150 139M32 70L50 139"/><circle class="em-glint" cx="124.5" cy="99.2" r="2.6"/><circle class="em-glint" cx="75.5" cy="99.2" r="2.6"/><path class="em-fill" d="M100 159C106 158 112 158 116 160C120 164 118 170 113 173C109 175 104 176 100 176C96 176 91 175 87 173C82 170 80 164 84 160C88 158 94 158 100 159Z"/><path class="em-line" d="M100 176V181M100 181C104 185 109 185 113 182M100 181C96 185 91 185 87 182"/><path class="em-outline" d="M100 50C106 49 112 49 118 46C126 33 135 19 143 8C145 5 149 4 151 7C159 24 166 47 168 70C172 80 175 92 172 104C170 118 162 131 150 139C143 143 135 147 130 152C129 160 129 172 126 180C120 188 110 192 100 192C90 192 80 188 74 180C71 172 71 160 70 152C65 147 57 143 50 139C38 131 30 118 28 104C25 92 28 80 32 70C34 47 41 24 49 7C51 4 55 5 57 8C65 19 74 33 82 46C88 49 94 49 100 50Z" pathLength="1"/></svg></div>
+  <svg class="welcome-word" viewBox="0 0 255.2 44.6"><use href="#jange-wordmark"/></svg>
+  <p class="welcome-np" lang="ne">जङ्गे</p>
+</div>
+
 <main class="hud" id="hud" data-net="online" data-wx="loading" data-pc="off" data-store="ok">
+  <h1 class="sr-only">JANGE · जङ्गे — personal desk assistant</h1>
 
-  <header class="topbar">
-    <a class="brand" href="./" aria-label="Jarvis home">
-      <svg class="brand-mark" aria-hidden="true"><use href="#i-reactor"/></svg>
-      <span class="brand-name">JARVIS</span>
-      <span class="brand-sub">Desk interface · 3.0</span>
-    </a>
-    <p class="topline"><span id="greeting">Good day</span><span class="sep" aria-hidden="true">//</span><span id="today-line">—</span><span class="sep" aria-hidden="true">//</span><span id="week-line">—</span></p>
-    <div class="chips">
-      <span id="network" class="chip">Online</span>
-      <span id="offline-ready" class="chip">Preparing offline</span>
-    </div>
-  </header>
-
-  <section class="wing wing-left" aria-label="Dubai, environment and agenda">
+  <header class="band">
     <article class="clock-readout dubai" aria-label="Dubai time">
       <p class="label"><span class="idx">01</span><span>Dubai</span><span class="label-sub">· UAE</span></p>
       <div class="flipclock" id="flip-dubai" aria-hidden="true">
@@ -71,11 +79,31 @@
       </div>
       <time id="clock" class="sr-only">--:--</time>
       <p class="date-row"><span id="date" class="date">Loading date…</span><span class="fsec">:<span id="seconds">--</span></span></p>
-      <p class="zone">Asia/Dubai · GST · UTC+04:00</p>
+      <p class="zone-row"><span class="zone" title="Asia/Dubai">GST · UTC+04:00</span><span id="next-alarm-dubai" class="clock-alarm" hidden></span></p>
     </article>
 
+    <div class="crown">
+      <a class="brand" href="./" aria-label="JANGE home"><svg class="brand-mark" viewBox="0 0 200 200" aria-hidden="true"><use href="#jange-emblem"/></svg><svg class="brand-word" viewBox="0 0 255.2 44.6" aria-hidden="true"><use href="#jange-wordmark"/></svg></a>
+      <p class="brand-sub"><span lang="ne">जङ्गे</span><span aria-hidden="true">·</span>Personal assistant · 3.1</p>
+      <p id="greeting" class="greeting">Good day</p>
+      <p class="crown-date"><span id="today-line">—</span><span class="sep" aria-hidden="true">·</span><span id="week-line">—</span></p>
+      <div class="chips"><span id="network" class="chip">Online</span><span id="offline-ready" class="chip">Preparing offline</span></div>
+    </div>
+
+    <article class="clock-readout kathmandu" aria-label="Kathmandu time">
+      <p class="label"><span>Kathmandu</span><span class="label-sub">· Nepal</span><span class="idx">02</span></p>
+      <div class="flipclock" id="flip-kathmandu" aria-hidden="true">
+        <span class="fgroup"><span class="fampm"></span><span class="tile"></span><span class="tile"></span></span><span class="fcolon"></span><span class="fgroup"><span class="tile"></span><span class="tile"></span></span>
+      </div>
+      <time id="kathmandu-clock" class="sr-only">--:--</time>
+      <p class="date-row"><span class="fsec">:<span id="kathmandu-seconds">--</span></span><span id="kathmandu-date" class="date">Loading date…</span></p>
+      <p class="zone-row"><span id="next-alarm-kathmandu" class="clock-alarm" hidden></span><span class="zone" title="Asia/Kathmandu">NPT · UTC+05:45</span></p>
+    </article>
+  </header>
+
+  <section class="wing wing-left" aria-label="Weather and agenda">
     <article class="readout env" aria-labelledby="env-title">
-      <p class="label"><span class="idx">02</span><span id="env-title">Weather</span><span class="label-sub">Sharjah</span></p>
+      <p class="label"><span class="idx">03</span><span id="env-title">Weather</span><span id="wx-place" class="label-sub">Sharjah</span></p>
       <div class="env-main">
         <svg class="wx" viewBox="0 0 32 32" aria-hidden="true"><use id="weather-icon" href="#wx-none"/></svg>
         <span id="temperature" class="temp">—</span>
@@ -89,11 +117,12 @@
         <div><dt>Sunset</dt><dd id="sunset">—</dd></div>
         <div><dt>UV max</dt><dd id="uv">—</dd></div>
       </dl>
-      <p class="source"><span id="weather-updated">Waiting for weather</span><span aria-hidden="true">·</span><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a><button id="weather-retry" class="mini" type="button" aria-label="Refresh weather"><svg aria-hidden="true"><use href="#i-refresh"/></svg></button></p>
+      <p id="loc-note" class="loc-note" hidden></p>
+      <p class="source"><span id="weather-updated">Waiting for weather</span><span aria-hidden="true">·</span><a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a><button id="locate" class="mini locate" type="button" aria-label="Use my current location"><svg aria-hidden="true"><use href="#i-locate"/></svg></button><button id="weather-retry" class="mini" type="button" aria-label="Refresh weather"><svg aria-hidden="true"><use href="#i-refresh"/></svg></button></p>
     </article>
 
     <article class="readout agenda" aria-labelledby="agenda-peek-title">
-      <p class="label"><span class="idx">03</span><span id="agenda-peek-title">Today</span><span class="label-sub">Agenda</span></p>
+      <p class="label"><span class="idx">04</span><span id="agenda-peek-title">Today</span><span class="label-sub">Agenda</span></p>
       <button id="agenda-open" class="agenda-peek" type="button" aria-label="Open today in the calendar">
         <span id="today-events" class="peek-list"></span>
         <span id="week-strip" class="week-strip" aria-hidden="true"></span>
@@ -102,42 +131,45 @@
     </article>
   </section>
 
-  <section class="core-stage" aria-label="Jarvis core">
+  <section class="core-stage" aria-label="JANGE core">
     <div class="core-wrap">
     <span class="bus bus-left" aria-hidden="true"></span>
     <span class="bus bus-right" aria-hidden="true"></span>
     <button id="core" class="core" type="button" aria-label="Open focus tasks">
+      <span class="core-face" aria-hidden="true"></span>
       <span class="core-glow" aria-hidden="true"></span>
       <svg class="dial" viewBox="0 0 480 480" aria-hidden="true">
         <circle class="d-hair" cx="240" cy="240" r="236"/>
-        <circle class="d-sec" cx="240" cy="240" r="226" transform="rotate(-90 240 240)" stroke-dasharray="1.2 22.4666" stroke-dashoffset="0.6"/>
-        <circle class="d-sec-major" cx="240" cy="240" r="226" transform="rotate(-90 240 240)" stroke-dasharray="2.4 115.9333" stroke-dashoffset="1.2"/>
-        <circle class="d-hair dim" cx="240" cy="240" r="216"/>
-        <circle class="d-quarter" cx="240" cy="240" r="210" transform="rotate(-90 240 240)" stroke-dasharray="0.8 12.9445" stroke-dashoffset="0.4"/>
-        <circle class="d-hour" cx="240" cy="240" r="210" transform="rotate(-90 240 240)" stroke-dasharray="1.6 53.378" stroke-dashoffset="0.8"/>
+        <circle class="d-sec" cx="240" cy="240" r="227" transform="rotate(-90 240 240)" stroke-dasharray="1 22.7714" stroke-dashoffset="0.5"/>
+        <circle class="d-sec-major" cx="240" cy="240" r="227" transform="rotate(-90 240 240)" stroke-dasharray="2 116.857" stroke-dashoffset="1"/>
+        <circle class="d-hair dim" cx="240" cy="240" r="217"/>
+        <circle class="d-quarter" cx="240" cy="240" r="210" transform="rotate(-90 240 240)" stroke-dasharray="0.6 13.1445" stroke-dashoffset="0.3"/>
+        <circle class="d-hour" cx="240" cy="240" r="210" transform="rotate(-90 240 240)" stroke-dasharray="1.4 53.578" stroke-dashoffset="0.7"/>
+        <circle class="d-cardinal" cx="240" cy="240" r="208" transform="rotate(-90 240 240)" stroke-dasharray="3.2 323.53" stroke-dashoffset="1.6"/>
         <circle class="d-band" cx="240" cy="240" r="200"/>
         <circle id="daylight" class="d-daylight" cx="240" cy="240" r="200" stroke-dasharray="0 1256.64"/>
-        <circle id="day-progress" class="d-progress" cx="240" cy="240" r="192" transform="rotate(90 240 240)" stroke-dasharray="0 1206.37"/>
-        <text class="d-label" x="240" y="57" dy="0.35em">12</text>
-        <text class="d-label" x="423" y="240" dy="0.35em">18</text>
-        <text class="d-label" x="240" y="423" dy="0.35em">00</text>
-        <text class="d-label" x="57" y="240" dy="0.35em">06</text>
-        <g id="marker-ktm" class="d-marker ktm" transform="rotate(0 240 240)"><path d="M240 31l-5.5-9.5h11z"/></g>
-        <g id="marker-dxb" class="d-marker dxb" transform="rotate(0 240 240)"><path d="M240 31l-5.5-9.5h11z"/></g>
+        <circle id="day-progress" class="d-progress" cx="240" cy="240" r="193" transform="rotate(90 240 240)" stroke-dasharray="0 1212.65"/>
+        <text class="d-label" x="240" y="58" dy="0.35em">12</text>
+        <text class="d-label" x="422" y="240" dy="0.35em">18</text>
+        <text class="d-label" x="240" y="422" dy="0.35em">00</text>
+        <text class="d-label" x="58" y="240" dy="0.35em">06</text>
+        <g id="alarm-marks" class="d-alarms"></g>
+        <g id="marker-ktm" class="d-marker ktm" transform="rotate(0 240 240)"><path d="M240 30l-5-9h10z"/></g>
+        <g id="marker-dxb" class="d-marker dxb" transform="rotate(0 240 240)"><path d="M240 30l-5-9h10z"/></g>
         <circle class="d-focus-track" cx="240" cy="240" r="140"/>
         <circle id="focus-ring" class="d-focus" cx="240" cy="240" r="140" transform="rotate(-90 240 240)" stroke-dasharray="879.65" stroke-dashoffset="879.65"/>
-        <circle class="d-rim" cx="240" cy="240" r="127"/>
-        <circle class="d-rim-fine" cx="240" cy="240" r="120" stroke-dasharray="1.5 4.5"/>
+        <circle class="d-rim" cx="240" cy="240" r="128"/>
+        <circle class="d-rim-fine" cx="240" cy="240" r="122" stroke-dasharray="1 5.39"/>
       </svg>
       <span class="ring ring-a" aria-hidden="true"><svg viewBox="0 0 360 360"><circle cx="180" cy="180" r="174" stroke-dasharray="96 10 6 10 150 18 3 18 220 12 40 12 180 30 6 8 90 12"/><circle class="fine" cx="180" cy="180" r="166" stroke-dasharray="1 7"/></svg></span>
-      <span class="ring ring-b" aria-hidden="true"><svg viewBox="0 0 320 320"><circle cx="160" cy="160" r="152" stroke-dasharray="2 5"/><path d="M160 13l-6-9h12z"/><path d="M160 13l-6-9h12z" transform="rotate(120 160 160)"/><path d="M160 13l-6-9h12z" transform="rotate(240 160 160)"/></svg></span>
+      <span class="ring ring-b" aria-hidden="true"><svg viewBox="0 0 320 320"><circle cx="160" cy="160" r="152" stroke-dasharray="2 5"/><path d="M160 13l-5-8h10z"/><path d="M160 13l-5-8h10z" transform="rotate(120 160 160)"/><path d="M160 13l-5-8h10z" transform="rotate(240 160 160)"/></svg></span>
       <span class="link link-env" aria-hidden="true"><svg viewBox="0 0 40 180"><path d="M29.7 9A162 162 0 0 0 29.7 171"/></svg></span>
       <span class="link link-pc" aria-hidden="true"><svg viewBox="0 0 40 180"><path d="M10.3 9A162 162 0 0 1 10.3 171"/></svg></span>
       <span class="sweep" aria-hidden="true"></span>
       <span id="sec-hand" class="sec-hand" aria-hidden="true"></span>
       <span id="ripple" class="ripple" aria-hidden="true"></span>
       <span class="core-text">
-        <span class="core-kicker">J · A · R · V · I · S</span>
+        <span class="core-avatar" aria-hidden="true"><svg viewBox="0 0 200 200"><use href="#jange-emblem"/></svg></span>
         <span id="core-state" class="core-state">Initializing</span>
         <span id="core-detail" class="core-detail">Local systems</span>
         <span class="core-rule" aria-hidden="true"></span>
@@ -147,41 +179,43 @@
       </span>
     </button>
     </div>
-    <p class="core-legend" aria-hidden="true"><span class="lg dxb">Dubai</span><span class="lg ktm">Kathmandu</span><span class="lg sun">Sharjah daylight</span><span class="lg focus">Focus</span></p>
+    <figure id="daily-quote" class="daily-quote" data-slot="assistant" aria-labelledby="quote-title">
+      <span id="quote-title" class="sr-only">Quote of the day</span>
+      <blockquote id="quote-text" class="quote-text"></blockquote>
+      <figcaption id="quote-author" class="quote-author"></figcaption>
+      <p id="quote-ne" class="quote-ne" lang="ne"></p>
+    </figure>
   </section>
 
-  <section class="wing wing-right" aria-label="Kathmandu, workstation and systems">
-    <article class="clock-readout kathmandu" aria-label="Kathmandu time">
-      <p class="label"><span>Kathmandu</span><span class="label-sub">· Nepal</span><span class="idx">04</span></p>
-      <div class="flipclock" id="flip-kathmandu" aria-hidden="true">
-        <span class="fgroup"><span class="fampm"></span><span class="tile"></span><span class="tile"></span></span><span class="fcolon"></span><span class="fgroup"><span class="tile"></span><span class="tile"></span></span>
-      </div>
-      <time id="kathmandu-clock" class="sr-only">--:--</time>
-      <p class="date-row"><span class="fsec">:<span id="kathmandu-seconds">--</span></span><span id="kathmandu-date" class="date">Loading date…</span></p>
-      <p class="zone">Asia/Kathmandu · NPT · UTC+05:45</p>
-    </article>
-
+  <section class="wing wing-right" aria-label="Workstation and systems">
     <article class="readout pc" aria-labelledby="pc-title">
-      <p class="label"><span id="pc-title">Workstation</span><span class="idx">05</span></p>
-      <div class="pc-head"><button id="connect-open" class="link-btn" type="button"><svg aria-hidden="true"><use href="#i-link"/></svg>Pair</button><span class="pc-state"><span id="pc-status" class="status-chip off">Not paired</span><span id="pc-sampled" class="muted">No telemetry</span></span></div>
-      <div class="gauges">
-        <div class="gauge" id="gauge-cpu">
-          <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-track" cx="50" cy="50" r="42"/><circle class="g-value" cx="50" cy="50" r="42" transform="rotate(-90 50 50)" stroke-dasharray="263.89" stroke-dashoffset="263.89"/></svg>
-          <span class="g-read"><strong id="cpu">—</strong><small>CPU</small></span>
-        </div>
-        <div class="gauge" id="gauge-ram">
-          <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-track" cx="50" cy="50" r="42"/><circle class="g-value" cx="50" cy="50" r="42" transform="rotate(-90 50 50)" stroke-dasharray="263.89" stroke-dashoffset="263.89"/></svg>
-          <span class="g-read"><strong id="ram">—</strong><small>Memory</small></span>
-        </div>
-        <dl class="pc-extra">
-          <div><dt>GPU</dt><dd id="gpu">—</dd></div>
-          <div><dt>Temp</dt><dd id="temp">—</dd></div>
-        </dl>
+      <p class="label"><span id="pc-title">Workstation</span><span class="label-sub">PC</span><span class="idx">05</span></p>
+      <div class="pc-head">
+        <span class="pc-state"><span id="pc-status" class="status-chip off">Not paired</span><span id="pc-host" class="pc-host">No companion paired</span></span>
+        <button id="connect-open" class="link-btn" type="button"><svg aria-hidden="true"><use href="#i-link"/></svg>Pair</button>
       </div>
+      <p class="pc-secure"><svg aria-hidden="true"><use href="#i-shield"/></svg><span id="pc-secure-text">Tailscale HTTPS · read-only token</span></p>
+      <div class="gauges">
+        <div class="gauge" id="gauge-cpu"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-track" cx="50" cy="50" r="42"/><circle class="g-value" cx="50" cy="50" r="42" transform="rotate(-90 50 50)" stroke-dasharray="263.89" stroke-dashoffset="263.89"/></svg><span class="g-read"><strong id="cpu">—</strong><small>CPU</small></span></div>
+        <div class="gauge" id="gauge-gpu"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-track" cx="50" cy="50" r="42"/><circle class="g-value" cx="50" cy="50" r="42" transform="rotate(-90 50 50)" stroke-dasharray="263.89" stroke-dashoffset="263.89"/></svg><span class="g-read"><strong id="gpu">—</strong><small>GPU</small></span></div>
+        <div class="gauge" id="gauge-ram"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="g-track" cx="50" cy="50" r="42"/><circle class="g-value" cx="50" cy="50" r="42" transform="rotate(-90 50 50)" stroke-dasharray="263.89" stroke-dashoffset="263.89"/></svg><span class="g-read"><strong id="ram">—</strong><small>RAM</small></span></div>
+      </div>
+      <dl class="pc-stats">
+        <div><dt>Temp</dt><dd id="temp">—</dd></div>
+        <div><dt>Uptime</dt><dd id="uptime">—</dd></div>
+        <div><dt>Sampled</dt><dd id="pc-sampled">—</dd></div>
+      </dl>
       <div class="spark" aria-hidden="true"><svg viewBox="0 0 200 32" preserveAspectRatio="none"><polyline id="cpu-spark" points=""/></svg><span id="spark-label" class="spark-label">CPU history · no samples</span></div>
-      <p id="pc-message" class="pc-message">Pair the read-only companion for live CPU and memory.</p>
-      <div class="pc-actions" role="group" aria-label="PC controls, disabled">
-        <svg aria-hidden="true"><use href="#i-lock"/></svg><button type="button" disabled>Lock</button><button type="button" disabled>Sleep</button><button type="button" disabled>Shut down</button><button type="button" disabled>Launch</button>
+      <p id="pc-message" class="pc-message">Pair the companion for live telemetry.</p>
+      <div class="pc-controls" role="group" aria-labelledby="pc-controls-label">
+        <p id="pc-controls-label" class="controls-label"><svg aria-hidden="true"><use href="#i-lock"/></svg>Controls locked · backend pending</p>
+        <div class="control-row">
+          <button type="button" disabled><svg aria-hidden="true"><use href="#i-lock"/></svg>Lock</button>
+          <button type="button" disabled><svg aria-hidden="true"><use href="#i-moon"/></svg>Sleep</button>
+          <button type="button" disabled><svg aria-hidden="true"><use href="#i-restart"/></svg>Restart</button>
+          <button type="button" disabled><svg aria-hidden="true"><use href="#i-power"/></svg>Shut down</button>
+          <button type="button" disabled><svg aria-hidden="true"><use href="#i-app"/></svg>Launch</button>
+        </div>
       </div>
     </article>
 
@@ -191,7 +225,7 @@
         <li id="sys-net"><span>Network</span><b>—</b></li>
         <li id="sys-weather"><span>Weather feed</span><b>—</b></li>
         <li id="sys-cache"><span>Offline shell</span><b>—</b></li>
-        <li id="sys-pc"><span>PC companion</span><b>—</b></li>
+        <li id="sys-alarm"><span>Alarm sound</span><b>—</b></li>
         <li id="sys-store"><span>Storage</span><b>—</b></li>
       </ul>
     </article>
@@ -200,13 +234,14 @@
   <nav class="dock" aria-label="Command dock">
     <button id="tasks-open" class="dock-btn" type="button" aria-label="Open focus tasks"><svg aria-hidden="true"><use href="#i-focus"/></svg><span>Focus</span><b id="task-count" class="badge">0</b></button>
     <button id="calendar-open" class="dock-btn" type="button" aria-label="Open calendar"><svg aria-hidden="true"><use href="#i-calendar"/></svg><span>Calendar</span></button>
+    <button id="alarms-open" class="dock-btn" type="button" aria-label="Open alarms"><svg aria-hidden="true"><use href="#i-bell"/></svg><span>Alarms</span><b id="alarm-count" class="badge zero">0</b></button>
     <span class="dock-sep" aria-hidden="true"></span>
     <a class="dock-btn ext" href="https://calendar.google.com" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="#i-calendar"/></svg><span>Google Cal</span></a>
     <a class="dock-btn ext" href="https://outlook.live.com" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="#i-mail"/></svg><span>Outlook</span></a>
     <a class="dock-btn ext" href="https://github.com" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="#i-code"/></svg><span>GitHub</span></a>
     <a class="dock-btn ext" href="https://www.youtube.com" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="#i-play"/></svg><span>YouTube</span></a>
     <span class="dock-sep" aria-hidden="true"></span>
-    <button id="export" class="dock-btn" type="button" aria-label="Back up tasks and events"><svg aria-hidden="true"><use href="#i-backup"/></svg><span>Backup</span></button>
+    <button id="export" class="dock-btn" type="button" aria-label="Back up tasks, events and alarms"><svg aria-hidden="true"><use href="#i-backup"/></svg><span>Backup</span></button>
     <button id="settings-open" class="dock-btn" type="button" aria-label="Open settings"><svg aria-hidden="true"><use href="#i-settings"/></svg><span>Settings</span></button>
   </nav>
 </main>
@@ -241,8 +276,102 @@
   </div>
 </dialog>
 
+<dialog id="alarms-dialog" class="panel panel-alarms" aria-labelledby="alarms-title">
+  <form method="dialog" class="panel-head"><p class="label"><span class="idx">A</span><span id="alarms-title">Alarms</span><span class="label-sub">Stored on this iPad</span></p><button class="close" aria-label="Close alarms"><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
+  <div class="panel-body">
+    <div class="alarm-limits" role="note">
+      <p><b>A supplementary desk alarm, not a guaranteed wake-up.</b> JANGE rings only while it is open and in front on this iPad with the screen on. Keep important alarms on your iPhone. iPadOS pauses web pages in the background, behind another app or when the iPad locks; an alarm due then cannot sound and is shown as missed.</p>
+      <div class="limits-row">
+        <span id="sound-status" class="status-chip off">Sound locked</span>
+        <button id="sound-test" class="ghost small" type="button">Test sound</button>
+        <span id="wake-status" class="status-chip off">Screen may sleep</span>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Alarm type">
+      <button id="tab-alarms" class="tab" type="button" role="tab" aria-selected="true" aria-controls="alarm-list-view">Alarms</button>
+      <button id="tab-shifts" class="tab" type="button" role="tab" aria-selected="false" aria-controls="shift-view">Shifts</button>
+    </div>
+    <div id="alarm-list-view" role="tabpanel" aria-labelledby="tab-alarms">
+      <div class="alarm-toolbar"><button id="alarm-new" class="primary wide-btn" type="button"><svg aria-hidden="true"><use href="#i-plus"/></svg>New alarm</button></div>
+      <ul id="alarm-list" class="alarm-list"></ul>
+      <p id="alarm-empty" class="empty">No alarms yet. Add one for either city's time.</p>
+      <p class="dialog-notice alarm-notice" data-notice role="status"></p>
+    </div>
+    <div id="shift-view" role="tabpanel" aria-labelledby="tab-shifts" hidden>
+      <p id="shift-next" class="shift-next">No upcoming shift alarm.</p>
+      <div class="shift-settings">
+        <div class="switch-row"><span id="shift-switch-label">Shift alarms</span><button id="shift-switch" class="switch" type="button" role="switch" aria-checked="true" aria-labelledby="shift-switch-label"></button></div>
+        <div class="af-grid">
+          <div class="af-field"><label for="shift-prep">Preparation (minutes)</label><input id="shift-prep" type="number" inputmode="numeric" min="0" max="240" step="5" value="60"></div>
+          <div class="af-field"><label for="shift-commute">Commute (minutes)</label><input id="shift-commute" type="number" inputmode="numeric" min="0" max="240" step="5" value="30"></div>
+        </div>
+        <div class="af-grid">
+          <fieldset class="af-set"><legend>Snooze</legend><div class="segmented"><label><input type="radio" name="shift-snooze" value="5"> 5 min</label><label><input type="radio" name="shift-snooze" value="10" checked> 10</label><label><input type="radio" name="shift-snooze" value="15"> 15</label></div></fieldset>
+          <fieldset class="af-set"><legend>Sound</legend><div class="segmented"><label><input type="radio" name="shift-sound" value="chime" checked> Chime</label><label><input type="radio" name="shift-sound" value="soft"> Soft</label><label><input type="radio" name="shift-sound" value="silent"> Visual</label></div></fieldset>
+        </div>
+      </div>
+      <div class="alarm-toolbar shift-toolbar">
+        <label class="ghost file-btn" for="roster-file">Import roster (.ics)</label><input id="roster-file" class="sr-only" type="file" accept=".ics,text/calendar">
+        <button id="shift-new" class="primary wide-btn" type="button"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add shift</button>
+      </div>
+      <div id="shift-issues" class="shift-issues" role="status" hidden></div>
+      <ul id="shift-list" class="shift-list"></ul>
+      <p id="shift-empty" class="empty">No shifts yet. Add your shifts or import your roster calendar; alarms are calculated from each shift&#8217;s start time.</p>
+      <p class="dialog-notice shift-notice" data-notice role="status"></p>
+      <form id="shift-form" class="alarm-form" hidden>
+        <h3 id="shift-form-title">Add shift</h3>
+        <div class="af-grid">
+          <div class="af-field"><label for="shift-date">Date</label><input id="shift-date" type="date" required></div>
+          <div class="af-field"><label for="shift-note">Note</label><input id="shift-note" maxlength="80" placeholder="e.g. Terminal 3" autocomplete="off"></div>
+        </div>
+        <fieldset class="af-set"><legend>Type</legend><div class="segmented shift-types"><label><input type="radio" name="shift-type" value="morning" checked> Morning</label><label><input type="radio" name="shift-type" value="evening"> Evening</label><label><input type="radio" name="shift-type" value="night"> Night</label><label><input type="radio" name="shift-type" value="shift"> Other</label><label><input type="radio" name="shift-type" value="off"> Off</label><label><input type="radio" name="shift-type" value="holiday"> Holiday</label><label><input type="radio" name="shift-type" value="travel"> Travel</label></div></fieldset>
+        <div class="af-grid">
+          <div class="af-field"><label for="shift-start">Shift start</label><input id="shift-start" type="time"></div>
+          <div class="af-field"><label for="shift-end">Shift end (optional)</label><input id="shift-end" type="time"></div>
+        </div>
+        <fieldset class="af-set"><legend>Shift time zone</legend><div class="segmented"><label><input type="radio" name="shift-zone" value="Asia/Dubai" checked> Dubai</label><label><input type="radio" name="shift-zone" value="Asia/Kathmandu"> Kathmandu</label></div></fieldset>
+        <fieldset class="af-set"><legend>Alarm for this shift</legend>
+          <div class="segmented"><label><input type="radio" name="shift-alarm" value="auto" checked> Calculated</label><label><input type="radio" name="shift-alarm" value="custom"> Custom time</label><label><input type="radio" name="shift-alarm" value="off"> Off</label></div>
+          <div class="af-field shift-alarm-time"><label for="shift-alarm-time">Custom alarm time</label><input id="shift-alarm-time" type="time"></div>
+        </fieldset>
+        <p class="af-summary">Working shifts need a start time; JANGE never guesses one. Days off, holidays and travel have no alarm.</p>
+        <div class="line"><button class="primary wide" type="submit">Save shift</button><button type="button" id="shift-cancel" class="ghost">Cancel</button></div>
+      </form>
+    </div>
+    <form id="alarm-form" class="alarm-form" hidden>
+      <h3 id="alarm-form-title">New alarm</h3>
+      <div class="af-grid">
+        <div class="af-field"><label for="alarm-time">Time</label><input id="alarm-time" type="time" required value="07:00"></div>
+        <div class="af-field"><label for="alarm-label">Label</label><input id="alarm-label" maxlength="60" placeholder="Alarm" autocomplete="off"></div>
+      </div>
+      <fieldset class="af-set"><legend>Time zone</legend>
+        <div class="segmented"><label><input type="radio" name="alarm-zone" value="Asia/Dubai" checked> Dubai</label><label><input type="radio" name="alarm-zone" value="Asia/Kathmandu"> Kathmandu</label></div>
+      </fieldset>
+      <fieldset class="af-set"><legend>Repeat</legend>
+        <div class="repeat-presets"><button type="button" data-preset="once">Once</button><button type="button" data-preset="daily">Daily</button><button type="button" data-preset="weekdays">Weekdays</button><button type="button" data-preset="weekends">Weekends</button></div>
+        <div class="day-chips"><button type="button" class="day" data-day="1" aria-pressed="false" aria-label="Monday">M</button><button type="button" class="day" data-day="2" aria-pressed="false" aria-label="Tuesday">T</button><button type="button" class="day" data-day="3" aria-pressed="false" aria-label="Wednesday">W</button><button type="button" class="day" data-day="4" aria-pressed="false" aria-label="Thursday">T</button><button type="button" class="day" data-day="5" aria-pressed="false" aria-label="Friday">F</button><button type="button" class="day" data-day="6" aria-pressed="false" aria-label="Saturday">S</button><button type="button" class="day" data-day="7" aria-pressed="false" aria-label="Sunday">S</button></div>
+        <p id="alarm-repeat-summary" class="af-summary">Once</p>
+      </fieldset>
+      <div class="af-grid">
+        <fieldset class="af-set"><legend>Snooze</legend><div class="segmented"><label><input type="radio" name="alarm-snooze" value="5"> 5 min</label><label><input type="radio" name="alarm-snooze" value="10" checked> 10</label><label><input type="radio" name="alarm-snooze" value="15"> 15</label></div></fieldset>
+        <fieldset class="af-set"><legend>Sound</legend><div class="segmented"><label><input type="radio" name="alarm-sound" value="chime" checked> Chime</label><label><input type="radio" name="alarm-sound" value="soft"> Soft</label><label><input type="radio" name="alarm-sound" value="silent"> Visual</label></div></fieldset>
+      </div>
+      <div class="line"><button class="primary wide" type="submit">Save alarm</button><button type="button" id="alarm-cancel" class="ghost">Cancel</button></div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="alarm-ring" class="ring-overlay" role="alertdialog" aria-labelledby="ring-time" aria-describedby="ring-label ring-note">
+  <div class="ring-visual" aria-hidden="true"><span class="rv rv1"></span><span class="rv rv2"></span><span class="rv rv3"></span></div>
+  <p class="ring-kicker"><svg class="ring-emblem" viewBox="0 0 200 200" aria-hidden="true"><use href="#jange-emblem"/></svg>Alarm · <span id="ring-zone">Dubai</span> time</p>
+  <p id="ring-time" class="ring-time">--:--</p>
+  <p id="ring-label" class="ring-label">Alarm</p>
+  <p id="ring-note" class="ring-note"></p>
+  <div class="ring-actions"><button id="ring-snooze" class="ring-btn snooze" type="button">Snooze</button><button id="ring-dismiss" class="ring-btn dismiss" type="button">Dismiss</button></div>
+</dialog>
+
 <dialog id="settings" class="panel" aria-labelledby="settings-title">
-  <form method="dialog" class="panel-head"><p class="label"><span class="idx">S</span><span id="settings-title">Desk settings</span></p><button class="close" aria-label="Close settings"><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
+  <form method="dialog" class="panel-head"><p class="label"><span class="idx">S</span><span id="settings-title">JANGE settings</span></p><button class="close" aria-label="Close settings"><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
   <div class="panel-body settings-body">
     <p>Dubai and Kathmandu clocks share the device clock. The calendar uses Dubai time. Keep <b>Settings → General → Date &amp; Time → Set Automatically</b> on.</p>
     <h3>Motion</h3>
@@ -250,12 +379,26 @@
       <label><input type="radio" name="motion" value="full" checked> Cinematic</label>
       <label><input type="radio" name="motion" value="calm"> Calm</label>
     </div>
-    <p class="muted">Calm stops the rotating rings and breathing glow. The seconds bezel and status changes remain. Reduce Motion in iPad settings turns all motion off.</p>
+    <p class="muted">Calm stops the rotating rings and breathing light. The seconds hand, flips and status changes remain. Reduce Motion in iPad settings turns all motion off.</p>
     <h3>Clock format</h3>
     <div class="segmented" role="radiogroup" aria-label="Clock format">
       <label><input type="radio" name="clock" value="24" checked> 24-hour</label>
       <label><input type="radio" name="clock" value="12"> 12-hour</label>
     </div>
+    <h3>Weather location</h3>
+    <div class="segmented" role="radiogroup" aria-label="Weather location">
+      <label><input type="radio" name="loc-mode" value="auto" checked> Current location</label>
+      <label><input type="radio" name="loc-mode" value="manual"> Chosen city</label>
+    </div>
+    <p id="loc-status" class="muted">Uses the iPad&#8217;s location only when you allow it, rounded to about 5 km. JANGE checks it when opened or brought back, never in the background.</p>
+    <form id="city-form" class="entry city-form"><label class="sr-only" for="city-input">Search a city</label><input id="city-input" maxlength="60" placeholder="Search a city" autocomplete="off"><button class="primary" type="submit">Search</button></form>
+    <div class="city-quick"><button type="button" class="text-btn" data-city="sharjah">Sharjah</button><button type="button" class="text-btn" data-city="dubai">Dubai</button><button type="button" class="text-btn" data-city="kathmandu">Kathmandu</button></div>
+    <ul id="city-results" class="city-results"></ul>
+    <h3>Display</h3>
+    <div class="switch-row"><span id="awake-label">Keep the screen awake while JANGE is open</span><button id="awake-switch" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="awake-label"></button></div>
+    <p id="awake-note" class="muted">Uses the browser's Screen Wake Lock when available. Otherwise set Settings → Display &amp; Brightness → Auto-Lock → Never for desk use.</p>
+    <h3>Dial key</h3>
+    <p class="core-legend dial-key"><span class="lg dxb">Dubai time</span><span class="lg ktm">Kathmandu time</span><span class="lg alarm">Alarm</span><span class="lg sun">Daylight at the weather location</span><span class="lg focus">Focus tasks done</span></p>
     <h3>Trusted PC monitoring</h3>
     <p class="muted">Optional: connect the read-only companion over Tailscale HTTPS. Credentials stay in memory and are cleared on reload. A failed connection means unreachable, not necessarily powered off.</p>
     <form id="connect-form" class="stack">
@@ -267,12 +410,14 @@
     </form>
     <p id="connect-result" role="status"></p>
     <h3>Local data</h3>
-    <p class="muted">Tasks and events stay in this Safari installation. Keep a JSON backup for recovery.</p>
-    <label for="import-file">Restore a Jarvis backup (merges with existing items)</label>
+    <p class="muted">Tasks, events and alarms stay in this Safari installation. Keep a JSON backup for recovery.</p>
+    <label for="import-file">Restore a JANGE or Jarvis backup (merges with existing items)</label>
     <input id="import-file" type="file" accept="application/json,.json">
     <p id="data-result" class="dialog-notice" data-notice role="status"></p>
     <h3>Install on iPad</h3>
-    <p class="muted">Open the live site in Safari → Share → Add to Home Screen → Add. Open Jarvis once online so offline files can be saved.</p>
+    <p class="muted">Open the live site in Safari → Share → Add to Home Screen → Add. Open JANGE once online so offline files can be saved. The home-screen name and icon update when you add it again.</p>
+    <h3>Assistant</h3>
+    <p class="muted">Voice activation (“Hey Jange”) is not enabled. It needs a reliable on-device wake-word engine and will be added separately; JANGE never listens in the background today.</p>
   </div>
 </dialog>
 </body>
