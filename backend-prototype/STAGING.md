@@ -1,5 +1,17 @@
 # Hostinger staging evidence and installation boundary
 
+## Disposable verification preparation — 2026-10-16
+
+The owner created the separate `jarvis_verify` database and `jvverify` user. Only this empty disposable database received the current five-table schema, including immutable subject/workspace and restore-generation columns. Authenticated SQL verified MariaDB 11.8.9, all five tables using InnoDB/utf8mb4_bin, and an INSERT/UPDATE/ROLLBACK drill leaving zero fixture rows. The older staging database was preserved.
+
+The new user's visible DDL/routine permissions were removed through its scoped permission form. A subsequent SQL query found SELECT, INSERT, UPDATE, DELETE **plus DELETE HISTORY and SHOW CREATE ROUTINE**; all showed IS_GRANTABLE=NO. The panel's four checked boxes therefore do not establish exactly four effective grants. These two additional MariaDB privileges remain an explicit least-privilege limitation to assess; no global-grant absence has yet been demonstrated on Hostinger. The private runner reports the actual schema grant list and refuses unexpected grants/global privileges.
+
+A reviewed CLI-only `tests/hosted.php` fixture and unchanged backend core were prepared in a new owner-only (0700) directory outside `public_html`. Its password file is owner-only (0600), initially empty; the owner must enter the existing verification user's password directly in File Manager, never chat/Git. A server-generated key will remain private. The runner refuses non-CLI execution, unexpected database names/grants, a previously claimed run or any nonempty application table before initialization. It writes only synthetic records, fails closed and reports no credentials or raw exceptions. No public runner or API exception was installed. No new cron has yet been activated.
+
+The exact runner passed on disposable local PHP 8.3.35/MariaDB 11.8.9, including encryption/tamper, idempotency, deletion conflicts, generation rejection, CSRF/session expiry/revocation and a two-connection InnoDB lock check. Repeat execution preserved its original report. The existing independent-writer 200/409 and encrypted new-key restore drills also passed again. These are local tests, **not hosted PHP/PDO successes**. Authenticated hosted SQL checks do not verify application cookies/HTTPS authentication, real hosted PDO, browser multi-tab behavior or hosted backup/restore.
+
+At 03:49 UTC, certificate-verified HTTPS checks returned Glow root/www 200 and staging 403. Production, other website files, email/DNS and Claude's frontend were not changed. Historical sections below describe earlier gates; this dated update supersedes their statements about the verification database not yet existing.
+
 ## Native sodium enabled — 2026-10-16 03:32 UTC
 
 The owner subsequently instructed "enable sodium and go on, we will revert if needed", superseding the worker-uncertainty hold for the selected staging website. Only sodium was selected on jarvis-staging.glowwithimane.com's extension page: a before/after comparison of all 128 controls found exactly one change. Save completed after dismissing a feedback overlay; no PHP version/options/reset action was used. Authenticated PHP Info then reported PHP 8.3.35, sodium support enabled and libsodium headers/library 1.0.18. This is native runtime evidence, not merely a checked UI box. Runtime encryption roundtrip/application integration remains a separate test.

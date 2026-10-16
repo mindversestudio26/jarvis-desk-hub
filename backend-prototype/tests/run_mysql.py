@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shutil
 import socket
 import subprocess
 import tempfile
@@ -49,8 +50,24 @@ with tempfile.TemporaryDirectory(prefix='jange-mariadb-') as directory:
             return value.stdout.decode('utf-8')
         run('tests/mysql_contract.php', ['bootstrap'])
         env['JARVIS_DSN'] = prefix + 'dbname=' + name + ';charset=utf8mb4'
-        run('bin/init.php')
+        # Exercise the exact private hosted runner against an empty real database.
+        migrated = subprocess.run(php + ['-r', "require 'src/core.php';$db=database(config());$db->exec(file_get_contents('schema.mysql.sql'));"], env=env, cwd=ROOT, capture_output=True)
+        assert migrated.returncode == 0
         runtime = dict(env, JARVIS_DB_USER=user, JARVIS_DB_PASSWORD=runtime_password)
+        (private / 'public_html').mkdir()
+        release = private / 'private-runner'
+        (release / 'src').mkdir(parents=True)
+        (release / 'tests').mkdir()
+        shutil.copyfile(ROOT / 'src/core.php', release / 'src/core.php')
+        shutil.copyfile(ROOT / 'tests/hosted.php', release / 'tests/hosted.php')
+        hosted = subprocess.run(php + [str(release / 'tests/hosted.php')], env=runtime, cwd=release, capture_output=True)
+        assert hosted.returncode == 0, hosted.stdout.decode('utf-8', errors='replace')
+        hosted_result = json.loads(hosted.stdout)
+        assert hosted_result['result'] == 'PASS'
+        saved_result = (release / 'result.json').read_bytes()
+        repeated = subprocess.run(php + [str(release / 'tests/hosted.php')], env=runtime, cwd=release, capture_output=True)
+        assert repeated.returncode == 0 and b'already claimed' in repeated.stdout
+        assert (release / 'result.json').read_bytes() == saved_result
         contract = json.loads(run('tests/mysql_contract.php', ['contract'], runtime))
         original = json.loads(run('tests/mysql_contract.php', ['inspect'], runtime))
         binding = {key: original['owner'][0][key] for key in ['subject_id', 'workspace_id', 'generation']}
@@ -88,6 +105,7 @@ with tempfile.TemporaryDirectory(prefix='jange-mariadb-') as directory:
         contract.update(result='PASS', scope='Disposable Windows loopback MariaDB; not Hostinger', php=version)
         output = Path(os.environ.get('JARVIS_TEST_OUTPUT', ROOT / 'test-results'))
         output.mkdir(parents=True, exist_ok=True)
+        (output / 'hosted-runner-local-results.json').write_text(json.dumps(hosted_result, indent=2), encoding='utf-8')
         (output / 'mysql-results.json').write_text(json.dumps(contract, indent=2), encoding='utf-8')
         print(json.dumps(contract, indent=2))
     finally:
