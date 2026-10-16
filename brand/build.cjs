@@ -141,8 +141,6 @@ const files = {
     `<g transform="translate(10 10) scale(.5)">${ring(94, '#111111')}${inRing(.78, emblemBody({ tan: '#ffffff', line: '#111111', mask: '#111111', glint: '#ffffff', facets: false }))}</g>` +
     `<g transform="translate(128 30) scale(.62)">${wordmarkBody('#111111')}</g>` +
     `<text x="128" y="94" font-family="${DEVANAGARI}" font-size="20" fill="#111111">जङ्गे</text>`, 'JANGE — जङ्गे, monochrome'),
-  // Favicon: head only, larger, no ring, so it survives 16–32 px.
-  'icon.svg': svg('0 0 200 200', `<rect width="200" height="200" rx="44" fill="${C.obsidian}"/>` + inRing(.9, emblemBody({ tan: C.gold, mask: C.obsidian, glint: C.cyan, facets: false })), 'JANGE'),
 };
 
 /* ---------------------------------------------------------------- concepts */
@@ -192,5 +190,7 @@ async function pngs() {
   }
   await browser.close();
 }
-if (process.argv.includes('--png')) pngs().catch(e => { console.error(e); process.exit(1); });
+// The app icons now come from the realistic emblem (brand/realistic/export.py); the old
+// vector PNG step is kept for the record but never overwrites them.
+if (process.argv.includes('--png')) console.log('Icons come from brand/realistic/export.py now; --png is retired.');
 module.exports = { G, WM, emblemBody, wordmarkBody };

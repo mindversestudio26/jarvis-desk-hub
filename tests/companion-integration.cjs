@@ -15,7 +15,7 @@ const { spawn } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const ORIGIN = 'https://mindversestudio26.github.io';
 const HOST = 'jange-test-pc.example.ts.net';
-const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
+const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.webp': 'image/webp' };
 const freePort = () => new Promise(resolve => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); }); });
 async function until(fn, label) { for (let n = 0; n < 150; n++) { if (await fn()) return; await new Promise(r => setTimeout(r, 100)); } throw Error('Timed out: ' + label); }
 

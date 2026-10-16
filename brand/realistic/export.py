@@ -19,6 +19,11 @@ def head(img, size, sharpen=True):
     """Head only: ear tips to chin, square, for the 30–46 px placements and icons."""
     c = img.crop((int(80 * U), int(50 * U), int(920 * U), int(890 * U)))  # ear tips to chin, square
     c = c.resize((size, size), Image.LANCZOS)
+    # The crop cuts through the ruff: fade its last 12 % so no hard edge shows under the badge.
+    fade = Image.linear_gradient("L").resize((size, int(size * 0.12)))
+    mask = Image.new("L", (size, size), 255)
+    mask.paste(fade.transpose(Image.FLIP_TOP_BOTTOM), (0, size - fade.height))
+    c.putalpha(Image.composite(c.getchannel("A"), Image.new("L", (size, size), 0), mask))
     return c.filter(ImageFilter.UnsharpMask(radius=0.8, percent=60, threshold=1)) if sharpen else c
 
 
@@ -57,7 +62,7 @@ def palette(img):
 palette(icon(512)).save(OUT / "icon-512.png", optimize=True)
 icon(192).save(OUT / "icon-192.png", optimize=True)
 icon(180, ring=False, emblem_frac=0.9).save(OUT / "icon-180.png", optimize=True)            # iOS rounds the corners
-palette(icon(512, ring=False, emblem_frac=0.70)).save(OUT / "icon-maskable-512.png", optimize=True)  # inside the 80 % safe zone
+palette(icon(512, ring=False, emblem_frac=0.60)).save(OUT / "icon-maskable-512.png", optimize=True)  # inside the 80 % safe zone
 icon(32, ring=False, emblem_frac=1.0).save(OUT / "favicon-32.png", optimize=True)
 for f in sorted(OUT.iterdir()):
     print(f"{f.name:28} {f.stat().st_size:>8,} bytes  {Image.open(f).size}")

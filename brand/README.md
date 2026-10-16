@@ -39,7 +39,6 @@ The first sketches tapered to a point and looked like a fox. They were redrawn a
 | `jange-lockup-vertical.svg` | Stacked lockup on obsidian |
 | `jange-lockup-mono.svg` | Horizontal monochrome lockup |
 | `concepts/` | The three explored concepts, for the record |
-| `../icon.svg` | Browser favicon (head only, no ring, readable at 16–32 px) |
 | `../icon-180.png` | Apple touch icon (full bleed; iOS rounds the corners) |
 | `../icon-192.png`, `../icon-512.png` | PWA icons (`purpose: any`) |
 | `../icon-maskable-512.png` | PWA maskable icon, inside the 80 % safe zone |
@@ -89,7 +88,7 @@ There are no neon glows and no metallic gradients. The emblem works in a single 
 node brand/build.cjs
 ```
 
-That command writes the SVGs. Add `--png` with `PW` set to a Playwright package to rebuild the PNG icons.
+That command writes the outline-mark SVGs (the 3.1 identity, kept for the record). The app icons and in-app images now come from `realistic/export.py`; `--png` is retired so it cannot overwrite them.
 
 ## Realistic gold emblem (3.2, awaiting approval)
 

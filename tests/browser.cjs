@@ -17,7 +17,7 @@ const oldData = { tasks: [{ id: 'existing-task', text: 'Preserve my existing tas
 const PC = 'https://jarvis-fixture.example.ts.net';
 const results = [];
 let serveBaseline = null;
-const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.ics': 'text/calendar' };
+const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.webp': 'image/webp', '.ics': 'text/calendar' };
 const server = http.createServer((req, res) => {
   const file = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).slice(1) || 'index.html';
   if (file.includes('..') || file.startsWith('.git')) { res.writeHead(403).end(); return; }
@@ -54,6 +54,7 @@ async function checkBrowser(engine, name, baseURL) {
     }, oldData);
     await page.goto(baseURL);
     await until(async () => await page.locator('#temperature').innerText() === '31°');
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('.brand-mark img, .core-avatar img')].map(i => i.complete && i.naturalWidth > 0)), [true, true], 'Emblem images decode');
     await page.clock.pauseAt(new Date('2026-10-16T18:14:59Z'));
 
     // Clocks: one instant, two zones, quarter-hour offset, rollover, hidden pause and resume.
@@ -317,7 +318,9 @@ async function flipTest(engine, name, baseURL) {
         visibleLeaves: tiles.flatMap(t => [...t.querySelectorAll('.leaf')]).filter(l => getComputedStyle(l).visibility === 'visible').length,
       }];
     })));
-    const settled = async () => { await page.waitForTimeout(1500); return read(); };
+    // Leaves land on animationend. Under the paused test clock the app's fallback timer cannot fire,
+    // so wait for the flip to finish (up to 10 s) instead of a fixed 1.5 s that a slow frame overruns.
+    const settled = async () => { await until(async () => { const r = await read(); return ['dubai', 'kathmandu'].every(c => !r[c].flipping.includes('1') && r[c].visibleLeaves === 0); }); return read(); };
     await page.clock.install({ time: new Date('2026-10-16T05:59:51Z') });
     await page.goto(baseURL);
     await page.waitForTimeout(1500);
@@ -377,7 +380,7 @@ async function flipTest(engine, name, baseURL) {
     const calm = await browser.newContext({ viewport: { width: 1080, height: 810 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
     await calm.route('https://api.open-meteo.com/**', route => route.fulfill({ json: fixture }));
     const still = await calm.newPage();
-    await still.clock.install({ time: new Date('2026-10-16T05:59:57Z') });
+    await still.clock.install({ time: new Date('2026-10-16T05:59:50Z') }); // wide margin: a slow cold load must not overrun pauseAt
     await still.goto(baseURL);
     await still.clock.pauseAt(new Date('2026-10-16T05:59:59.5Z'));
     await still.clock.runFor(600);

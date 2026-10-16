@@ -10,7 +10,7 @@ const { QUOTES, forDay } = require('../quotes.js');
 const root = path.resolve(__dirname, '..');
 const out = path.resolve(process.env.JARVIS_TEST_OUTPUT || path.join(root, 'test-results'));
 fs.mkdirSync(out, { recursive: true });
-const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' };
+const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2', '.webp': 'image/webp' };
 const server = http.createServer((req, res) => {
   const file = decodeURIComponent(new URL(req.url, 'http://localhost').pathname).slice(1) || 'index.html';
   if (file.includes('..') || file.startsWith('.git')) { res.writeHead(403).end(); return; }
