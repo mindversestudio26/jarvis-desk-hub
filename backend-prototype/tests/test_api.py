@@ -282,6 +282,16 @@ class API(unittest.TestCase):
         cookie, csrf, _ = self.login()
         op = self.op(text='Backup restoration fixture')
         current = self.call('POST', '/api/v1/sync', op, cookie, csrf)[2]['record']
+        removed = self.op(text='Deleted backup fixture')
+        created = self.call('POST', '/api/v1/sync', removed, cookie, csrf)[2]['record']
+        self.call('POST', '/api/v1/sync', dict(removed, operation_id=str(uuid.uuid4()), base_revision=created['revision'], deleted=True, data=None), cookie, csrf)
+        def durable_rows(filename):
+            connection = sqlite3.connect(filename)
+            try:
+                return {table: connection.execute('SELECT * FROM ' + table + ' ORDER BY 1,2').fetchall() for table in ['owner', 'records', 'operations']}
+            finally:
+                connection.close()
+        original_rows = durable_rows(self.database)
         archive = Path(self.temp.name) / 'fixture.backup'
         command = self.php + [str(ROOT / 'bin/backup.php')]
         result = subprocess.run(command + ['export', str(archive)], env=self.env, cwd=ROOT, capture_output=True)
@@ -294,7 +304,10 @@ class API(unittest.TestCase):
         db = sqlite3.connect(target)
         self.assertEqual(db.execute('SELECT revision FROM records WHERE id=?', (op['id'],)).fetchone()[0], current['revision'])
         self.assertEqual(db.execute('SELECT COUNT(*) FROM sessions').fetchone()[0], 0)
+        self.assertEqual(db.execute('SELECT deleted FROM records WHERE id=?', (removed['id'],)).fetchone()[0], 1)
         db.close()
+        self.assertEqual(durable_rows(target), original_rows)
+        self.assertEqual(durable_rows(self.database), original_rows)
         self.assertNotEqual(subprocess.run(command + ['restore-local', str(archive)], env=env, cwd=ROOT, capture_output=True).returncode, 0)
         corrupt = Path(self.temp.name) / 'corrupt.backup'
         raw = bytearray(archive.read_bytes())
@@ -337,6 +350,70 @@ class API(unittest.TestCase):
         result = subprocess.run(self.php + ['-r', code], env=self.env, cwd=ROOT, capture_output=True)
         self.assertEqual(result.returncode, 7)
         self.assertEqual(result.stdout, b'MySQL requires explicit utf8mb4')
+
+    def test_28_duplicate_mysql_charsets_rejected(self):
+        code = "require 'src/core.php';try {database(['dsn'=>'mysql:host=127.0.0.1;dbname=fixture;charset=utf8mb4;charset=latin1']);}catch(RuntimeException $e){echo $e->getMessage();exit(7);}"
+        result = subprocess.run(self.php + ['-r', code], env=self.env, cwd=ROOT, capture_output=True)
+        self.assertEqual(result.returncode, 7)
+        self.assertEqual(result.stdout, b'MySQL requires explicit utf8mb4')
+
+    def test_29_retry_cannot_resurrect_deleted_record(self):
+        cookie, csrf, _ = self.login()
+        op = self.op()
+        initial = self.call('POST', '/api/v1/sync', op, cookie, csrf)[2]['record']
+        deletion = dict(op, operation_id=str(uuid.uuid4()), base_revision=initial['revision'], deleted=True, data=None)
+        tombstone = self.call('POST', '/api/v1/sync', deletion, cookie, csrf)[2]['record']
+        replay = self.call('POST', '/api/v1/sync', op, cookie, csrf)
+        self.assertEqual(replay[0], 200)
+        self.assertEqual(replay[2]['record'], tombstone)
+        self.assertTrue(tombstone['deleted'])
+
+    def test_30_cached_session_rechecked_inside_mutation(self):
+        _, _, sid = self.login()
+        code = "require 'src/core.php';$c=config();$db=database($c);$s=query($db,'SELECT * FROM sessions WHERE id=?',[getenv('JARVIS_TEST_SESSION')])->fetch();query($db,'DELETE FROM sessions WHERE id=?',[$s['id']]);try{mutate($db,$c,json_decode(getenv('JARVIS_TEST_OPERATION'),true),$s);echo 'unexpected';}catch(ApiError $e){echo $e->status;}"
+        result = subprocess.run(self.php + ['-r', code], env=dict(self.env, JARVIS_TEST_SESSION=sid, JARVIS_TEST_OPERATION=json.dumps(self.op())), cwd=ROOT, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, b'401')
+
+    def test_31_ciphertext_context_swap_fails_closed(self):
+        cookie, csrf, _ = self.login()
+        a, b = self.op(), self.op()
+        self.call('POST', '/api/v1/sync', a, cookie, csrf)
+        self.call('POST', '/api/v1/sync', b, cookie, csrf)
+        db = sqlite3.connect(self.database)
+        box_a = db.execute('SELECT box FROM records WHERE id=?', (a['id'],)).fetchone()[0]
+        box_b = db.execute('SELECT box FROM records WHERE id=?', (b['id'],)).fetchone()[0]
+        try:
+            db.execute('UPDATE records SET box=? WHERE id=?', (box_b, a['id']))
+            db.commit()
+            status, _, data = self.call('GET', '/api/v1/sync', cookie=cookie)
+            self.assertEqual(status, 503)
+            self.assertEqual(data, {'error': 'Service unavailable; check server configuration'})
+        finally:
+            db.execute('UPDATE records SET box=? WHERE id=?', (box_a, a['id']))
+            db.commit()
+            db.close()
+
+    def test_32_hostinger_public_html_path_guard_and_private_backup(self):
+        release = Path(self.temp.name) / 'hostinger-layout'
+        (release / 'src').mkdir(parents=True)
+        (release / 'bin').mkdir()
+        (release / 'public_html').mkdir()
+        shutil.copyfile(ROOT / 'src/core.php', release / 'src/core.php')
+        shutil.copyfile(ROOT / 'bin/backup.php', release / 'bin/backup.php')
+        unsafe = dict(self.env, JARVIS_DSN='sqlite:' + str(release / 'public_html/private.sqlite'))
+        result = subprocess.run(self.php + ['-r', "require 'src/core.php';config();"], env=unsafe, cwd=release, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((release / 'public_html/private.sqlite').exists())
+        public_archive = release / 'public_html/unsafe.backup'
+        command = self.php + [str(release / 'bin/backup.php'), 'export']
+        rejected = subprocess.run(command + [str(public_archive)], env=self.env, cwd=release, capture_output=True)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertFalse(public_archive.exists())
+        private_archive = release / 'private.backup'
+        accepted = subprocess.run(command + [str(private_archive)], env=self.env, cwd=release, capture_output=True)
+        self.assertEqual(accepted.returncode, 0, accepted.stderr)
+        self.assertTrue(private_archive.is_file())
 
 if __name__ == '__main__':
     unittest.main()

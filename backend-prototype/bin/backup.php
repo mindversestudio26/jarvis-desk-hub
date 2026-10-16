@@ -6,8 +6,7 @@ require dirname(__DIR__).'/src/core.php';
 const MAX_BACKUP_BYTES=134217728; // Same bound for export and restore.
 try {
     $c=config();$db=database($c);$action=$argv[1]??'';$path=$argv[2]??'';
-    $directory=realpath(dirname($path));$public=realpath(dirname(__DIR__).'/public');
-    if (!$directory || !$public || str_starts_with(strtolower($directory).DIRECTORY_SEPARATOR,strtolower($public).DIRECTORY_SEPARATOR)) throw new RuntimeException('Private backup path required');
+    private_directory(dirname($path));
     $tables=['owner','records','operations'];
     if ($action==='export') {
         $data=transaction($db,function() use($db,$tables) {

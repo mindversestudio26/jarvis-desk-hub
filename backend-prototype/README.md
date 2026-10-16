@@ -4,6 +4,8 @@ Current backend hardening, updated test evidence, API retry semantics and stagin
 
 Actual Hostinger staging provisioning and evidence, including remaining deployment blockers: [STAGING.md](STAGING.md). The staging URL currently denies access; it is not a verified running backend.
 
+Claude's implemented v1 integration boundary, error handling and unresolved workspace/restore gates: [API-CONTRACT.md](API-CONTRACT.md).
+
 This directory is additive. It does not change Jarvis's dashboard, service worker, storage key, Pages deployment or Claude's UI. Nothing here has been deployed to Hostinger. The console is a test harness, not a replacement design.
 
 ## Implemented

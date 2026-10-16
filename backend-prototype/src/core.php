@@ -6,6 +6,21 @@ final class ApiError extends RuntimeException {
     public function __construct(public int $status, string $message, public array $details = []) { parent::__construct($message); }
 }
 
+function private_directory(string $directory): string {
+    $resolved=realpath($directory);
+    if (!$resolved) throw new RuntimeException('Existing private directory required');
+    $known=false;
+    foreach ([dirname(__DIR__).'/public',dirname(__DIR__).'/public_html',$_SERVER['DOCUMENT_ROOT']??''] as $candidate) {
+        $root=$candidate!==''?realpath($candidate):false;
+        if (!$root) continue;
+        $known=true;
+        $prefix=strtolower(rtrim($root,'/\\')).DIRECTORY_SEPARATOR;
+        if (str_starts_with(strtolower(rtrim($resolved,'/\\')).DIRECTORY_SEPARATOR,$prefix)) throw new RuntimeException('Path must be outside document roots');
+    }
+    if (!$known) throw new RuntimeException('Document root could not be verified');
+    return $resolved;
+}
+
 function setting(string $name): string {
     $value=getenv($name);
     if ($value!==false) return $value;
@@ -15,10 +30,7 @@ function setting(string $name): string {
         $file=dirname(__DIR__).'/config.local.php';
         if (is_file($file)) {
             $resolved=realpath($file);
-            foreach ([dirname(__DIR__).'/public',dirname(__DIR__).'/public_html',$_SERVER['DOCUMENT_ROOT']??''] as $root) {
-                $root=$root!==''?realpath($root):false;
-                if ($root && str_starts_with(strtolower($resolved),strtolower($root).DIRECTORY_SEPARATOR)) throw new RuntimeException('Configuration must be outside the document root');
-            }
+            private_directory(dirname($resolved));
             $private=require $file;
             if (!is_array($private)) throw new RuntimeException('Invalid private configuration');
         }
@@ -35,9 +47,7 @@ function config(): array {
     $local = setting('JARVIS_LOCAL_DEV') === '1';
     if (!extension_loaded('sodium') || !$key || strlen($key) !== 32 || !$dsn) throw new RuntimeException('Missing secure configuration');
     if (str_starts_with($dsn,'sqlite:')) {
-        $directory=realpath(dirname(substr($dsn,7)));
-        $webroot=realpath(dirname(__DIR__).'/public');
-        if (!$directory || ($webroot && str_starts_with(strtolower($directory).DIRECTORY_SEPARATOR,strtolower($webroot).DIRECTORY_SEPARATOR))) throw new RuntimeException('SQLite must be outside the document root');
+        private_directory(dirname(substr($dsn,7)));
     }
     $url = parse_url($origin);
     if (!$url || !isset($url['host']) || (isset($url['user']) || isset($url['pass'])) || isset($url['query']) || isset($url['fragment']) || !empty($url['path'])) throw new RuntimeException('Invalid origin');
@@ -47,7 +57,10 @@ function config(): array {
 }
 
 function database(array $c): PDO {
-    if (str_starts_with($c['dsn'],'mysql:') && !preg_match('/(?:^mysql:|;)charset=utf8mb4(?:;|$)/',$c['dsn'])) throw new RuntimeException('MySQL requires explicit utf8mb4');
+    if (str_starts_with($c['dsn'],'mysql:')) {
+        $count=preg_match_all('/(?:^mysql:|;)charset=([^;]*)/',$c['dsn'],$charsets);
+        if ($count!==1 || $charsets[1][0]!=='utf8mb4') throw new RuntimeException('MySQL requires explicit utf8mb4');
+    }
     $db = new PDO($c['dsn'], setting('JARVIS_DB_USER') ?: null, setting('JARVIS_DB_PASSWORD') ?: null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES=>false]);
     if ($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') { $db->exec('PRAGMA busy_timeout=5000'); $db->exec('PRAGMA foreign_keys=ON'); }
     return $db;
