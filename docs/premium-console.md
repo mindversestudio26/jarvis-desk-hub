@@ -55,3 +55,13 @@ The original brief requested development-only publication. The owner subsequentl
 The code reviewer used adversarial perspectives for failure handling, maintainability and security. The remaining medium issue was focus loss when a selected calendar date was replaced while its agenda dialog was open. The console now records that date and restores focus to the replacement on close; a Chromium/WebKit regression selects a different date and verifies restoration. Calendar refresh caching, own-zone shift filtering, range boundaries and Calm mode were also corrected before release.
 
 A separate security review found no new injection sinks, credential persistence, control activation, CSP relaxation or tailnet authentication changes. The frontend continues to use textContent for saved user content. These findings do not constitute a new backend or physical-device audit.
+
+## Tactile instruments update — 17 October 2026
+
+Published incrementally at the owner's request. First milestone adds local SVG UAE/Nepal flags, a seconds subdial driven by the existing clock tick, and a Nepali-only date inside the Kathmandu clock (the existing Gregorian update target remains hidden for compatibility).
+
+The second milestone restores the original live JANGE core between weather and shifts. The original task interaction, status and data targets remain intact. Static graphite gradients, champagne bevels, recessed clock faces, raised dock keys and pressed calendar cells provide physical depth without animated blur or WebGL. Core rings pause outside Home and when hidden; Calm and Reduce Motion stop decorative motion, including the busy avatar pulse.
+
+Touch navigation follows horizontal drags using one CSSOM transform per animation frame, direction locking, distance/velocity completion and a spring-back on cancellation. Buttons, controls, dialogs, calendar and nested scroll containers are excluded. Multitouch, backgrounding and navigation reset the gesture; trailing clicks are suppressed. Vertical scrolling and keyboard navigation remain available.
+
+Verification: Chromium and WebKit console layouts across five sizes, dedicated swipe/motion/CSP checks, existing browser clock/persistence/offline update regressions and harmless control integration. Screenshots inspected at 1080 × 810. Physical iPad feel/frame rate still requires on-device use. Windows companion, credentials and Tailscale rules are unchanged by this visual update.

@@ -47,3 +47,7 @@ The browser suite upgrades installed 2.0, 3.0 and hourly-quote releases to the c
 ## Opt-in Windows controls
 
 See docs/windows-controls.md. Run node tests/controls.cjs for Chromium/WebKit with an isolated real HTTP companion and harmless injected executor. Python discovery includes control security and mocked native-adapter tests. Never substitute a live Windows executor in these fixtures.
+
+## Tactile clock/core and swipe verification
+
+`node tests/swipe.cjs` checks Chromium/WebKit horizontal drag, flick, spring-back, vertical-scroll and control exclusions, multitouch/cancellation, hidden-page resets, keyboard navigation, reduced motion, Calm busy-avatar behavior, hidden-core pause and strict CSP. The console suite also checks flags, Kathmandu's Nepali-only visible date, seconds progress and restored core visibility. No real PC commands are executed.

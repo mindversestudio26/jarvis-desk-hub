@@ -13,7 +13,14 @@ const fixture={current:{temperature_2m:31,relative_humidity_2m:45,apparent_tempe
    const ctx=await b.newContext({viewport:{width:1080,height:810},timezoneId:'America/New_York',reducedMotion:'reduce',serviceWorkers:'block',hasTouch:true});await ctx.route('https://api.open-meteo.com/**',r=>r.fulfill({json:fixture}));
    ctx.setDefaultTimeout(10000);const p=await ctx.newPage(),errors=[];console.log(name+': navigation and calendar');p.on('pageerror',e=>errors.push(e.message));await p.clock.install({time:new Date('2026-10-17T08:59:45Z')});await p.goto(base);await p.clock.pauseAt(new Date('2026-10-17T08:59:50Z'));
    const current=()=>p.locator('#hud').getAttribute('data-active-page');const nav=n=>p.locator('[data-page-target="'+n+'"]').click();
-   assert.equal(await current(),'home');assert.equal(await p.locator('#quote-text').textContent(),'“'+forHour('2026-10-17',12).q+'”');await p.clock.runFor(15000);assert.equal(await p.locator('#quote-text').textContent(),'“'+forHour('2026-10-17',13).q+'”');
+   assert.equal(await current(),'home');
+   assert.equal(await p.locator('#kathmandu-date').isVisible(),false,'Kathmandu shows only its Nepali calendar date');
+   assert.match(await p.locator('.console-bs-date').textContent(),/विक्रम संवत्/);
+   assert.equal(await p.locator('.clock-flag').count(),2);
+   assert.equal(await p.locator('#seconds-arc').getAttribute('stroke-dasharray'),'50 60');
+   assert.equal(await p.locator('#core').isVisible(),true,'live focus core restored');
+   assert.equal(await p.locator('#core .ring-a').evaluate(e=>getComputedStyle(e).animationName),'none','reduced motion freezes decorative core');
+   assert.equal(await p.locator('#quote-text').textContent(),'“'+forHour('2026-10-17',12).q+'”');await p.clock.runFor(15000);assert.equal(await p.locator('#quote-text').textContent(),'“'+forHour('2026-10-17',13).q+'”');
    await p.reload();assert.equal(await p.locator('#quote-text').textContent(),'“'+forHour('2026-10-17',13).q+'”');await p.clock.setSystemTime(new Date('2026-10-17T11:01:00Z'));await p.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));assert.equal(await p.locator('#quote-text').textContent(),'“'+forHour('2026-10-17',15).q+'”');
    await nav('pc');assert.equal(await current(),'pc');assert.equal(await p.locator('.pc-controls button:disabled').count(),5);assert.equal(await p.locator('#cpu').textContent(),'—');await p.reload();assert.equal(await current(),'pc');
    await nav('planner');await p.locator('[data-calendar-mode="gregorian"]').click();await p.locator('.console-day[data-date="2026-10-17"]').click();assert.equal(await p.locator('#agenda-dialog').evaluate(d=>d.open),true);await p.locator('#event-time').fill('17:30');await p.locator('#event-input').fill('Planner date identity');await p.getByRole('button',{name:'Add event',exact:true}).click();await p.getByRole('button',{name:'Close calendar',exact:true}).click();

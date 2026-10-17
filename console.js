@@ -26,7 +26,7 @@
 
   const clocks = node('div','console-clocks'); home.append(clocks); move('.dubai',clocks); move('.kathmandu',clocks);
   const nepaliDate = node('p','console-bs-date'); nepaliDate.lang = 'ne'; q('.kathmandu').append(nepaliDate);
-  const homeGrid = node('div','console-home-grid'); home.append(homeGrid); move('.env',homeGrid); move('.agenda',homeGrid);
+  const homeGrid = node('div','console-home-grid'); home.append(homeGrid); move('.env',homeGrid); move('.core-stage',homeGrid);
   const shiftCard = node('article','console-card console-shift'); shiftCard.append(node('span','console-eyebrow','ON THE HORIZON'),node('h3','','Your next shift')); const shiftSummary = node('div','console-shift-summary'); shiftCard.append(shiftSummary,button('Manage shifts ↗',() => { launch('alarms-open'); launch('tab-shifts'); })); homeGrid.append(shiftCard); move('.agenda',shiftCard);
   const plaque = node('div','console-plaque'); home.append(plaque); move('#daily-quote',plaque);
   title(pc,'02 / WORKSTATION','Your machine. At a glance.'); const pcGrid = node('div','console-pc-grid'); pc.append(pcGrid); move('.pc',pcGrid); move('.systems',pcGrid);
@@ -49,8 +49,6 @@
   const taskList = module('Focus tasks','Edit ↗',() => launch('tasks-open'));
   const eventList = module('Day agenda','Add ↗',() => editDay(picked));
   const shiftsList = module('Upcoming shifts','Manage ↗',() => { launch('alarms-open'); launch('tab-shifts'); });
-  // Keep all dynamic radar targets alive for app.js while removing the radar visually.
-  const radar = q('.core-stage'); if (radar) { radar.hidden = true; radar.setAttribute('aria-hidden','true'); }
   ['.band','.wing-left','.wing-right'].forEach(s => { const n = q(s); if (n) n.hidden = true; });
   move('.dock',host);
   let returnDateFocus = null;
@@ -124,20 +122,103 @@
     fill(shiftsList,shifts.slice(0,3).map(shiftText),'No upcoming shifts saved.'); paintCalendar();
   }
   let active = 'home'; const navButtons = pages.map((p,i) => { const b = button(['Home','PC','Planner'][i],() => show(p.dataset.page,true)); b.dataset.pageTarget = p.dataset.page; b.setAttribute('aria-controls',p.id); nav.append(b); return b; });
-  function show(name,focus = false) { if (!pages.some(p => p.dataset.page === name)) name = 'home'; const previous = active; active = name; pages.forEach(p => { const on = p.dataset.page === name; p.hidden = !on; p.inert = !on; p.setAttribute('aria-hidden',String(!on)); }); navButtons.forEach(b => b.setAttribute('aria-current',b.dataset.pageTarget === name ? 'page' : 'false')); host.dataset.activePage = name;
+  function show(name,focus = false,travel = 0) { resetSwipe(); if (!pages.some(p => p.dataset.page === name)) name = 'home'; const previous = active; active = name; pages.forEach(p => { const on = p.dataset.page === name; p.hidden = !on; p.inert = !on; p.setAttribute('aria-hidden',String(!on)); }); navButtons.forEach(b => b.setAttribute('aria-current',b.dataset.pageTarget === name ? 'page' : 'false')); host.dataset.activePage = name;
     if (previous !== name && !matchMedia('(prefers-reduced-motion: reduce)').matches && !document.documentElement.classList.contains('calm')) {
-      const arriving = pages.find(p => p.dataset.page === name), direction = pages.findIndex(p => p.dataset.page === name) > pages.findIndex(p => p.dataset.page === previous) ? 1 : -1;
+      const arriving = pages.find(p => p.dataset.page === name), direction = travel || (pages.findIndex(p => p.dataset.page === name) > pages.findIndex(p => p.dataset.page === previous) ? 1 : -1);
       arriving.getAnimations().forEach(a => a.cancel());
       arriving.animate([{transform:'translateX('+(direction*48)+'px)',opacity:.25},{transform:'translateX(0)',opacity:1}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
     }
      try { localStorage.setItem('jange.console.page.v1',name); } catch {} if (focus) pages.find(p => p.dataset.page === name).focus({preventScroll:true}); refresh(); }
-  const excluded = target => target.closest('input,textarea,select,button,a,[contenteditable],dialog,.console-calendar');
-  const navigate = n => { const i = pages.findIndex(p => p.dataset.page === active); show(pages[(i+n+3)%3].dataset.page,true); };
+  const swipeMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const motionOff = () => swipeMotion.matches || document.documentElement.classList.contains('calm');
+  const excluded = target => target.closest('input,textarea,select,button,a,label,[contenteditable],[role="button"],[role="slider"],[role="switch"],dialog,.console-calendar,.pc-controls,.control-access');
+  const navigate = n => { const i = pages.findIndex(p => p.dataset.page === active); show(pages[(i+n+3)%3].dataset.page,true,n); };
   document.addEventListener('keydown',e => { if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || q('dialog[open]') || e.target.closest('input,textarea,select,[contenteditable],.console-calendar')) return; if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); navigate(e.key === 'ArrowRight' ? 1 : -1); } });
-  let touch = null;
-  deck.addEventListener('touchstart',e => { touch = null; if (e.touches.length !== 1 || q('dialog[open]') || excluded(e.target)) return; for (let n = e.target; n && n !== deck; n = n.parentElement) if (n.scrollWidth > n.clientWidth+2 && /auto|scroll/.test(getComputedStyle(n).overflowX)) return; touch = {x:e.touches[0].clientX,y:e.touches[0].clientY}; },{passive:true});
-  deck.addEventListener('touchend',e => { if (!touch || !e.changedTouches.length) return; const dx = e.changedTouches[0].clientX-touch.x, dy = e.changedTouches[0].clientY-touch.y; touch = null; if (Math.abs(dx)>80 && Math.abs(dx)>Math.abs(dy)*1.6) navigate(dx<0 ? 1 : -1); },{passive:true});
-  deck.addEventListener('touchcancel',() => { touch = null; },{passive:true});
+  let touch = null, dragFrame = 0, rebound = null, suppressClickUntil = 0;
+  function resetSwipe(settle = false) {
+    cancelAnimationFrame(dragFrame); dragFrame = 0;
+    if (rebound) { rebound.cancel(); rebound = null; }
+    const old = touch; touch = null;
+    if (!old) return;
+    if (old.axis === 'x') suppressClickUntil = performance.now() + 450;
+    const from = old.page.style.transform;
+    old.page.style.transform = old.transform;
+    old.page.style.willChange = old.willChange;
+    if (settle && from && from !== old.transform && !motionOff() && !document.hidden && !q('dialog[open]')) {
+      rebound = old.page.animate([{transform:from},{transform:old.transform || 'none'}],{duration:180,easing:'cubic-bezier(.2,.8,.2,1)'});
+    }
+  }
+  function scrollable(target) {
+    for (let n = target; n && n !== deck; n = n.parentElement) {
+      const css = getComputedStyle(n);
+      if ((n.scrollWidth > n.clientWidth+2 && /auto|scroll/.test(css.overflowX)) ||
+          (n.scrollHeight > n.clientHeight+2 && /auto|scroll/.test(css.overflowY))) return true;
+    }
+    return false;
+  }
+  const point = (list,id) => Array.from(list || []).find(p => p.identifier === id);
+  function track(p,at) {
+    const dx = p.clientX-touch.x, dy = p.clientY-touch.y;
+    if (!touch.axis && Math.hypot(dx,dy) >= 10) {
+      if (Math.abs(dx) > Math.abs(dy)*1.6) touch.axis = 'x';
+      else if (Math.abs(dy) >= Math.abs(dx) || Math.hypot(dx,dy) > 24) touch.axis = 'y';
+    }
+    if (touch.axis === 'y') { resetSwipe(); return false; }
+    touch.dx = dx; touch.dy = dy;
+    touch.samples.push({x:dx,at});
+    while (touch.samples.length > 2 && touch.samples[1].at < at-100) touch.samples.shift();
+    return touch.axis === 'x';
+  }
+  document.addEventListener('touchstart',e => { if (e.touches.length > 1) resetSwipe(); },{passive:true,capture:true});
+  deck.addEventListener('touchstart',e => {
+    resetSwipe(); suppressClickUntil = 0;
+    if (e.touches.length !== 1 || document.hidden || q('dialog[open]') || excluded(e.target) || scrollable(e.target)) return;
+    const p = e.touches[0], page = pages.find(p => p.dataset.page === active);
+    page.getAnimations().forEach(a => a.cancel());
+    touch = {id:p.identifier,x:p.clientX,y:p.clientY,dx:0,dy:0,axis:null,page,
+      transform:page.style.transform,willChange:page.style.willChange,samples:[{x:0,at:e.timeStamp}]};
+  },{passive:true});
+  deck.addEventListener('touchmove',e => {
+    if (!touch) return;
+    const p = point(e.touches,touch.id);
+    if (e.touches.length !== 1 || !p || document.hidden || q('dialog[open]')) { resetSwipe(); return; }
+    if (!track(p,e.timeStamp)) return;
+    // A non-cancelable real move means the browser already owns scrolling.
+    if (!e.cancelable && e.isTrusted) { resetSwipe(); return; }
+    if (e.cancelable) e.preventDefault();
+    if (motionOff() || dragFrame) return;
+    dragFrame = requestAnimationFrame(() => {
+      dragFrame = 0;
+      if (!touch || motionOff()) return;
+      const limit = Math.max(1,deck.clientWidth)*.45;
+      const drag = Math.max(-limit,Math.min(limit,touch.dx*.85));
+      // Individual CSSOM properties work under style-src 'self'; no style text injection.
+      touch.page.style.willChange = 'transform';
+      touch.page.style.transform = 'translate3d('+drag+'px,0,0)';
+    });
+  },{passive:false});
+  deck.addEventListener('touchend',e => {
+    if (!touch) return;
+    const p = point(e.changedTouches,touch.id);
+    if (!p || e.touches?.length || document.hidden || q('dialog[open]')) { resetSwipe(); return; }
+    if (!track(p,e.timeStamp) || !touch) { resetSwipe(true); return; }
+    const {dx,dy,samples} = touch, last = samples[samples.length-1];
+    const first = samples.find(s => s.at >= last.at-100) || last;
+    const elapsed = last.at-first.at, velocity = elapsed > 0 ? (last.x-first.x)/elapsed : 0;
+    const distance = Math.min(120,Math.max(80,deck.clientWidth*.18));
+    const commit = Math.abs(dx)>Math.abs(dy)*1.6 &&
+      (Math.abs(dx)>=distance || (Math.abs(dx)>=35 && Math.abs(velocity)>=.55 && Math.sign(velocity)===Math.sign(dx)));
+    resetSwipe(!commit);
+    if (commit) navigate(dx<0 ? 1 : -1);
+  },{passive:true});
+  deck.addEventListener('touchcancel',() => resetSwipe(true),{passive:true});
+  deck.addEventListener('click',e => {
+    if (performance.now() < suppressClickUntil) { e.preventDefault(); e.stopImmediatePropagation(); }
+  },true);
+  // Covers dialogs created later by controls.js as well as the original app dialogs.
+  new MutationObserver(() => { if (q('dialog[open]')) resetSwipe(); }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
+  window.addEventListener('pagehide',() => resetSwipe());
+  swipeMotion.addEventListener('change',() => resetSwipe());
   document.querySelectorAll('dialog').forEach(d => d.addEventListener('close',() => {
     refresh();
     if (d.id === 'agenda-dialog' && returnDateFocus) {
@@ -146,7 +227,7 @@
     }
   }));
   window.addEventListener('storage',refresh); window.addEventListener('jange:nepali-ready',refresh);
-  let timer; function schedule() { clearInterval(timer); if (document.hidden) pages.forEach(p => p.getAnimations().forEach(a => a.cancel())); if (!document.hidden) { refresh(); timer = setInterval(refresh,60000); } } document.addEventListener('visibilitychange',schedule);
+  let timer; function schedule() { resetSwipe(); clearInterval(timer); if (document.hidden) pages.forEach(p => p.getAnimations().forEach(a => a.cancel())); if (!document.hidden) { refresh(); timer = setInterval(refresh,60000); } } document.addEventListener('visibilitychange',schedule);
   window.JangeConsole = {refresh,navigate:show};
   let saved; try { saved = localStorage.getItem('jange.console.page.v1'); } catch {} show(saved || 'home'); schedule();
 })();
