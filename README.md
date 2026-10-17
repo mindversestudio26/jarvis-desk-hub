@@ -1,6 +1,6 @@
 # IMANE · इमाने — personal desk assistant (3.3)
 
-IMANE is a dependency-free static desk interface for an iPad 7th Generation, designed around a 1080 × 810 CSS-pixel landscape viewport with flowing portrait and phone layouts. It was renamed IMANE on 17 October 2026 (first named JANGE after the family's German Shepherd); its emblem is now a gold medallion of the assistant's approved portrait (see [brand/README.md](brand/README.md)). The repository, URL, storage keys and cache names keep their original `jarvis` identifiers so existing installs and data carry over. No build step, account, API key or paid service is required.
+IMANE is a dependency-free static desk interface for an iPad 7th Generation, designed around a 1080 × 810 CSS-pixel landscape viewport with flowing portrait and phone layouts. It was renamed IMANE on 17 October 2026 (formerly JANGE); its emblem is a gold medallion of the assistant's approved portrait (see [brand/README.md](brand/README.md)). The repository, URL, storage keys and cache names keep their original `jarvis` identifiers so existing installs and data carry over. No build step, account, API key or paid service is required.
 
 ## Install on iPad
 

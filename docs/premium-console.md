@@ -4,7 +4,7 @@
 
 The old single-screen layout gave the decorative central dial more area than time, weather and planning. Small peripheral labels competed for attention. The new console separates Home, Windows and Planner while retaining the existing application, dialogs, domain engines and all stored-data schemas.
 
-Material rules: matte graphite frame, recessed black clock/quote displays, a single upper-left light direction, thin champagne edges, subdued teal for verified state, and inset feedback on presses. Existing gold Shepherd assets are reused. No image regeneration, WebGL, backdrop blur or new runtime package is introduced.
+Material rules: matte graphite frame, recessed black clock/quote displays, a single upper-left light direction, thin champagne edges, subdued teal for verified state, and inset feedback on presses. The header emblem is now the IMANE portrait medallion. No image regeneration, WebGL, backdrop blur or new runtime package is introduced.
 
 Home has two large mechanical clocks, two contextual instruments and a bilingual quote plaque. The secondary agenda scrolls within its allotted space if populated. The familiar dock stays reachable. Portrait and phone sizes flow vertically rather than shrink controls. Planner Dual means a BS month with Gregorian correspondence on each date; Gregorian mode navigates Gregorian months. Events retain their existing Dubai time convention and ISO keys; shifts retain their own zones.
 

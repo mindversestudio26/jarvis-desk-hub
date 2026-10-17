@@ -4,7 +4,7 @@
 
 Historical 3.5 implementation report. For the current realistic portrait and corrected iPad Pro 11-inch M4 target, see [realistic-portrait.md](realistic-portrait.md).
 
-Existing baseline: 578459d. Three pages, direct/keyboard/swipe navigation, page memory, tactile materials, flip clocks, flags, seconds subdials, hourly bilingual quotes, BS/AD planner, tasks/events/alarms/shifts, offline cache and separately authorized PC controls already work. Preserve them. Add the humanoid/environment only; the German Shepherd remains the brand emblem. The owner explicitly authorized incremental deployment in the current request.
+Existing baseline: 578459d. Three pages, direct/keyboard/swipe navigation, page memory, tactile materials, flip clocks, flags, seconds subdials, hourly bilingual quotes, BS/AD planner, tasks/events/alarms/shifts, offline cache and separately authorized PC controls already work. Preserve them. Add the humanoid/environment only. The owner explicitly authorized incremental deployment in the current request.
 
 ## Reference assessment
 
@@ -38,7 +38,7 @@ Primary risks are tiny facial details, unclear arm silhouettes, umbrella/rain oc
 
 ## Implementation and verification
 
-Original adult female vector artwork uses 148 SVG elements, gradients and clipped rain; no SVG filters, WebGL, external rendering runtime or continuous JavaScript frame loop. Umbrella, finite forehead wipe and cold arm-wrap use articulated original poses. German Shepherd branding remains in the header. Night lighting never shows a sun or unrelated heat haze. Unknown wind bearing remains neutral.
+Original adult female vector artwork uses 148 SVG elements, gradients and clipped rain; no SVG filters, WebGL, external rendering runtime or continuous JavaScript frame loop. Umbrella, finite forehead wipe and cold arm-wrap use articulated original poses. Night lighting never shows a sun or unrelated heat haze. Unknown wind bearing remains neutral.
 
 Thresholds: heat at 38°C actual / 40°C apparent, cold at 12°C, wind at 30 km/h; hysteresis, an 8-second condition hold and per-gesture 60-second cooldown prevent repeated reactions. Wipe/protective alert expire after 5 seconds. Model readings older than 30 minutes or fetches older than 20 minutes do not drive atmosphere. Calm, reduced-motion and static modes disable animation; hidden/off-Home scenes pause.
 

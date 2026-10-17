@@ -21,7 +21,7 @@ Neon text shadows and the blue ambient light are gone. The core became a dial: a
 
 The clocks moved into a crown band across the top, which makes them about 35 % larger. Michroma still sets the labels; Cormorant Garamond italic (self-hosted, OFL) adds a single serif accent for the greeting, alarm labels and the quote.
 
-See `brand/README.md` for the German Shepherd emblem, the three concepts and the selection.
+The 3.1 German Shepherd emblem has since been retired; see `brand/README.md` for the current IMANE emblem.
 
 ## Assistant states (core avatar)
 
