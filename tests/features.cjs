@@ -1,12 +1,12 @@
 /* Dev-only regression runner for JANGE 3.1 features: alarms, shift alarms,
-   daily quote, location weather and the welcome screen. Same setup as
+   hourly quote, location weather and the welcome screen. Same setup as
    tests/browser.cjs (Playwright installed separately, loopback server). */
 const { chromium, webkit } = require(process.env.JARVIS_PLAYWRIGHT || 'playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
-const { QUOTES, forDay } = require('../quotes.js');
+const { QUOTES, forHour } = require('../quotes.js');
 const root = path.resolve(__dirname, '..');
 const out = path.resolve(process.env.JARVIS_TEST_OUTPUT || path.join(root, 'test-results'));
 fs.mkdirSync(out, { recursive: true });
@@ -213,7 +213,7 @@ async function quoteTest(engine, name, baseURL) {
   const browser = await engine.launch();
   try {
     const { context, page, errors } = await open(browser, baseURL, { time: '2026-10-16T19:59:50Z' });
-    const before = forDay('2026-10-16'), after = forDay('2026-10-17');
+    const before = forHour('2026-10-16', 23), after = forHour('2026-10-17', 0);
     assert.equal(await text(page, '#quote-text'), '“' + before.q + '”');
     assert.equal(await text(page, '#quote-author'), before.a);
     assert.equal(await text(page, '#quote-ne'), before.ne);

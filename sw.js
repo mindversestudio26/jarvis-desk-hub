@@ -1,6 +1,6 @@
 'use strict';
 // The jarvis-desk- prefix is kept so 3.1 (JANGE) cleans up every older shell cache.
-const CACHE='jarvis-desk-v3.2.3';
+const CACHE='jarvis-desk-v3.3.0';
 const FILES=['./','./index.html','./style.css','./app.js','./clocks.js','./alarms.js','./shifts.js','./quotes.js','./roster.js','./manifest.webmanifest','./brand/jange-emblem-512.webp','./brand/jange-head-160.webp','./icon-180.png','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./favicon-32.png','./fonts/michroma-latin-400.woff2','./fonts/cormorant-garamond-latin-500-italic.woff2'];
 // Each version stores fresh copies: files keep their names across versions (e.g. the emblem),
 // so a copy still in the browser's HTTP cache must never be saved into a new version.

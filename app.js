@@ -235,18 +235,19 @@ function minuteUpdate(cities) {
   const now = new Date(d.iso);
   $('today-line').textContent = dubai(now, {weekday:'long', day:'numeric', month:'long'});
   $('week-line').textContent = 'Week ' + isoWeek(d.day) + ' · Day ' + dayOfYear(d.day);
-  renderQuote(d.day);
+  renderQuote(d.day, d.hour);
   replan();
   renderPeek();
   renderAlarmSummaries();
 }
 
-// One documented quotation per Dubai day; it changes at Dubai midnight.
-let quoteDay = '';
-function renderQuote(day) {
-  if (day === quoteDay) return;
-  quoteDay = day;
-  const q = QT.forDay(day);
+// Deterministic hourly quotation; the clock also refreshes this after wake.
+let quoteHour = '';
+function renderQuote(day, hour) {
+  const key = day + ':' + hour;
+  if (key === quoteHour) return;
+  quoteHour = key;
+  const q = QT.forHour(day, hour);
   $('quote-text').textContent = '“' + q.q + '”';
   $('quote-author').textContent = q.a;
   $('quote-ne').textContent = q.ne;

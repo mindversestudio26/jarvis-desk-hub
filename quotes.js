@@ -76,7 +76,16 @@
     const index = ((day % QUOTES.length) + QUOTES.length) % QUOTES.length;
     return { ...QUOTES[index], index };
   }
-  const api = { QUOTES, forDay };
+  // Dubai wall-clock date + hour, independent of the browser's local timezone.
+  function forHour(day, hour) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !Number.isInteger(hour) || hour < 0 || hour > 23) throw new RangeError('Invalid Dubai hour');
+    const instant = Date.parse(day + 'T00:00:00Z');
+    if (!Number.isFinite(instant) || new Date(instant).toISOString().slice(0, 10) !== day) throw new RangeError('Invalid Dubai date');
+    const slot = Math.round((instant - EPOCH) / 864e5) * 24 + hour;
+    const index = ((slot % QUOTES.length) + QUOTES.length) % QUOTES.length;
+    return { ...QUOTES[index], index };
+  }
+  const api = { QUOTES, forDay, forHour };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.JangeQuotes = api;
 })(typeof window === 'undefined' ? globalThis : window);
