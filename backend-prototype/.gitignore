@@ -1,0 +1,13 @@
+state/
+test-results/
+*.sqlite*
+*.env
+config.local.php
+gate.local.php
+db-password.txt
+http-test-password.txt
+access.local.json
+*.key
+*.backup
+audit.jsonl*
+audit.lock

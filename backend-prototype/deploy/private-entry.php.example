@@ -1,0 +1,15 @@
+<?php
+declare(strict_types=1);
+// REVIEW TEMPLATE ONLY. Installing this requires explicit gate-change approval.
+header('Cache-Control: no-store');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: no-referrer');
+try {
+    $private=realpath(__DIR__.'/../.jange-http');
+    if (!$private || is_link(__DIR__.'/../.jange-http')) throw new RuntimeException();
+    require $private.'/src/staging-gate.php';
+    $policy=require $private.'/gate.local.php';
+    if (!is_array($policy) || !staging_gate_allows($policy,$_SERVER,time())) throw new RuntimeException();
+} catch(Throwable) {http_response_code(403);exit;}
+// Private backend's original API validates its own cookie, Origin and CSRF.
+require $private.'/public/api.php';

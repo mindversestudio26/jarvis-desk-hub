@@ -1,0 +1,3 @@
+<?php
+// INACTIVE template. Owner-approved peer addresses/deadline/token hash required.
+return ['created'=>0,'expires'=>0,'ips'=>[],'token_sha256'=>''];
