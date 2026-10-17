@@ -432,6 +432,10 @@ async function upgradeTest(baseURL, baseline) {
     assert.equal(await page.locator('#sunrise').innerText(), '—', 'Missing daily fields stay unavailable');
     assert.match(await text(page, '#tasks'), /Preserve my existing task/);
     await page.locator('#agenda-open').click();
+    // This test runs on the real date: open the event's own day (16 Oct 2026), whatever today is.
+    const eventDay = page.locator('#calendar button[aria-label="16 October 2026"]');
+    for (let i = 0; i < 36 && !(await eventDay.count()); i++) await page.locator('#month-prev').click();
+    await eventDay.click();
     assert.match(await page.locator('#events').innerText(), /Preserve my existing event/);
     await page.getByRole('button', { name: 'Close calendar' }).click();
     await context.setOffline(true);
@@ -439,8 +443,8 @@ async function upgradeTest(baseURL, baseline) {
     await page.waitForSelector('#alarms-open');
     assert.match(await text(page, '#tasks'), /Preserve my existing task/);
     const caches = await page.evaluate(async () => globalThis.caches.keys());
-    assert(caches.includes('jarvis-desk-v3.2.1'));
-    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.2.1'], 'Old shell caches removed');
+    assert(caches.includes('jarvis-desk-v3.2.2'));
+    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.2.2'], 'Old shell caches removed');
     assert.equal(await page.title(), 'JANGE · जङ्गे');
     results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to 3.1 service-worker upgrade, preserved storage and weather cache, no forced reload, offline 3.1, old cache cleanup' });
     await context.close();
