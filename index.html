@@ -79,12 +79,12 @@
 
   <header class="band">
     <article class="clock-readout dubai" aria-label="Dubai time">
-      <p class="label"><span class="idx">01</span><span>Dubai</span><span class="label-sub">· UAE</span></p>
+      <p class="label"><span class="idx">01</span><svg class="clock-flag" viewBox="0 0 36 24" role="img" aria-label="United Arab Emirates"><path fill="#00843d" d="M0 0h36v8H0z"/><path fill="#fff" d="M0 8h36v8H0z"/><path fill="#111" d="M0 16h36v8H0z"/><path fill="#ef3340" d="M0 0h9v24H0z"/></svg><span>Dubai</span><span class="label-sub">· UAE</span></p>
       <div class="flipclock" id="flip-dubai" aria-hidden="true">
         <span class="fgroup"><span class="fampm"></span><span class="tile"></span><span class="tile"></span></span><span class="fcolon"></span><span class="fgroup"><span class="tile"></span><span class="tile"></span></span>
       </div>
       <time id="clock" class="sr-only">--:--</time>
-      <p class="date-row"><span id="date" class="date">Loading date…</span><span class="fsec">:<span id="seconds">--</span></span></p>
+      <p class="date-row"><span id="date" class="date">Loading date…</span><span class="fsec seconds-instrument" aria-label="Seconds"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="seconds-track" cx="24" cy="24" r="21"/><circle id="seconds-arc" class="seconds-arc" cx="24" cy="24" r="21" pathLength="60" stroke-dasharray="0 60" transform="rotate(-90 24 24)"/></svg><span id="seconds">--</span><small>SEC</small></span></p>
       <p class="zone-row"><span class="zone" title="Asia/Dubai">GST · UTC+04:00</span><span id="next-alarm-dubai" class="clock-alarm" hidden></span></p>
     </article>
 
@@ -97,12 +97,12 @@
     </div>
 
     <article class="clock-readout kathmandu" aria-label="Kathmandu time">
-      <p class="label"><span>Kathmandu</span><span class="label-sub">· Nepal</span><span class="idx">02</span></p>
+      <p class="label"><svg class="clock-flag flag-nepal" viewBox="0 0 26 32" role="img" aria-label="Nepal"><path fill="#003893" d="M0 0l25 17H11l15 15H0z"/><path fill="#dc143c" d="M2 4l17 11H7l14 15H2z"/><path fill="#fff" d="M5 11a4 4 0 0 0 7 0 3.6 3.6 0 0 1-7 0"/><path fill="#fff" d="M8 20l1 2 2-1v2l2 1-2 1v2l-2-1-1 2-1-2-2 1v-2l-2-1 2-1v-2l2 1z"/></svg><span>Kathmandu</span><span class="label-sub">· Nepal</span><span class="idx">02</span></p>
       <div class="flipclock" id="flip-kathmandu" aria-hidden="true">
         <span class="fgroup"><span class="fampm"></span><span class="tile"></span><span class="tile"></span></span><span class="fcolon"></span><span class="fgroup"><span class="tile"></span><span class="tile"></span></span>
       </div>
       <time id="kathmandu-clock" class="sr-only">--:--</time>
-      <p class="date-row"><span class="fsec">:<span id="kathmandu-seconds">--</span></span><span id="kathmandu-date" class="date">Loading date…</span></p>
+      <p class="date-row"><span class="fsec seconds-instrument" aria-label="Seconds"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="seconds-track" cx="24" cy="24" r="21"/><circle id="kathmandu-seconds-arc" class="seconds-arc" cx="24" cy="24" r="21" pathLength="60" stroke-dasharray="0 60" transform="rotate(-90 24 24)"/></svg><span id="kathmandu-seconds">--</span><small>SEC</small></span><span id="kathmandu-date" class="date">Loading date…</span></p>
       <p class="zone-row"><span id="next-alarm-kathmandu" class="clock-alarm" hidden></span><span class="zone" title="Asia/Kathmandu">NPT · UTC+05:45</span></p>
     </article>
   </header>

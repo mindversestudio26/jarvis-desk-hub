@@ -316,6 +316,8 @@ function tick(snap) {
     $(ids[0]).textContent = showClock(city, value, snap === true);
     $(ids[0]).dateTime = value.iso;
     $(ids[1]).textContent = value.seconds;
+    const secondsArc = $(ids[1] + '-arc');
+    if (secondsArc) secondsArc.setAttribute('stroke-dasharray', Number(value.seconds) + ' 60');
     if ($(ids[2]).textContent !== value.date) $(ids[2]).textContent = value.date;
   }
   moveHand(Number(cities.dubai.seconds));
