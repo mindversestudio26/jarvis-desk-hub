@@ -20,9 +20,9 @@
 }
 .living-scene .assistant-status{font:500 10px/1.15 var(--font-ui,system-ui,sans-serif);letter-spacing:1.5px;text-transform:uppercase;color:var(--assistant-accent);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .living-scene .assistant-context{font:400 10px/1.15 var(--font-ui,system-ui,sans-serif);color:#9cb5b5;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.living-scene .assistant-person{transform-origin:160px 316px;animation:assistant-breathe 7s ease-in-out infinite}
+.living-scene .assistant-person{transform-origin:160px 316px;animation:assistant-breathe 7s steps(28,end) infinite}
 .living-scene .assistant-head{transform-origin:161px 199px}
-.living-scene .assistant-eyes{transform-origin:161px 142px;animation:assistant-blink 9s ease-in-out infinite}
+.living-scene .assistant-eyes{transform-origin:161px 142px;animation:assistant-blink 9s steps(2,end) infinite}
 .living-scene .assistant-pose,.living-scene .assistant-weather,.living-scene .assistant-umbrella,
 .living-scene .assistant-ribbon,.living-scene .assistant-protective,.living-scene .assistant-beam,
 .living-scene .assistant-rain-covered,.living-scene .assistant-rain-uncovered,.living-scene .assistant-canopy-splashes,
