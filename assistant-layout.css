@@ -21,3 +21,32 @@
 
 /* 11-inch M4: 2420x1668 physical pixels, typical 1210x834 CSS landscape. */
 @media(min-width:1150px) and (min-height:800px){.has-living-assistant .assistant-touch{height:248px}.has-living-assistant .console-home-grid{grid-template-columns:minmax(0,1fr) minmax(300px,1.08fr) minmax(0,1.15fr)}}
+
+/* Character-first landscape: clocks and context flank the full-height projection. */
+@media(min-width:901px){
+ .has-living-assistant #console-home{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.4fr) minmax(0,.85fr);gap:12px;align-items:start}
+ .has-living-assistant #console-home>.console-clocks,.has-living-assistant #console-home>.console-home-grid{display:contents}
+ .has-living-assistant #console-home .dubai{grid-column:1;grid-row:1}
+ .has-living-assistant #console-home .kathmandu{grid-column:3;grid-row:1}
+ .has-living-assistant #console-home .env{grid-column:1;grid-row:2;min-height:0;align-self:start}
+ .has-living-assistant #console-home .console-shift{grid-column:3;grid-row:2;min-height:0;align-self:start}
+ .console-ready.has-living-assistant #console-home .core-stage{grid-column:2;grid-row:1 / span 2;align-self:start;gap:2px;min-width:0}
+ .has-living-assistant #console-home .assistant-touch{height:440px}
+ .console-ready.has-living-assistant #console-home .clock-readout{padding:9px 12px}
+ .console-ready.has-living-assistant #console-home .flipclock{--tw:min(44px,18cqi);margin:3px 0 5px}
+ .console-ready.has-living-assistant #console-home .clock-readout .label{font-size:9px;letter-spacing:.8px}
+ .console-ready.has-living-assistant #console-home .date{font-size:11px}
+ .console-ready.has-living-assistant #console-home .console-bs-date{font-size:12px}
+ .console-ready.has-living-assistant #console-home .readout,.console-ready.has-living-assistant #console-home .console-card{padding:10px 12px}
+ .console-ready.has-living-assistant #console-home .console-plaque{grid-column:1/-1;grid-row:3;min-height:0;margin:0;padding:8px 16px}
+ .console-ready.has-living-assistant #console-home .console-plaque .quote-text{font-size:21px;line-height:1.2}
+ .console-ready.has-living-assistant #console-home .console-plaque .quote-ne{font-size:14px;margin-top:3px;line-height:1.35}
+ .console-ready.has-living-assistant #console-home .core-wrap{max-width:350px;align-self:center}
+}
+@media(min-width:901px) and (max-height:780px){
+ .has-living-assistant #console-home{gap:9px}
+ .has-living-assistant #console-home .assistant-touch{height:350px}
+ .console-ready.has-living-assistant #console-home .flipclock{--tw:min(39px,18cqi)}
+ .console-ready.has-living-assistant #console-home .console-plaque .quote-text{font-size:19px}
+ .console-ready.has-living-assistant #console-home .console-plaque .quote-ne{font-size:13px}
+}
