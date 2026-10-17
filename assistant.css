@@ -168,3 +168,20 @@
 
 .calm .assistant-photo-blink,.living-scene[data-static=true] .assistant-photo-blink,.living-scene.assistant-static .assistant-photo-blink{opacity:0!important}
 @media(prefers-reduced-motion:reduce){.living-scene .assistant-photo-blink{opacity:0!important}}
+
+/* Expressive WebGL rig: one canonical face for every expression. It replaces the idle and
+   blink photos (and their CSS breathing/attention keyframes) only after it initialises;
+   without WebGL the photo layers above remain the complete fallback. */
+.assistant-rig{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;pointer-events:none;transition:opacity .22s ease}
+.has-rig .assistant-rig{opacity:1}
+.has-rig .assistant-photo-idle,.has-rig .assistant-photo-blink{opacity:0!important;animation:none!important}
+.has-rig.has-realistic-portrait .assistant-photo-motion,.has-rig.has-realistic-portrait[data-activity=attention] .assistant-photo-motion{animation:none}
+/* With rigged arm layers every gesture stays on the canonical face: the legacy pose photos,
+   SVG umbrella and SVG rain stand down (the rig draws rain and deflects it off its canopy). */
+.has-rig.rig-arms .assistant-photo-umbrella,.has-rig.rig-arms .assistant-photo-wipe,.has-rig.rig-arms .assistant-photo-wrap{opacity:0!important}
+.has-rig.rig-arms .assistant-rain-covered,.has-rig.rig-arms .assistant-rain-uncovered,.has-rig.rig-arms .assistant-canopy-splashes{display:none}
+/* Without the arm atlas, weather gestures fall back to the legacy pose photos. */
+.has-rig:not(.rig-arms).portrait-loaded-umbrella[data-gesture=umbrella] .assistant-rig,
+.has-rig:not(.rig-arms).portrait-loaded-umbrella[data-condition=storm] .assistant-rig,
+.has-rig:not(.rig-arms).portrait-loaded-wipe[data-gesture=wipe] .assistant-rig,
+.has-rig:not(.rig-arms).portrait-loaded-wrap[data-gesture=wrap] .assistant-rig{opacity:0}

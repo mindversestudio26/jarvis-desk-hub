@@ -136,6 +136,9 @@
       if(pose==='idle') {img.addEventListener('load',()=>{scene.classList.add('has-realistic-portrait');scene.dispatchEvent(new Event('jange:portrait-ready'));});img.addEventListener('error',()=>scene.classList.remove('has-realistic-portrait'));}
       portrait.append(img);
     }
+    // Expressive renderer target; stays transparent until the WebGL rig initialises.
+    const rig=doc.createElement('canvas');rig.className='assistant-rig';rig.setAttribute('aria-hidden','true');
+    portrait.append(rig);
     touch.prepend(portrait);
     const caption=doc.createElement('div');caption.className='assistant-caption';
     const status=doc.createElement('span');status.className='assistant-status';status.textContent='Assistant';
