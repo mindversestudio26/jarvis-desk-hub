@@ -106,3 +106,7 @@ The dashboard rejects timestamps older than 30 seconds or more than 5 seconds in
 - write methods: 405
 
 The Origin check protects browser access but is not authentication on its own. Non-browser clients can spoof headers, so the random bearer token and the tailnet are what keep it private. No control endpoint exists to exploit or trigger by accident.
+
+## Optional Windows controls
+
+The opt-in control implementation, security contract, tests and owner-approved activation/rollback steps are documented in [Windows controls](../docs/windows-controls.md). The monitoring token cannot authorize controls.

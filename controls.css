@@ -1,0 +1,15 @@
+/* Separately authorized PC actions. */
+.control-access{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+.control-access button{font-size:11px;padding:8px 12px}
+.control-result{font-size:11px;line-height:1.4;color:var(--text-2);margin:0;flex:1 1 160px}
+.control-dialog{padding:24px;width:min(500px,calc(100vw - 30px));max-height:90dvh;overflow:auto}
+.control-dialog h2{font-size:22px;overflow-wrap:anywhere}
+.control-dialog p{font-size:14px;line-height:1.6}
+.control-dialog form{display:grid;gap:12px;margin:15px 0}
+.control-dialog select{display:block;width:100%;min-height:44px;margin:12px 0}
+.control-dialog select[hidden]{display:none}
+.control-dialog>button{margin:10px 8px 0 0;min-height:44px}
+.console-ready .control-row button:not(:disabled){cursor:pointer;color:#ecdbb7;background:linear-gradient(#3d3b33,#292b29);border-color:#d9c08e55;box-shadow:0 3px 4px #0006,inset 0 1px #ffffff10}
+.console-ready .control-row button:not(:disabled):active{transform:translateY(2px);box-shadow:inset 0 2px 5px #0009}
+.console-ready .control-row button:disabled{opacity:.65}
+@media(min-width:901px) and (max-height:780px){.console-ready .gauges{margin:10px 0;grid-template-columns:repeat(3,minmax(0,110px))}.console-ready .pc-stats{margin:10px 0}}

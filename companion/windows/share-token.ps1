@@ -10,7 +10,8 @@
 #>
 param(
     [ValidateSet('Window', 'Clipboard', 'Taildrop')][string]$Via = 'Window',
-    [string]$Device = 'ipad-gen-7'
+    [string]$Device = 'ipad-gen-7',
+    [ValidateSet('ReadOnly','Control')][string]$Kind = 'ReadOnly'
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'common.ps1')
@@ -18,7 +19,8 @@ if ($Device -notmatch '\A[a-zA-Z0-9-]{1,63}\z') { throw "Unexpected device name 
 $outbox = Join-Path $App 'outbox'
 # A send interrupted by a crash or power loss could leave a token file behind.
 Remove-Item (Join-Path $outbox '*') -Force -ErrorAction SilentlyContinue
-$token = Get-PairingToken
+$token = if ($Kind -eq 'Control') { Get-ControlToken } else { Get-PairingToken }
+$transferName = if ($Kind -eq 'Control') { 'JANGE-control-token.txt' } else { 'JANGE-pairing-token.txt' }
 
 # Copies the token without adding it to Windows clipboard history or cloud clipboard sync.
 function Copy-Token {
@@ -32,16 +34,16 @@ function Copy-Token {
 }
 function Clear-TokenClipboard { if ((Get-Clipboard -Raw) -eq $token) { Set-Clipboard -Value $null } }
 
+try {
 switch ($Via) {
     'Clipboard' {
         Copy-Token
         Write-Host 'Token copied. Paste it into JANGE now: the clipboard is cleared in 60 seconds.'
         Start-Sleep -Seconds 60
-        Clear-TokenClipboard
     }
     'Taildrop' {
         New-Item -ItemType Directory -Force -Path $outbox | Out-Null
-        $file = Join-Path $outbox 'JANGE-pairing-token.txt'
+        $file = Join-Path $outbox $transferName
         try {
             Set-Content -Path $file -Value $token -NoNewline -Encoding ascii
             & $Tailscale file cp $file "${Device}:"
@@ -49,7 +51,7 @@ switch ($Via) {
         } finally {
             Remove-Item $file -Force -ErrorAction SilentlyContinue
         }
-        Write-Host "Sent to $Device. On the iPad open Files > Tailscale, open JANGE-pairing-token.txt, copy the text, paste it into JANGE, then delete the file."
+        Write-Host "Sent to $Device. On the iPad open Files > Tailscale, open $transferName, copy the text, paste it into JANGE, then delete the file."
     }
     'Window' {
         Add-Type -AssemblyName System.Windows.Forms, System.Drawing
@@ -61,7 +63,17 @@ switch ($Via) {
         $done.Add_Click({ $form.Close() })
         $form.Controls.AddRange(@($box, $copy, $done))
         [void]$form.ShowDialog()
-        Clear-TokenClipboard
     }
 }
-Remove-Variable token
+} finally {
+    try {
+        if ($Via -in @('Clipboard', 'Window')) { Clear-TokenClipboard }
+    } finally {
+        try {
+            if ($box) { $box.Text = '' }
+        } finally {
+            try { if ($form) { $form.Dispose() } }
+            finally { Remove-Variable token -ErrorAction SilentlyContinue }
+        }
+    }
+}

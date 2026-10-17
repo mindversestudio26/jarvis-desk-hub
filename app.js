@@ -1194,6 +1194,7 @@ function pcStatus(next, message) {
   $('pc-message').textContent = message;
   $('connect-open').lastChild.textContent = next === 'off' ? 'Pair' : 'Manage';
   $('pc-host').textContent = agent ? new URL(agent.url).hostname : 'No companion paired';
+  dispatchEvent(new Event('jange:pc-state'));
   $('pc-secure-text').textContent = next === 'online' ? 'Tailscale HTTPS · token verified' : 'Tailscale HTTPS · read-only token';
   setBusy('pc', next === 'linking' || next === 'warming');
   setSystems();
@@ -1261,7 +1262,7 @@ async function pollPC() {
     stat('pc-sampled', sys.pcAt);
     pcStatus('online', 'Authenticated, read-only monitoring.');
     restart(document.querySelector('.link-pc'), 'flash');
-    $('connect-result').textContent = 'Connected. Monitoring only; controls remain disabled.';
+    $('connect-result').textContent = 'Connected for monitoring. Authorize controls separately in the PC view.';
   } catch {
     if (generation === pcGeneration) {
       resetMetrics();

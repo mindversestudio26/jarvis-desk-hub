@@ -1,4 +1,4 @@
-"""JANGE (Jarvis) read-only companion. No PC-control functionality is implemented."""
+"""JANGE companion: read-only monitoring plus separately authenticated opt-in controls."""
 import argparse
 import datetime
 import hmac
@@ -13,6 +13,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import psutil
+from control import ControlError, load_controller
 
 snapshot = {}
 snapshot_lock = threading.Lock()
@@ -87,7 +88,8 @@ class Handler(BaseHTTPRequestHandler):
         pass  # Do not log bearer tokens, addresses or telemetry.
 
     def allowed(self):
-        return (ipaddress.ip_address(self.client_address[0]).is_loopback
+        return (all(len(self.headers.get_all(k, [])) == 1 for k in ("Origin", "Host"))
+                and ipaddress.ip_address(self.client_address[0]).is_loopback
                 and self.headers.get("Origin") == self.server.allowed_origin
                 and self.headers.get("Host") in self.server.allowed_hosts)
 
@@ -105,7 +107,70 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(body)
 
+    def control_route(self):
+        """Return True when this is a control request; never use the read token."""
+        if not self.path.startswith('/v1/control'):
+            return False
+        self.close_connection = True
+        if not self.allowed():
+            self.respond(403)
+            return True
+        ctl = self.server.control
+        if ctl is None:
+            self.respond(404, {'error':'control_unavailable'}, cors=True)
+            return True
+        try:
+            if len(self.headers.get_all('Authorization', [])) != 1:
+                raise ControlError(401, 'control_auth_required')
+            ctl.authorize(self.headers.get('Authorization', ''))
+            if self.command == 'GET' and self.path == '/v1/control':
+                self.respond(200, ctl.capabilities(), cors=True)
+            elif self.command == 'GET' and re.fullmatch(r'/v1/control/result/[A-Za-z0-9_-]{16,80}', self.path):
+                self.respond(200, ctl.result(self.path.rsplit('/',1)[1]), cors=True)
+            elif self.command == 'POST' and self.path in ('/v1/control/challenge','/v1/control/execute'):
+                lengths = self.headers.get_all('Content-Length', [])
+                if self.headers.get('Transfer-Encoding') or len(lengths)!=1 or not re.fullmatch(r'[0-9]{1,4}', lengths[0]) or not 1<=int(lengths[0])<=1024:
+                    raise ControlError(400, 'invalid_body_length')
+                if len(self.headers.get_all('Content-Type', []))!=1 or self.headers.get('Content-Type').lower()!='application/json':
+                    raise ControlError(415, 'json_required')
+                def unique(pairs):
+                    result = {}
+                    for key,value in pairs:
+                        if key in result:
+                            raise ValueError('Duplicate JSON field')
+                        result[key] = value
+                    return result
+                try:
+                    body=json.loads(self.rfile.read(int(lengths[0])),object_pairs_hook=unique)
+                except (ValueError,UnicodeError,TimeoutError):
+                    raise ControlError(400,'invalid_json')
+                if self.path.endswith('/challenge'):
+                    self.respond(200,ctl.challenge(body),cors=True)
+                else:
+                    self.respond(202,ctl.execute(body),cors=True)
+            else:
+                self.respond(405 if self.command not in ('GET','POST') else 404,cors=True)
+        except ControlError as error:
+            self.respond(error.status,{'error':error.code},cors=True)
+        return True
+
     def do_OPTIONS(self):
+        if self.path.startswith('/v1/control'):
+            if not self.allowed():
+                return self.respond(403)
+            method = 'GET' if self.path == '/v1/control' or re.fullmatch(r'/v1/control/result/[A-Za-z0-9_-]{16,80}', self.path) else 'POST' if self.path in ('/v1/control/challenge','/v1/control/execute') else None
+            requested = {x.strip().lower() for x in self.headers.get('Access-Control-Request-Headers','').split(',') if x.strip()}
+            if method is None or self.headers.get('Access-Control-Request-Method')!=method or not requested.issubset({'authorization','content-type'}):
+                return self.respond(403,cors=True)
+            self.send_response(204)
+            self.send_header('Access-Control-Allow-Origin',self.server.allowed_origin)
+            self.send_header('Vary','Origin')
+            self.send_header('Access-Control-Allow-Methods',method)
+            self.send_header('Access-Control-Allow-Headers','Authorization, Content-Type')
+            self.send_header('Cache-Control','no-store')
+            self.send_header('Content-Length','0')
+            self.end_headers()
+            return
         if not self.allowed() or self.path != "/v1/status":
             return self.respond(403)
         if self.headers.get("Access-Control-Request-Method") != "GET":
@@ -123,6 +188,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if self.control_route():
+            return
         if not self.allowed():
             return self.respond(403)
         supplied = self.headers.get("Authorization", "")
@@ -137,10 +204,13 @@ class Handler(BaseHTTPRequestHandler):
             self.server.last_request = now
         with snapshot_lock:
             data = dict(snapshot)
+        if data:
+            data["control_enabled"] = self.server.control is not None
         self.respond(200 if data else 503, data, cors=True)
 
     def do_POST(self):
-        self.respond(405)
+        if not self.control_route():
+            self.respond(405)
     do_PUT = do_POST
     do_DELETE = do_POST
     do_PATCH = do_POST
@@ -165,6 +235,7 @@ def make_server(port, token, origin, host):
     if not re.fullmatch(r"[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]+\.ts\.net", host):
         raise ValueError("Host must be the exact Tailscale DNS name")
     server = Server(("127.0.0.1", port), Handler)
+    server.control = None
     server.token = token
     server.allowed_origin = origin
     server.allowed_hosts = {host, "127.0.0.1:"+str(server.server_port)}
@@ -178,14 +249,16 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--origin", required=True)
     parser.add_argument("--host", required=True)
+    parser.add_argument("--control-config", help="Opt-in local configuration; absent means read-only")
     args = parser.parse_args()
     # Take the token out of the environment so no child process (nvidia-smi) inherits it.
     server = make_server(args.port, os.environ.pop("JARVIS_READ_TOKEN", ""), args.origin, args.host)
+    server.control = load_controller(args.control_config, os.environ.pop("JANGE_CONTROL_TOKEN", ""), server.token)
     smi = nvidia_smi_path()
     if smi:
         threading.Thread(target=sample_gpu, args=(smi,), daemon=True).start()
     threading.Thread(target=sample, daemon=True).start()
-    print("JANGE read-only companion on loopback" + (" (NVIDIA GPU readings on)" if smi else "") + ". Control features are absent.", flush=True)
+    print("JANGE read-only companion on loopback" + (" (NVIDIA GPU readings on)" if smi else "") + (". Separate controls enabled." if server.control else ". Controls disabled."), flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

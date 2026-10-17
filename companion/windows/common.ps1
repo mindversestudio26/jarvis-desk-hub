@@ -2,6 +2,8 @@
 # %USERPROFILE%\.jange (not AppData): packaged apps get AppData redirected, the profile root is not.
 $App = Join-Path $env:USERPROFILE '.jange\companion'
 $TokenFile = Join-Path $App 'token.dpapi'
+$ControlTokenFile = Join-Path $App 'control-token.dpapi'
+$ControlConfigFile = Join-Path $App 'controls.json'
 $ConfigFile = Join-Path $App 'config.json'
 $PidFile = Join-Path $App 'companion.pid'
 $Tailscale = Join-Path $env:ProgramFiles 'Tailscale\tailscale.exe'
@@ -31,4 +33,20 @@ function Get-CompanionProcess {
     $proc = Get-Process -Id ([int](Get-Content $PidFile)) -ErrorAction SilentlyContinue
     if ($proc -and $proc.Path -and $proc.Path.StartsWith($App, [StringComparison]::OrdinalIgnoreCase)) { return $proc }
     return $null
+}
+
+# Separate control secret. These helpers are invoked only by explicit opt-in installation.
+function Get-ControlToken {
+    if (-not (Test-Path -LiteralPath $ControlTokenFile)) { throw 'Control credential has not been provisioned.' }
+    $secure = Get-Content -LiteralPath $ControlTokenFile | ConvertTo-SecureString
+    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
+}
+function New-ControlToken {
+    if (Test-Path -LiteralPath $ControlTokenFile) { return }
+    $bytes = [byte[]]::new(32)
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+    $value = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
+    ConvertTo-SecureString $value -AsPlainText -Force | ConvertFrom-SecureString | Set-Content -LiteralPath $ControlTokenFile -Encoding ascii
 }
