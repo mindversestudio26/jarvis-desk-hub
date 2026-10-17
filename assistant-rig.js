@@ -642,7 +642,8 @@ void main() {
       const t = frameTime();
       if (t === null || t !== lastFrame) return submit();
       pending = true;
-      if (!flush && root.requestAnimationFrame) flush = root.requestAnimationFrame(() => { flush = 0; if (alive && pending && frameTime() !== lastFrame) submit(); });
+      // A rendering-frame callback is by definition a new frame: submit the latest pending state.
+      if (!flush && root.requestAnimationFrame) flush = root.requestAnimationFrame(() => { flush = 0; if (alive && pending && !lost) submit(); });
       return true;
     }
     function destroy() {
