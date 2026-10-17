@@ -50,3 +50,8 @@
  .console-ready.has-living-assistant #console-home .console-plaque .quote-text{font-size:19px}
  .console-ready.has-living-assistant #console-home .console-plaque .quote-ne{font-size:13px}
 }
+
+@media(min-width:901px){
+ .has-living-assistant #console-home .zone-row{flex-wrap:wrap;row-gap:3px}
+ .has-living-assistant #console-home .clock-alarm{flex-basis:100%;white-space:normal;overflow:visible;font-size:9px;letter-spacing:0;line-height:1.35}
+}
