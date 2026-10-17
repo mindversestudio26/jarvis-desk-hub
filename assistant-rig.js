@@ -293,7 +293,9 @@ void main() {
    * the forearm sweeps in front of the chest to the forehead, then follows the head and strokes. */
   function skinWipe(arm, pose, data) {
     const B = arm.piece.bones, S = B.shoulder, E = B.elbow, W = B.wrist, Hd = B.hand, right = pose.arms.right;
-    const raise = right.mode === 'wipe' ? right.raise : 0, ru = smooth(0, .6, raise), rf = smooth(.15, 1, raise);
+    const raise = right.mode === 'wipe' ? right.raise : 0;
+    if (raise < .04) return 0;
+    const ru = smooth(0, .6, raise), rf = smooth(.15, 1, raise);
     const restU = Math.atan2(E[1]-S[1], E[0]-S[0]), restF = Math.atan2(W[1]-E[1], W[0]-E[0]);
     const au = (1-ru)*(Math.atan2(1, -.12)-restU), ku = 1+(1-ru)*.55, dirU = [Math.cos(restU), Math.sin(restU)];
     // Hanging, the arm starts from the canonical shoulder joint; raised, the shoulder rolls forward.
@@ -327,18 +329,34 @@ void main() {
     const fo = bodyFollow(pose, data, 560), g = p => { const r = rot([p[0]-P[0], p[1]-P[1]], a); return [P[0]+r[0]+fo[0], P[1]+r[1]+fo[1]]; };
     return {alpha:smooth(0, .15, um.reach), low:g(B.gripLow), high:g(B.gripHigh)};
   }
+  /* Cold wrap: a forearm sweeps inward about its elbow (below the frame) from hanging to
+   * gripping the opposite upper arm; it rises with the lifted shoulders and rubs gently. */
+  function skinWrap(arm, pose, data) {
+    const B = arm.piece.bones, P = B.elbow, H = B.hand, w = pose.wrap, k = w.arms;
+    let off = Math.atan2(H[1]-P[1], H[0]-P[0])-Math.PI/2;
+    while (off > Math.PI) off -= Math.PI*2; while (off <= -Math.PI) off += Math.PI*2;
+    const a = -(1-k)*off+(w.rub || 0)*.025*Math.sign(off);
+    for (let i = 0; i < arm.count; i++) {
+      const x = arm.rest[i*2], y = arm.rest[i*2+1], r = rot([x-P[0], y-P[1]], a), fo = bodyFollow(pose, data, y);
+      arm.pos[i*2] = P[0]+r[0]+fo[0]; arm.pos[i*2+1] = P[1]+r[1]+fo[1];
+    }
+    return w.amount > 0 ? smooth(0, .12, k) : 0;
+  }
   /* Triangle batch with premultiplied colour: [x, y, r, g, b, a] per vertex. */
   function Batch(capacity) {
     let buf = new Float32Array(capacity*6), n = 0;
     const grow = need => { if ((n+need)*6 > buf.length) { const next = new Float32Array(Math.max(buf.length*2, (n+need)*6)); next.set(buf); buf = next; } };
     // c[4] (optional) adds emission: premultiplied colour above alpha glows additively, like light.
-    const vert = (p, c) => { const e = 1+(c[4] || 0); buf[n*6] = p[0]; buf[n*6+1] = p[1]; buf[n*6+2] = c[0]*c[3]*e; buf[n*6+3] = c[1]*c[3]*e; buf[n*6+4] = c[2]*c[3]*e; buf[n*6+5] = c[3]; n++; };
+    const vxy = (x, y, c) => { const e = 1+(c[4] || 0), i = n*6; buf[i] = x; buf[i+1] = y; buf[i+2] = c[0]*c[3]*e; buf[i+3] = c[1]*c[3]*e; buf[i+4] = c[2]*c[3]*e; buf[i+5] = c[3]; n++; };
+    const vert = (p, c) => vxy(p[0], p[1], c);
     const api = {
       tri(a, b, c, ca, cb, cc) { grow(3); vert(a, ca); vert(b, cb || ca); vert(c, cc || ca); },
       line(a, b, width, ca, cb) {
+        // Two triangles written in place: no temporary vectors per segment (rain draws hundreds).
         const dx = b[0]-a[0], dy = b[1]-a[1], l = Math.hypot(dx, dy) || 1, nx = -dy/l*width/2, ny = dx/l*width/2, c2 = cb || ca;
-        const a1 = [a[0]+nx, a[1]+ny], a2 = [a[0]-nx, a[1]-ny], b1 = [b[0]+nx, b[1]+ny], b2 = [b[0]-nx, b[1]-ny];
-        api.tri(a1, a2, b1, ca, ca, c2); api.tri(b1, a2, b2, c2, ca, c2);
+        grow(6);
+        vxy(a[0]+nx, a[1]+ny, ca); vxy(a[0]-nx, a[1]-ny, ca); vxy(b[0]+nx, b[1]+ny, c2);
+        vxy(b[0]+nx, b[1]+ny, c2); vxy(a[0]-nx, a[1]-ny, ca); vxy(b[0]-nx, b[1]-ny, c2);
       },
       disc(c, r, ci, co, seg) {
         for (let k = 0; k < seg; k++) {
@@ -472,7 +490,7 @@ void main() {
     const curves = {left:data.curves(data.EYES.left), right:data.curves(data.EYES.right)};
     const back = Batch(4096), front = Batch(8192), mid = Batch(64);
     let program, layer, color, buffers = [], textures = [], lost = false, dpr = 1, maxDpr = 2, view = [1, 1, 0, 0], scale = 1, lastPose = null;
-    let bodyBuf = {}, colorBuf = null, enabled = [], stats = {arms:0, umbrella:false, drops:0, splashes:0, puffs:0};
+    let bodyBuf = {}, colorBuf = null, colorCap = 0, enabled = [], stats = {arms:0, umbrella:false, drops:0, splashes:0, puffs:0};
     const loc = {}, lloc = {}, cloc = {}, armBuf = {};
     const link = (vs, fs) => {
       const p = gl.createProgram(); gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
@@ -540,7 +558,9 @@ void main() {
     function drawBatch(batch, flash) {
       if (!batch.count) return;
       gl.useProgram(color); gl.uniform4fv(cloc.u_view, view); gl.uniform1f(cloc.u_flash, flash);
-      gl.bindBuffer(gl.ARRAY_BUFFER, colorBuf); gl.bufferData(gl.ARRAY_BUFFER, batch.array, gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, colorBuf);
+      if (batch.array.byteLength > colorCap) { colorCap = batch.array.byteLength*2; gl.bufferData(gl.ARRAY_BUFFER, colorCap, gl.DYNAMIC_DRAW); }
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, batch.array);
       attribs(color, [['a_pos', colorBuf, 2, 24, 0], ['a_col', colorBuf, 4, 24, 8]]);
       gl.drawArrays(gl.TRIANGLES, 0, batch.count);
     }
@@ -550,31 +570,39 @@ void main() {
       gl.useProgram(layer); gl.uniform4fv(lloc.u_view, view); gl.uniform1f(lloc.u_alpha, alpha);
       gl.uniform4f(lloc.u_grade, L.warmth, L.bright, L.desat, L.wet); gl.uniform4f(lloc.u_fx, L.flash || 0, 0, 0, 0);
       gl.uniform4f(lloc.u_stub, stub[0], stub[1], stub[2], stub[3]); gl.uniform1f(lloc.u_stubAlpha, stubAlpha);
-      gl.bindBuffer(gl.ARRAY_BUFFER, b.pos); gl.bufferData(gl.ARRAY_BUFFER, a.pos, gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, b.pos); gl.bufferSubData(gl.ARRAY_BUFFER, 0, a.pos);
       attribs(layer, [['a_pos', b.pos, 2], ['a_uv', b.uv, 2], ['a_src', b.src, 2]]);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.index); gl.drawElements(gl.TRIANGLES, a.index.length, gl.UNSIGNED_SHORT, 0);
     }
-    function render(pose) {
-      if (lost || gl.isContextLost()) return false;
+    // CPU work for a pose: skinning, umbrella geometry, rain and breath. Kept separate from the
+    // GPU submission so a burst of frames inside one task (a throttled tab catching up, a test
+    // clock) still simulates every step but submits only the latest state.
+    let frame = null;
+    function compute(pose) {
       lastPose = pose;
-      const f = pose.face, hd = pose.head, b = pose.body, H = data.HEAD, B = data.BODY, L = pose.light, lim = data.LIMITS, A = data.ARMS;
-      // Layers are skinned first so the body knows whether the raised arm replaces its own.
       const wipeAlpha = arms ? skinWipe(arms.wipe, pose, data) : 0;
       const grip = arms && pose.umbrella.amount > 0 ? skinUmbrella(arms.umbrella, pose, data) : null;
+      const wrapAlpha = arms && pose.wrap.amount > 0 ? Math.min(skinWrap(arms.wrapBack, pose, data), skinWrap(arms.wrapFront, pose, data)) : 0;
       back.reset(); front.reset(); mid.reset();
       const umb = grip && pose.umbrella.materialize > 0 ? umbrellaGeometry(pose.umbrella, grip, data, back, front) : null;
       if (umb) mid.line(umb.shaft[0], umb.shaft[1], 3.2, umb.col(umb.gold, umb.shaft[0], .95), umb.col(umb.gold, umb.shaft[1], .95));
       const slant = rain.step(pose, umb, data);
       rain.draw(back, front, slant, pose.env.storm);
+      frame = {pose, wipeAlpha, grip, wrapAlpha};
+      stats = {arms:(wipeAlpha > 0 ? 1 : 0)+(grip && grip.alpha > 0 ? 1 : 0)+(wrapAlpha > 0 ? 2 : 0), umbrella:!!umb, drops:rain.drops, splashes:rain.splashes, puffs:rain.puffs};
+    }
+    function draw() {
+      if (!frame || lost || gl.isContextLost()) return false;
+      const {pose, wipeAlpha, grip, wrapAlpha} = frame;
+      const f = pose.face, hd = pose.head, b = pose.body, H = data.HEAD, B = data.BODY, L = pose.light, lim = data.LIMITS, A = data.ARMS;
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT);
       drawBatch(back, L.flash || 0);
       gl.useProgram(program);
       attribs(program, [['a_pos', bodyBuf.pos, 2], ['a_w', bodyBuf.w, 4], ['a_depth', bodyBuf.depth, 1], ['a_arm', bodyBuf.arm, 2]]);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bodyBuf.index);
-      const hs = handles(data, f), hv = new Float32Array(HANDLES*4), dv = new Float32Array(HANDLES*4);
-      hs.forEach(([h, dx, dy], i) => { hv.set(h, i*4); dv[i*4] = dx; dv[i*4+1] = dy; });
-      gl.uniform4fv(loc.u_h, hv); gl.uniform4fv(loc.u_d, dv);
+      handles(data, f).forEach(([h, dx, dy], i) => { handleV.set(h, i*4); dispV[i*4] = dx; dispV[i*4+1] = dy; });
+      gl.uniform4fv(loc.u_h, handleV); gl.uniform4fv(loc.u_d, dispV);
       gl.uniform4f(loc.u_head, H.yawPx*hd.yaw, H.yawRigidPx*hd.yaw, H.pitchPx*hd.pitch, H.pitchRigidPx*hd.pitch);
       gl.uniform3f(loc.u_roll, H.pivot[0], H.pivot[1], hd.roll*H.rollDeg*Math.PI/180);
       gl.uniform4f(loc.u_body, b.breath*B.breathPx, b.breath*B.chestScale, b.shoulderLift*B.shoulderLiftPx, b.lean*B.leanPx);
@@ -590,14 +618,30 @@ void main() {
       drawBatch(mid, L.flash || 0);
       drawArm('umbrella', grip ? grip.alpha : 0, L, pose.umbrella.materialize);
       drawArm('wipe', wipeAlpha, L, 1);
+      drawArm('wrapBack', wrapAlpha, L, 1);
+      drawArm('wrapFront', wrapAlpha, L, 1);
       drawBatch(front, L.flash || 0);
-      stats = {arms:(wipeAlpha > 0 ? 1 : 0)+(grip && grip.alpha > 0 ? 1 : 0), umbrella:!!umb, drops:rain.drops, splashes:rain.splashes, puffs:rain.puffs};
       return true;
     }
+    const handleV = new Float32Array(HANDLES*4), dispV = new Float32Array(HANDLES*4);
+    let taskBusy = false, flushQueued = false;
+    const channel = typeof MessageChannel === 'function' ? new MessageChannel() : null;
+    if (channel) channel.port1.onmessage = () => { taskBusy = false; if (flushQueued) { flushQueued = false; draw(); } };
+    function render(pose) {
+      if (lost || gl.isContextLost()) return false;
+      compute(pose);
+      if (!channel) return draw();
+      if (taskBusy) { flushQueued = true; return true; }
+      taskBusy = true; channel.port2.postMessage(0);
+      return draw();
+    }
     function destroy() {
-      if (!gl.isContextLost()) { buffers.forEach(x => gl.deleteBuffer(x)); textures.forEach(t => gl.deleteTexture(t)); [program, layer, color].forEach(p => p && gl.deleteProgram(p)); }
+      // A lost context is left for the browser to restore; a live one is released.
+      if (!gl.isContextLost()) {
+        buffers.forEach(x => gl.deleteBuffer(x)); textures.forEach(t => gl.deleteTexture(t)); [program, layer, color].forEach(p => p && gl.deleteProgram(p));
+        const ext = gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext();
+      }
       buffers = []; textures = [];
-      const ext = gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext();
     }
     try { init(); } catch (e) { destroy(); return null; }
     resize();
@@ -609,7 +653,8 @@ void main() {
     })();
     // Diagnostics: re-render the last pose and read the frame back (bottom-up RGBA rows).
     function capture() {
-      if (!lastPose || !render(lastPose)) return null;
+      if (!lastPose || lost || gl.isContextLost()) return null;
+      compute(lastPose); draw();
       const pixels = new Uint8Array(canvas.width*canvas.height*4);
       gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
       return {width:canvas.width, height:canvas.height, pixels, view:view.slice(), scale:scale*dpr};
@@ -620,7 +665,7 @@ void main() {
       get lost() { return lost || gl.isContextLost(); },
       get lastPose() { return lastPose; },
       get stats() { return Object.assign({}, stats); },
-      destroy() { canvas.removeEventListener('webglcontextlost', onLost); destroy(); }
+      destroy() { canvas.removeEventListener('webglcontextlost', onLost); if (channel) channel.port1.onmessage = null; destroy(); }
     });
   }
   return Object.freeze({create, buildMesh, buildArms, handles, headPoint, polygonWeight, HANDLES});

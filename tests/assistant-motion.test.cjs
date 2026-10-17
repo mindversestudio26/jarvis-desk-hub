@@ -300,3 +300,50 @@ test('frame pacing hints: idle drift is ambient, rain is steady, events are fast
   assert.ok(rates.has('steady') && !rates.has('ambient'));
   assert.equal(run(still, 0, 1000, () => model({condition:'rain', gesture:'umbrella'})).rate, 'idle');
 });
+
+test('cold wrap forearms grip the canonical upper arms and sweep inward from below the frame', () => {
+  const P = Data.ARMS.pieces, front = P.wrapFront.bones, back = P.wrapBack.bones;
+  assert.ok(front.hand[0] > 30 && front.hand[0] < 170 && front.hand[1] > 600 && front.hand[1] < 740, 'front hand on the viewer-left upper arm');
+  assert.ok(back.hand[0] > 430 && back.hand[0] < 580 && back.hand[1] > 600 && back.hand[1] < 740, 'back hand on the viewer-right upper arm');
+  assert.ok(front.elbow[1] > 800 && back.elbow[1] > 800, 'elbows stay below the portrait');
+  assert.ok(front.elbow[0] > 300 && back.elbow[0] < 300, 'forearms cross the body');
+  const arms = Rig.buildArms(Data);
+  assert.ok(arms.wrapFront.fore.every(v => v === 1) && arms.wrapBack.fore.every(v => v === 1));
+});
+
+// Steps the engine the way the adapter schedules frames: display rate when fast, timers otherwise.
+function paced(engine, from, to, fn, sample) {
+  let t = from, pose = null;
+  while (t <= to) {
+    pose = engine.update(fn(t), t); if (sample) sample(pose, t);
+    t += pose.rate === 'fast' ? FRAME : pose.rate === 'steady' ? 33 : pose.rate === 'ambient' ? 66 :
+      Math.min(1000, Math.max(16, (Number.isFinite(pose.nextAt) ? pose.nextAt : t+1000)-t));
+  }
+  return pose;
+}
+
+test('adapter pacing keeps blinks in quiet mode and never snaps weather after idle gaps', () => {
+  const fixed = [], pacedPoses = [];
+  run(Motion.create({seed:31, quality:'quiet'}), 0, 300000, () => model({}), (p, t) => fixed.push([p, t]));
+  paced(Motion.create({seed:31, quality:'quiet'}), 0, 300000, () => model({}), (p, t) => pacedPoses.push([p, t]));
+  const a = blinks(fixed).length, b = blinks(pacedPoses).length;
+  assert.ok(b >= a*.85, 'paced blinks '+b+' vs continuous '+a);
+  // Rain arrives after a long quiet stretch: the umbrella still reaches, materialises and opens.
+  const engine = Motion.create({seed:32, quality:'quiet'}); let first = null;
+  paced(engine, 0, 9000, () => model({}));
+  paced(engine, 9001, 14000, () => model({condition:'rain', gesture:'umbrella'}), p => { if (first === null) first = p.umbrella.amount; });
+  assert.ok(first < .2, 'animates from closed, first frame '+first);
+  assert.equal(engine.update(model({condition:'rain', gesture:'umbrella'}), 14100).umbrella.state, 'open');
+});
+
+test('umbrella hands over to the cold wrap only after it has folded away', () => {
+  const engine = Motion.create({seed:33});
+  run(engine, 0, 4000, () => model({condition:'rain', gesture:'umbrella'}));
+  let overlap = false, umbrellaGone = null, wrapAt = null;
+  run(engine, 4016, 9000, () => model({condition:'cold', gesture:'wrap'}), (p, t) => {
+    if (p.umbrella.amount > 0 && p.wrap.amount > 0) overlap = true;
+    if (umbrellaGone === null && p.umbrella.amount === 0) umbrellaGone = t;
+    if (wrapAt === null && p.wrap.amount > 0) wrapAt = t;
+  });
+  assert.equal(overlap, false); assert.ok(wrapAt >= umbrellaGone);
+});

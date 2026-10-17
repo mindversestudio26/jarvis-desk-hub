@@ -58,14 +58,17 @@
   /* Arm layers derived by brand/assistant/arms/derive.py: only arms and hands come from the
    * pose generations; matrix maps a piece's source pixels onto the canonical portrait. */
   const ARMS = {
-    atlas:{file:'brand/assistant/arms.webp', width:374, height:457},
+    atlas:{file:'brand/assistant/arms.webp', width:1010, height:457},
     pieces:{
       wipe:{atlas:[2,2,265,453], source:[30,201], matrix:[1.170282,0.030921,-38.78737,-0.030921,1.170282,-29.404078],
         bones:{shoulder:[215.65,514.29], elbow:[83.12,684.09], wrist:[206.46,388.05], hand:[275,234]}, grid:[18,30]},
       umbrella:{atlas:[269,2,103,252], source:[155,473], matrix:[1.08,0,-78,0,1.08,-7],
         bones:{elbow:[119.64,755.48], gripLow:[158.52,645.32], gripHigh:[150.96,509.24]}, grid:[8,20],
         // The shaft's lower end held in the fist appears only once the umbrella materialises.
-        stub:[206,560,242,612]}
+        stub:[206,560,242,612]},
+      // Cold wrap: each forearm sweeps up about an elbow below the frame to grip the opposite upper arm.
+      wrapBack:{atlas:[374,2,273,158], source:[279,576], matrix:[1.09,0,-27.0,0,1.09,-51.0], bones:{elbow:[136.5,842.8], hand:[534.35,673.85]}, grid:[14,8]},
+      wrapFront:{atlas:[649,2,359,202], source:[57,589], matrix:[1.09,0,-27.0,0,1.09,-51.0], bones:{elbow:[452.6,842.8], hand:[82.0,679.3]}, grid:[16,10]}
     },
     // Canonical right arm (viewer's left), hidden while the raised wipe arm replaces it.
     hideRight:[[22,560],[55,516],[105,503],[150,515],[168,556],[162,640],[172,720],[184,800],[16,800]],

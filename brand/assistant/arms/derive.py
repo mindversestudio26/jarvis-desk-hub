@@ -65,6 +65,14 @@ WIPE_POLY = [[20, 560], [150, 330]] + WIPE_HAND + [[245, 380], [250, 420], [240,
 UMB_POLY = [[178, 486], [196, 478], [214, 476], [234, 481], [247, 492], [254, 508], [253, 530], [251, 556], [245, 572], [240, 592], [232, 612],
             [218, 626], [210, 640], [206, 665], [202, 700], [196, 720], [160, 720], [158, 690], [160, 650], [162, 612], [168, 590], [172, 540], [173, 505]]
 
+# Wrap: the viewer-left hand's forearm crosses in front; the viewer-right hand's forearm behind it.
+WRAP_FRONT = [[88, 594], [96, 592], [106, 604], [118, 624], [140, 628], [156, 624], [168, 640], [182, 656], [200, 661], [245, 673], [300, 697],
+              [340, 714], [375, 735], [405, 765], [420, 800], [340, 800], [300, 775], [262, 752], [214, 733], [168, 722], [120, 726], [88, 726],
+              [66, 722], [60, 700], [60, 660], [66, 642], [82, 638]]
+WRAP_BACK = [[515, 579], [522, 584], [520, 596], [500, 612], [488, 624], [500, 626], [526, 630], [540, 640], [548, 660], [549, 690], [545, 712],
+             [511, 716], [453, 713], [438, 722], [395, 730], [350, 722], [300, 712], [282, 705], [282, 690], [303, 696], [357, 684], [418, 656],
+             [430, 650], [452, 612], [470, 600], [495, 592]]
+
 pieces = {}
 wipe_img, wipe_box = cut(load("wipe"), WIPE_POLY, hand_below=356)
 M_wipe = similarity([(262, 232), (75, 615)], [(275, 234), (68, 688)])   # fingertips -> forehead, elbow -> canonical arm
@@ -74,6 +82,12 @@ umb_img, umb_box = cut(load("umbrella"), UMB_POLY, feather=1.6)
 M_umb = scale_about((350, 400), (300, 425), 1.08)                     # zipper/collar registration of the body
 pieces["umbrella"] = dict(img=umb_img, box=umb_box, matrix=M_umb, bones=dict(
     elbow=apply(M_umb, (183, 706)), gripLow=apply(M_umb, (219, 604)), gripHigh=apply(M_umb, (212, 478))))
+
+wrap = load("wrap")
+M_wrap = scale_about((300, 400), (300, 385), 1.09)                    # collar registration, raised 40 px into view
+for key, poly, elbow, hand in [("wrapBack", WRAP_BACK, (150, 820), (515, 665)), ("wrapFront", WRAP_FRONT, (440, 820), (100, 670))]:
+    img, box = cut(wrap, poly, feather=1.6)
+    pieces[key] = dict(img=img, box=box, matrix=M_wrap, bones=dict(elbow=apply(M_wrap, elbow), hand=apply(M_wrap, hand)))
 
 # Pack crops side by side (2 px gutter).
 crops = {k: v["img"].crop(v["box"]) for k, v in pieces.items()}

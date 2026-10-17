@@ -42,7 +42,7 @@ The previous system cross-faded five whole photographs (idle, blink, umbrella, w
 - **Wipe** (5 s): perceive, raise (the upper arm swings forward from the canonical shoulder; the forearm foreshortens as it passes the chest), two forehead strokes that follow the head's tilt while the eyes close, lower, then relief.
 - **Umbrella**: reach, then the shaft materialises upward from the fist; the folded canopy unfolds with a slight overshoot; it holds with sway, and rain splashes off the canopy and drips from the rim. On close it folds, dematerialises and the hand lowers.
 - **Storm**: alert on entry, protective umbrella, heavier rain, darker light, and restrained lightning (one double flicker every 18–40 s, with no flashes under Reduce Motion).
-- **Cold**: shoulders lift, a shiver on entry and periodic shivers, a cold expression, cool light and breath vapour.
+- **Cold**: shoulders lift and a shiver plays on entry, then both forearms sweep up from below the frame and cross to grip the opposite upper arms, rubbing gently. Periodic shivers, a cold expression, cool light and breath vapour follow.
 - **Wind**: squint, directional hair displacement with gusts, lean, and slanted rain.
 
 **Environment**
@@ -53,21 +53,22 @@ The previous system cross-faded five whole photographs (idle, blink, umbrella, w
 ## Performance and device strategy
 
 - Frames run only while something moves:
-  - transitions and events: display rate;
+  - transitions and events: display rate, capped at about 60 renders a second on 120 Hz displays;
   - rain, wind and the umbrella hold: 30 fps;
-  - breathing and drift: 20 fps;
-  - otherwise idle until the next scheduled blink or gaze change.
-- Off Home or hidden: no frames at all.
+  - breathing and drift: 15 fps;
+  - otherwise idle until the next scheduled blink or gaze change, waking at least once a second.
+- No frames at all off Home, while hidden, or while a modal panel (settings, tasks, alarms, ringing) covers the figure. Returning settles explicitly to the current state.
+- A software rasteriser (no GPU) gets the quiet tier immediately.
+- If the WebGL context is lost, the photos take over; when the browser restores the context, the rig returns without a reload. A renderer exception also falls back to the photos.
 - The startup probe still selects *quiet* on slow engines: device-pixel ratio 1.25, no drift or breathing, event motion only.
 - Reduce Motion, Calm and static modes render one static frame per state change: no blinks, drift, wipe or lightning, and the held umbrella is shown open.
-- GPU memory estimate: about 4.5 MB (two 600×800 textures, a 374×457 atlas, about 13k vertices).
+- GPU memory estimate: about 6 MB (two 600×800 textures, a 1010×457 arm atlas, about 14k vertices).
 - The shaders are WebGL 1 / GLSL ES 1.0 for older iPads.
 - Without WebGL the photo portrait remains the complete fallback.
 
 ## Limitations
 
 - **Arm motion** is two-bone cut-out animation of derived arm layers. It is not a true 3D arm. Mid-swing foreshortening is approximated, and a brief cross-fade swaps the canonical arm for the raised layer. Production-grade continuous arm motion would need hand-painted or inpainted layered body art, or a matching 3D rig.
-- **Cold wrap:** the crossed-arm "wrap" is not rigged yet. Cold shows shoulders, shiver, expression and breath on the canonical face instead of swapping to the wrap photo's different face.
 - **Mouth:** there is no open-mouth texture, so lip parting is limited to a subtle seam stretch.
 - **Voice:** voice is not implemented, so there are no speaking or listening states.
 - **Measurements:** Windows Playwright engines (SwiftShader Chromium, software-composited WebKit) are not an iPad proxy. Smoothness, battery and thermals need the physical iPad.

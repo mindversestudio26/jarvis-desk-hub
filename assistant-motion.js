@@ -119,7 +119,7 @@
     const sp = key => springs[key] || (springs[key] = {x:0, v:0});
     let last = null, model = null;
     const blink = {next:0, start:-1, close:90, hold:30, open:150, second:-1};
-    const gaze = {x:0, y:0, next:0, microNext:0, mx:0, my:0, lastBlinkSaccade:0};
+    const gaze = {x:0, y:0, next:0, lastBlinkSaccade:0};
     const posture = {next:0, lean:0, roll:0};
     const smileMoment = {next:0, until:0};
     let breathPhase = 0, wipeStart = -1, wipePendingSince = 0, wipeSeenAt = null, nextAmbientWipe = 0;
@@ -168,7 +168,8 @@
 
     function update(nextModel, now, snapping) {
       if (!Number.isFinite(now)) throw new TypeError('now must be a finite timestamp');
-      if (last === null || (!snapping && (now-last > 1500 || now < last))) return settle(nextModel, now);
+      // Callers settle explicitly when resuming; a long silent gap is treated the same way.
+      if (last === null || (!snapping && (now-last > 10000 || now < last))) return settle(nextModel, now);
       model = nextModel || model;
       const dt = clamp((now-last)/1000, 0, .1); last = now;
       const still = opts.reducedMotion, ambient = !still && opts.quality !== 'quiet';
@@ -233,9 +234,8 @@
         const sleepy = face.lid > .35;
         const ctx = {attention:m.activity === 'attention', processing:m.activity === 'processing', sleepy, umbrellaHold};
         if (now >= gaze.next || (ctx.attention && (gaze.x !== 0 || gaze.y !== 0))) nextGaze(now, ctx);
-        if (ambient && now >= gaze.microNext) { gaze.mx = range(-.035, .035); gaze.my = range(-.025, .025); gaze.microNext = now+range(380, 1100); }
-      } else { gaze.x = 0; gaze.y = 0; gaze.mx = 0; gaze.my = 0; }
-      let gx = gaze.x+gaze.mx, gy = gaze.y+gaze.my;
+      } else { gaze.x = 0; gaze.y = 0; }
+      let gx = gaze.x, gy = gaze.y;
       if (wipe) { gx = gx*(1-wipe.lookUp)+.35*wipe.lookUp; gy = gy*(1-wipe.lookUp)-.7*wipe.lookUp; }
       if (opening) { gx *= 1-opening; gy = gy*(1-opening)-.8*opening; }
       const tBlink = blink.start >= 0 ? now-blink.start : -1;
@@ -321,12 +321,14 @@
         blink:b, reducedMotion:still
       };
       // Head and posture springs chase continuous drift; only transitions count as movement.
-      const moving = Object.keys(springs).some(k => !/^[hb]\./.test(k) && Math.abs(springs[k].v) > .004);
+      // Head/posture springs chase continuous drift and saccades are near-instant, so neither
+      // demands display-rate frames; expression, light and environment transitions do.
+      const moving = Object.keys(springs).some(k => !/^[hbg]\./.test(k) && Math.abs(springs[k].v) > .004);
       // Frame pacing hint: fast for transitions and events, steady for rain/wind particles and
       // hair, ambient for slow breathing and drift only, idle when nothing moves.
-      const fast = !still && (moving || b > 0 || blink.second > 0 || !!wipe || umbrellaDir !== 0 || wrapDir !== 0 ||
+      const fast = !still && (moving || b > 0 || blink.start >= 0 || blink.second > 0 || !!wipe || umbrellaDir !== 0 || wrapDir !== 0 ||
         shake !== 0 || flashAmt > 0 || alertStart >= 0);
-      const steady = !still && !fast && (env.rain > .01 || env.wind > .01 || umbrellaHold);
+      const steady = !still && !fast && (env.rain > .01 || (ambient && env.wind > .01) || umbrellaHold);
       pose.rate = fast ? 'fast' : steady ? 'steady' : ambient ? 'ambient' : 'idle';
       pose.active = fast || steady;
       pose.ambient = ambient;

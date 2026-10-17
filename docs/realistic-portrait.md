@@ -1,5 +1,7 @@
 # Realistic hologram — 3.6
 
+> Superseded for rendering by [expressive-assistant.md](expressive-assistant.md): with WebGL available the portrait is now animated by a per-frame rig; the photo layers below remain the fallback.
+
 The owner corrected the target device to **iPad Pro 11-inch M4**. [Apple specifications](https://support.apple.com/en-au/119892) list 2420×1668 physical pixels; we test the typical 2× CSS landscape viewport 1210×834, toolbar-constrained 1210×740, portrait 834×1210, and previous smaller layouts. Browser emulation is not physical-device performance evidence.
 
 ## Visual change

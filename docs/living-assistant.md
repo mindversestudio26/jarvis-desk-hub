@@ -1,5 +1,7 @@
 # Living assistant: additive architecture and design assessment
 
+> Superseded for rendering by [expressive-assistant.md](expressive-assistant.md) (WebGL rig with an on-demand frame loop).
+
 Historical 3.5 implementation report. For the current realistic portrait and corrected iPad Pro 11-inch M4 target, see [realistic-portrait.md](realistic-portrait.md).
 
 Existing baseline: 578459d. Three pages, direct/keyboard/swipe navigation, page memory, tactile materials, flip clocks, flags, seconds subdials, hourly bilingual quotes, BS/AD planner, tasks/events/alarms/shifts, offline cache and separately authorized PC controls already work. Preserve them. Add the humanoid/environment only; the German Shepherd remains the brand emblem. The owner explicitly authorized incremental deployment in the current request.

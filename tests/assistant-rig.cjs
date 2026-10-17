@@ -26,8 +26,7 @@ for(const [engine,name] of [[chromium,'chromium'],[webkit,'webkit']]){
  assert.equal(await scene.getAttribute('data-rig'),'webgl',name+' rig initialises');
  const info=await rig();assert.ok(info.vertices>10000 && info.triangles>20000,'dense facial mesh');
  await p.clock.runFor(600);
- assert.equal(await scene.locator('.assistant-photo-idle').evaluate(e=>getComputedStyle(e).opacity),'0','rig replaces the idle photo');
- assert.equal(await scene.locator('.assistant-rig').evaluate(e=>getComputedStyle(e).opacity),'1');
+ await p.waitForFunction(()=>getComputedStyle(document.querySelector('.assistant-photo-idle')).opacity==='0' && getComputedStyle(document.querySelector('.assistant-rig')).opacity==='1',null,{timeout:5000});
  const crop=async n=>{const box=await scene.locator('.assistant-touch').boundingBox();await p.screenshot({path:path.join(out,name+'-'+n+'.png'),clip:{x:box.x+box.width*.2,y:box.y,width:box.width*.6,height:box.height*.62}});};
  const expr=()=>scene.getAttribute('data-expression');
  const change=async fields=>{Object.assign(fixture.current,fields);await p.evaluate(()=>weather());await p.clock.runFor(11000);};
@@ -42,10 +41,12 @@ for(const [engine,name] of [[chromium,'chromium'],[webkit,'webkit']]){
  await p.evaluate(()=>pcStatus('auth','fixture'));await p.clock.runFor(700);assert.equal(await expr(),'concerned','error: controlled concern');await crop('error');
  await p.evaluate(()=>pcStatus('online','fixture'));await p.clock.runFor(700);assert.equal(await expr(),'content','connected: relaxed confidence');await crop('connected');
  await p.evaluate(()=>pcStatus('off','fixture'));
- await change({temperature_2m:43,apparent_temperature:46});assert.equal((await p.evaluate(()=>JangeAssistant.getState())).condition,'heat');
  // Heat wipe on the canonical face: the derived arm rises, strokes with eyes closed, lowers.
- const wipeSeen=new Set();let wipeArm=false;
- for(let i=0;i<30;i++){await p.clock.runFor(200);const r=await rig();wipeSeen.add(r.pose.gesture.phase);if(r.stats.arms>0)wipeArm=true;if(i===12)await crop('heat-wipe');}
+ // Sample from the weather change itself: the condition settles for 8 s before the wipe starts.
+ Object.assign(fixture.current,{temperature_2m:43,apparent_temperature:46});await p.evaluate(()=>weather());
+ const wipeSeen=new Set();let wipeArm=false,shot=false;
+ for(let i=0;i<90;i++){await p.clock.runFor(200);const r=await rig();wipeSeen.add(r.pose.gesture.phase);if(r.stats.arms>0)wipeArm=true;if(!shot&&r.pose.gesture.phase==='wipe'){shot=true;await crop('heat-wipe');}}
+ assert.equal((await p.evaluate(()=>JangeAssistant.getState())).condition,'heat');
  assert.ok(['raise','wipe','lower'].every(x=>wipeSeen.has(x)),'wipe phases '+[...wipeSeen]);assert.ok(wipeArm,'arm layer drawn');
  assert.equal(await scene.locator('.assistant-photo-wipe').evaluate(e=>getComputedStyle(e).opacity),'0','no face swap to the wipe photo');
  await p.clock.runFor(1000);assert.equal(await expr(),'heat','weather discomfort');await crop('heat');
@@ -90,16 +91,29 @@ for(const [engine,name] of [[chromium,'chromium'],[webkit,'webkit']]){
  report.results.push({engine:name,renderer:info.renderer,vertices:info.vertices,triangles:info.triangles,identityMeanAbsDiff:+identity.mean.toFixed(3),identityMax:identity.max});
  await p.emulateMedia({reducedMotion:'no-preference'});await p.clock.runFor(500);
  // Context loss falls back to the complete photo renderer without errors.
- await p.evaluate(()=>document.querySelector('.assistant-rig').getContext('webgl').getExtension('WEBGL_lose_context').loseContext());
+ await p.evaluate(()=>{window.__lose=document.querySelector('.assistant-rig').getContext('webgl').getExtension('WEBGL_lose_context');window.__lose.loseContext();});
  await p.clock.runFor(800);assert.equal(await scene.getAttribute('data-rig'),'fallback');
  assert.equal(await scene.evaluate(e=>e.classList.contains('has-rig')),false);
- assert.equal(await scene.locator('.assistant-photo-idle').evaluate(e=>getComputedStyle(e).opacity),'1','photo fallback visible');
+ // CSS opacity transitions run on real time, not the fake clock: wait for the fade to finish.
+ await p.waitForFunction(()=>getComputedStyle(document.querySelector('.assistant-photo-idle')).opacity==='1',null,{timeout:5000});
+ // The restored context brings the rig back without a reload.
+ await p.evaluate(()=>window.__lose.restoreContext());for(let i=0;i<10 && await scene.getAttribute('data-rig')!=='webgl';i++) await p.clock.runFor(300);
+ assert.equal(await scene.getAttribute('data-rig'),'webgl','rig restored with the context');
  assert.deepEqual(errors,[]);const video=p.video();await ctx.close();await video.saveAs(path.join(out,name+'-expressions.webm'));
  // No WebGL at all: the photo portrait is the unchanged fallback.
  const {ctx:ctx2}=await weatherContext(b,{});await ctx2.addInitScript(()=>{const real=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...a){return /webgl/.test(type)?null:real.call(this,type,...a);};});
  const p2=await ctx2.newPage(),errors2=[];p2.on('pageerror',e=>errors2.push(e.message));await p2.goto(base);await p2.waitForFunction(()=>document.querySelector('.living-scene')?.classList.contains('has-realistic-portrait'));await p2.waitForTimeout(800);
  assert.equal(await p2.evaluate(()=>document.querySelector('.living-scene').classList.contains('has-rig')),false);
  assert.equal(await p2.locator('.assistant-photo-idle').evaluate(e=>getComputedStyle(e).opacity),'1');assert.deepEqual(errors2,[]);await ctx2.close();
+ // Arm atlas unavailable: the rig still renders expressions; weather gestures use the pose photos.
+ const {ctx:ctx4,fixture:fx4}=await weatherContext(b,{});await ctx4.route('**/brand/assistant/arms.webp',r=>r.abort());
+ const p4=await ctx4.newPage(),errors4=[];p4.on('pageerror',e=>errors4.push(e.message));
+ await p4.clock.install({time:new Date('2026-10-17T08:00:00Z')});await p4.goto(base);await p4.clock.pauseAt(new Date('2026-10-17T08:00:10Z'));
+ await p4.waitForFunction(()=>window.JangeAssistant?.getState()?.fresh);
+ for(let i=0;i<20 && !(await p4.evaluate(()=>document.querySelector('.living-scene').dataset.rig==='webgl'));i++) await p4.clock.runFor(500);
+ assert.equal(await p4.evaluate(()=>document.querySelector('.living-scene').classList.contains('rig-arms')),false);
+ Object.assign(fx4.current,{weather_code:61});await p4.evaluate(()=>weather());await p4.clock.runFor(11000);
+ await p4.waitForFunction(()=>getComputedStyle(document.querySelector('.assistant-photo-umbrella')).opacity==='1' && getComputedStyle(document.querySelector('.assistant-rig')).opacity==='0',null,{timeout:5000});assert.deepEqual(errors4,[]);await ctx4.close();
  // Real-time frame pacing with the rig idling (ambient breathing/drift at a reduced rate).
  const {ctx:ctx3}=await weatherContext(b,{});const p3=await ctx3.newPage();await p3.goto(base);
  await p3.waitForFunction(()=>document.querySelector('.living-scene')?.dataset.rig==='webgl' && document.querySelector('.living-scene').dataset.quality);await p3.waitForTimeout(1500);
