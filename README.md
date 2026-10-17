@@ -72,7 +72,7 @@ Sources: [Open-Meteo API documentation](https://open-meteo.com/en/docs) and [fre
 
 ## JANGE 3.1 verification and updates
 
-Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.2.2`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every JANGE/Jarvis window and reopen online to activate 3.2; do not clear website data.
+Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.2.3`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every JANGE/Jarvis window and reopen online to activate 3.2; do not clear website data.
 
 Design notes: [docs/jange-3.1-design.md](docs/jange-3.1-design.md) (alarms, shifts and the future backend contract, quote sourcing, location privacy, PC states) and [brand/README.md](brand/README.md). Tests: [tests/README.md](tests/README.md).
 
