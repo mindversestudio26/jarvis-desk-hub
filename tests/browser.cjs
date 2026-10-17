@@ -448,7 +448,7 @@ async function upgradeTest(baseURL, baseline) {
     const caches = await page.evaluate(async () => globalThis.caches.keys());
     assert(caches.includes(CURRENT_CACHE));
     assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), [CURRENT_CACHE], 'Old shell caches removed');
-    assert.equal(await page.title(), 'JANGE · जङ्गे');
+    assert.equal(await page.title(), 'IMANE · इमाने');
     results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to current console service-worker upgrade, preserved storage and weather cache, no forced reload, offline console, old cache cleanup' });
     await context.close();
   } finally { serveBaseline = null; await browser.close(); }

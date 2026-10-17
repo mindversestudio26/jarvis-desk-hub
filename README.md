@@ -1,15 +1,15 @@
-# JANGE · जङ्गे — personal desk assistant (3.3)
+# IMANE · इमाने — personal desk assistant (3.3)
 
-JANGE is a dependency-free static desk interface for an iPad 7th Generation, designed around a 1080 × 810 CSS-pixel landscape viewport with flowing portrait and phone layouts. It is named after the family's German Shepherd; its emblem honours him through the breed (see [brand/README.md](brand/README.md)). The repository, URL, storage keys and cache names keep their original `jarvis` identifiers so existing installs and data carry over. No build step, account, API key or paid service is required.
+IMANE is a dependency-free static desk interface for an iPad 7th Generation, designed around a 1080 × 810 CSS-pixel landscape viewport with flowing portrait and phone layouts. It was renamed IMANE on 17 October 2026 (first named JANGE after the family's German Shepherd); its emblem is now a gold medallion of the assistant's approved portrait (see [brand/README.md](brand/README.md)). The repository, URL, storage keys and cache names keep their original `jarvis` identifiers so existing installs and data carry over. No build step, account, API key or paid service is required.
 
 ## Install on iPad
 
 1. Open https://mindversestudio26.github.io/jarvis-desk-hub/ in **Safari**.
-2. Tap **Share → Add to Home Screen → Add**. If an older "Jarvis" icon exists, remove it and add JANGE again to get the new name and icon.
-3. Open **JANGE** while online. Wait for the **Offline app ready** chip under the wordmark.
+2. Tap **Share → Add to Home Screen → Add**. If an older "Jarvis" or "IMANE" icon exists, remove it and add IMANE again to get the new name and icon.
+3. Open **IMANE** while online. Wait for the **Offline app ready** chip under the wordmark.
 4. Rotate to landscape. If rotation is locked, unlock it in Control Center.
 5. Enable **Settings → General → Date & Time → Set Automatically**. Both clocks use the device clock: `Asia/Dubai` (UTC+04:00) and `Asia/Kathmandu` (UTC+05:45), whatever the iPad's own zone or location.
-6. For a desk display: Settings → Display & Brightness → Auto-Lock → Never, or turn on **Keep the screen awake** in JANGE settings. Tap the screen once after opening JANGE so alarm sound is allowed.
+6. For a desk display: Settings → Display & Brightness → Auto-Lock → Never, or turn on **Keep the screen awake** in IMANE settings. Tap the screen once after opening IMANE so alarm sound is allowed.
 
 ## Features
 
@@ -17,11 +17,11 @@ JANGE is a dependency-free static desk interface for an iPad 7th Generation, des
 - **Three-screen console**: Home for time, weather, shifts and hourly quotes; Windows for real telemetry; Planner for BS/Gregorian dates and local planning. Swipe noninteractive content, use top navigation or keyboard arrows. The previous radar remains an internal compatibility target, no longer a visible focal point.
 - **Hourly quote**: one documented quotation per Dubai hour with its author and Nepali meaning, from an offline collection of 60 with recorded sources. Selection is deterministic, updates after wake, and does not repeat until all 60 entries have been shown.
 - **Weather where you are**: Open-Meteo weather for the iPad's location when you allow it (rounded to about 5 km, read on open/foreground only, never tracked), a chosen city otherwise, Sharjah by default. Temperature, feels-like, humidity, wind, high/low, sunrise/sunset, UV; saved readings are labelled when offline.
-- **Alarms** (supplementary, not a guaranteed wake-up): once, daily, weekdays, weekends or custom days in Dubai or Kathmandu time; synthesised chimes, full-screen ringing with Snooze and Dismiss, missed-alarm reporting, reload/foreground recovery, Add to Calendar (.ics) for important ones. They ring only while JANGE is open in front with the screen on — keep important alarms on your iPhone.
+- **Alarms** (supplementary, not a guaranteed wake-up): once, daily, weekdays, weekends or custom days in Dubai or Kathmandu time; synthesised chimes, full-screen ringing with Snooze and Dismiss, missed-alarm reporting, reload/foreground recovery, Add to Calendar (.ics) for important ones. They ring only while IMANE is open in front with the screen on — keep important alarms on your iPhone.
 - **Shift-aware alarms**: enter shifts or import the roster calendar (.ics); each working shift gets an alarm at start − preparation − commute, days off/holidays/travel never ring, missing start times are never guessed, duplicates collapse, per-shift overrides survive re-imports.
 - **Workstation (Windows PC)**: Connected / Warming up / Authentication required / Unreachable / Not paired; CPU, GPU and RAM gauges, temperature and uptime only from real companion samples ("N/A", "No sensor", "Not reported" otherwise); Lock, Sleep, Restart, Shut down and Launch shown but disabled until a secure control backend exists.
 - Focus tasks, a local calendar (Dubai time) with a today peek, your roster in large type (today — including days off and holidays — tomorrow and the next shift) and a week strip, live system checks, and a command dock (Focus, Calendar, Alarms, Google Calendar, Outlook, GitHub, YouTube, Backup, Settings).
-- **Your roster ships with JANGE** (`roster.js`): Day 07:00–19:00, Night 19:00–07:00 and Off dates, with alarms 2 h 30 min before each shift. It appears on the desk without importing anything. The file is public, so holidays are left out of it; holidays imported on the iPad stay there. To change it, edit the dates in `roster.js`, change its `version`, and deploy: the iPad picks it up the next time JANGE opens online. Each version is applied once and replaces the previous version's shifts (a dropped date loses its alarm; edits to bundled shifts reset); shifts added on the iPad and imported holidays stay.
+- **Your roster ships with IMANE** (`roster.js`): Day 07:00–19:00, Night 19:00–07:00 and Off dates, with alarms 2 h 30 min before each shift. It appears on the desk without importing anything. The file is public, so holidays are left out of it; holidays imported on the iPad stay there. To change it, edit the dates in `roster.js`, change its `version`, and deploy: the iPad picks it up the next time IMANE opens online. Each version is applied once and replaces the previous version's shifts (a dropped date loses its alarm; edits to bundled shifts reset); shifts added on the iPad and imported holidays stay.
 - Motion: **Cinematic** or **Calm**; iPad **Reduce Motion** removes all animation including the welcome and flips.
 - Installable offline app shell: clocks, quote, tasks, calendar, alarms and shifts work without internet or the PC.
 
@@ -52,7 +52,7 @@ Open `http://127.0.0.1:4174`. Service workers require HTTPS or localhost; openin
 
 Use a clean public repository. This repository contains only Jarvis source, documentation and the optional companion. Do not import Whiskyverse history, assets, secrets, private scan reports or backups. In repository **Settings → Pages**, choose **Deploy from a branch → main → /(root) → Save**. Pages publishes the static files; Python source is downloadable but never runs on Pages. There are no public PC-control endpoints.
 
-Every release changing app shell files must change the `CACHE` version in `sw.js`. The worker pre-caches a complete shell before activation, leaves the existing version running while a tab is open, and activates after old clients close. Close all JANGE/Jarvis tabs and home-screen windows and reopen to apply an update. Rollback means reverting files in Git and publishing with a **new** cache version.
+Every release changing app shell files must change the `CACHE` version in `sw.js`. The worker pre-caches a complete shell before activation, leaves the existing version running while a tab is open, and activates after old clients close. Close all IMANE/Jarvis tabs and home-screen windows and reopen to apply an update. Rollback means reverting files in Git and publishing with a **new** cache version.
 
 ## Architecture and security decisions
 
@@ -70,9 +70,9 @@ Reference repositories consulted for concepts only: local `ai-resources/system-d
 Sources: [Open-Meteo API documentation](https://open-meteo.com/en/docs) and [free non-commercial usage](https://open-meteo.com/en/pricing), [GitHub Pages availability](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages), [Tailscale Serve](https://tailscale.com/docs/features/tailscale-serve), [psutil](https://pypi.org/project/psutil/7.2.2/), [Open-Meteo geocoding](https://open-meteo.com/en/docs/geocoding-api), [BigDataCloud reverse geocoding (client)](https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api), [RFC 5545](https://www.rfc-editor.org/rfc/rfc5545).
 
 
-## JANGE 3.1 verification and updates
+## IMANE 3.1 verification and updates
 
-Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.2.3`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every JANGE/Jarvis window and reopen online to activate 3.2; do not clear website data.
+Unchanged: the `jarvis.desk.v2` key and schema, the legacy `jarvis_tasks` migration, `jarvis.weather.v1` (now also storing the rounded place), the version-2 backup format (3.1 adds optional `alarms` and `shiftPlan`; older backups restore unchanged). New keys: `jarvis.alarms.v1`, `jarvis.shifts.v1`; preferences (motion, clock format, wake lock, weather location) stay in `jarvis.prefs.v1` and are not backed up. The shell cache is `jarvis-desk-v3.2.3`; it adds `alarms.js`, `shifts.js`, `quotes.js`, Cormorant Garamond and the new icons. Close every IMANE/Jarvis window and reopen online to activate 3.2; do not clear website data.
 
 Design notes: [docs/jange-3.1-design.md](docs/jange-3.1-design.md) (alarms, shifts and the future backend contract, quote sourcing, location privacy, PC states) and [brand/README.md](brand/README.md). Tests: [tests/README.md](tests/README.md).
 

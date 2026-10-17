@@ -1,7 +1,7 @@
-/* The owner's work roster, shipped with JANGE so it appears by itself: no file to import.
+/* The owner's work roster, shipped with IMANE so it appears by itself: no file to import.
    This file is public, so it holds shift times only; holidays are deliberately left out.
    To update: change the dates below and the version (any new string), then deploy. The iPad
-   picks it up the next time JANGE opens online (the service worker fetches roster.js fresh).
+   picks it up the next time IMANE opens online (the service worker fetches roster.js fresh).
    Each version is applied once and replaces the previous version's shifts; shifts added on
    the iPad and imported holidays stay. */
 (function (root) {

@@ -1,4 +1,4 @@
-/* JANGE brand builder (development tool, not loaded by the app).
+/* IMANE brand builder (formerly JANGE) (development tool, not loaded by the app).
    Writes the emblem, wordmark, lockups and concept sketches as SVG, and the
    application icons as PNG when Playwright is available:
      node brand/build.cjs              # SVG only
@@ -87,10 +87,10 @@ function emblemBody({ tan = 'currentColor', line = tan, mask = null, glint = nul
    Wide geometric letters on a 40-unit cap height. The A has no crossbar: a
    raised ear, quietly. */
 const LETTERS = [
-  ['J', 34, 'M2 26V28C2 35 7 40 14 40H22C29 40 34 35 34 28V0'],
+  ['I', 0, 'M0 0V40'],
+  ['M', 46, 'M0 40V0L23 30L46 0V40'],
   ['A', 42, 'M0 40L21 0L42 40'],
   ['N', 38, 'M0 40V0L38 40V0'],
-  ['G', 40, 'M40 9C38 3.5 33 0 26 0H14C6.3 0 0 6.3 0 14V26C0 33.7 6.3 40 14 40H26C33.7 40 40 33.7 40 26V21H23'],
   ['E', 32, 'M32 0H0V40H32M0 20H25'],
 ];
 const GAP = 15, STROKE = 4.6;
@@ -119,28 +119,30 @@ const ring = (r, color, w = 2.4) => `<circle cx="100" cy="100" r="${r}" fill="no
 const inRing = (scale, body) => `<g transform="translate(100 103) scale(${scale}) translate(-100 -100)">${body}</g>`;
 const DEVANAGARI = 'Kohinoor Devanagari, Noto Sans Devanagari, Nirmala UI, Mangal, sans-serif'; // system fonts; viewers without Devanagari fall back
 
+// IMANE emblem: the gold portrait medallion exported by brand/portrait/export.py.
+const portrait = `<image href="jange-emblem-512.webp" x="22" y="20" width="156" height="156"/>`;
 const files = {
   // Masters
-  'brand/jange-emblem.svg': svg('0 0 200 200', emblemBody({ tan: C.gold, mask: C.obsidian, glint: C.cyan }), 'JANGE emblem'),
-  'brand/jange-emblem-ring.svg': svg('0 0 200 200', ring(94, C.gold) + inRing(.78, emblemBody({ tan: C.gold, mask: C.obsidian, glint: C.cyan })), 'JANGE emblem in ring'),
-  'brand/jange-emblem-mono.svg': svg('0 0 200 200', emblemBody({ tan: '#ffffff', line: '#111111', mask: '#111111', glint: '#ffffff', facets: false }), 'JANGE emblem, monochrome'),
-  'brand/jange-wordmark.svg': svg(`0 0 ${WM.width} ${WM.height}`, wordmarkBody(C.gold), 'JANGE'),
-  'brand/jange-wordmark-mono.svg': svg(`0 0 ${WM.width} ${WM.height}`, wordmarkBody('#111111'), 'JANGE'),
+  'brand/jange-emblem.svg': svg('0 0 200 200', emblemBody({ tan: C.gold, mask: C.obsidian, glint: C.cyan }), 'JANGE emblem (historical)'),
+  'brand/jange-emblem-ring.svg': svg('0 0 200 200', ring(94, C.gold) + inRing(.78, emblemBody({ tan: C.gold, mask: C.obsidian, glint: C.cyan })), 'JANGE emblem in ring (historical)'),
+  'brand/jange-emblem-mono.svg': svg('0 0 200 200', emblemBody({ tan: '#ffffff', line: '#111111', mask: '#111111', glint: '#ffffff', facets: false }), 'JANGE emblem, monochrome (historical)'),
+  'brand/jange-wordmark.svg': svg(`0 0 ${WM.width} ${WM.height}`, wordmarkBody(C.gold), 'IMANE'),
+  'brand/jange-wordmark-mono.svg': svg(`0 0 ${WM.width} ${WM.height}`, wordmarkBody('#111111'), 'IMANE'),
   // Lockups
   'brand/jange-lockup-horizontal.svg': svg(`0 0 ${f(150 + WM.width * .62)} 120`,
     `<rect width="100%" height="100%" fill="${C.obsidian}"/>` +
-    `<g transform="translate(10 10) scale(.5)">${ring(94, C.gold)}${inRing(.78, emblemBody({ tan: C.gold, mask: C.obsidian, glint: C.cyan }))}</g>` +
+    `<g transform="translate(10 10) scale(.5)">${ring(94, C.gold)}${portrait}</g>` +
     `<g transform="translate(128 30) scale(.62)">${wordmarkBody(C.gold)}</g>` +
-    `<text x="128" y="94" font-family="${DEVANAGARI}" font-size="20" fill="${C.white}" fill-opacity=".72">जङ्गे</text>`, 'JANGE — जङ्गे'),
+    `<text x="128" y="94" font-family="${DEVANAGARI}" font-size="20" fill="${C.white}" fill-opacity=".72">इमाने</text>`, 'IMANE — इमाने'),
   'brand/jange-lockup-vertical.svg': svg('0 0 240 300',
     `<rect width="100%" height="100%" fill="${C.obsidian}"/>` +
-    `<g transform="translate(50 18) scale(.7)">${ring(94, C.gold)}${inRing(.78, emblemBody({ tan: C.gold, mask: C.obsidian, glint: C.cyan }))}</g>` +
+    `<g transform="translate(50 18) scale(.7)">${ring(94, C.gold)}${portrait}</g>` +
     `<g transform="translate(${f(120 - WM.width * .62 / 2)} 182) scale(.62)">${wordmarkBody(C.gold)}</g>` +
-    `<text x="120" y="262" text-anchor="middle" font-family="${DEVANAGARI}" font-size="22" fill="${C.white}" fill-opacity=".72">जङ्गे</text>`, 'JANGE — जङ्गे'),
+    `<text x="120" y="262" text-anchor="middle" font-family="${DEVANAGARI}" font-size="22" fill="${C.white}" fill-opacity=".72">इमाने</text>`, 'IMANE — इमाने'),
   'brand/jange-lockup-mono.svg': svg(`0 0 ${f(150 + WM.width * .62)} 120`,
-    `<g transform="translate(10 10) scale(.5)">${ring(94, '#111111')}${inRing(.78, emblemBody({ tan: '#ffffff', line: '#111111', mask: '#111111', glint: '#ffffff', facets: false }))}</g>` +
+    `<defs><filter id="mono"><feColorMatrix type="saturate" values="0"/></filter></defs><g transform="translate(10 10) scale(.5)">${ring(94, '#111111')}<g filter="url(#mono)">${portrait}</g></g>` +
     `<g transform="translate(128 30) scale(.62)">${wordmarkBody('#111111')}</g>` +
-    `<text x="128" y="94" font-family="${DEVANAGARI}" font-size="20" fill="#111111">जङ्गे</text>`, 'JANGE — जङ्गे, monochrome'),
+    `<text x="128" y="94" font-family="${DEVANAGARI}" font-size="20" fill="#111111">इमाने</text>`, 'IMANE — इमाने, monochrome'),
 };
 
 /* ---------------------------------------------------------------- concepts */

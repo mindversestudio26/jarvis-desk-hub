@@ -1,5 +1,5 @@
 'use strict';
-/* JANGE 3.1. Every value on screen comes from the device clock, local storage,
+/* IMANE 3.1. Every value on screen comes from the device clock, local storage,
    Open-Meteo or the authenticated read-only companion. Nothing is simulated.
    Internal identifiers (storage keys, cache names, JarvisTime/JarvisAlarms)
    keep their original names so existing data and installs carry over. */
@@ -83,7 +83,7 @@ try {
     if (typeof raw.roster === 'string' && raw.roster.length <= 40) shiftStore.roster = raw.roster;
   }
 } catch {}
-/* Your roster ships with JANGE (roster.js), so it shows without importing a file. Each
+/* Your roster ships with IMANE (roster.js), so it shows without importing a file. Each
    roster version is applied once and replaces the previous version's shifts; shifts you
    add on the iPad, holidays you import and alarm overrides stay. Past alarms of new
    shifts never ring. */
@@ -348,7 +348,7 @@ function startClock(snap) {
 /* ------------------------------------------------------------------ focus tasks */
 function updateCoreLabel() {
   const first = state.tasks.find(t => !t.done);
-  $('core').setAttribute('aria-label', 'JANGE core. Open focus tasks. Status ' + $('core-state').textContent + ', ' + $('core-detail').textContent + '. ' + (first ? 'Current focus: ' + first.text : 'No open tasks') + '.');
+  $('core').setAttribute('aria-label', 'IMANE core. Open focus tasks. Status ' + $('core-state').textContent + ', ' + $('core-detail').textContent + '. ' + (first ? 'Current focus: ' + first.text : 'No open tasks') + '.');
 }
 function renderFocus() {
   const total = state.tasks.length, done = state.tasks.filter(t => t.done).length, first = state.tasks.find(t => !t.done);
@@ -547,7 +547,7 @@ function renderAlarms() {
     const info = el('div', 'ai-info'), at = nextRing(a, now);
     info.append(el('span', 'ai-label', a.label || 'Alarm'));
     info.append(el('span', 'ai-meta', AL.repeatLabel(a.days) + ' · ' + (a.snoozeUntil ? 'snoozed until ' + whenText(a.snoozeUntil, a.zone) : at !== null ? 'next ' + whenText(at, a.zone) + ', ' + relative(at - now) : 'off')));
-    if (a.missedAt) info.append(el('span', 'ai-missed', 'Missed ' + whenText(a.missedAt, a.zone) + ': JANGE was closed, in the background or the iPad was asleep'));
+    if (a.missedAt) info.append(el('span', 'ai-missed', 'Missed ' + whenText(a.missedAt, a.zone) + ': IMANE was closed, in the background or the iPad was asleep'));
     const toggle = el('button', 'switch');
     toggle.type = 'button';
     toggle.setAttribute('role', 'switch');
@@ -743,7 +743,7 @@ function startRinging(entry) {
   if (a.plan) $('ring-label').textContent = a.plan.label;
   $('ring-snooze').textContent = 'Snooze ' + a.snooze + ' min';
   const playing = startSound(a.sound, true);
-  $('ring-note').textContent = (entry.snoozed ? 'Snoozed alarm. ' : '') + (a.sound === 'silent' ? 'Visual alarm.' : playing ? '' : sys.sound === 'unsupported' ? 'This browser cannot play sound; visual alarm only.' : 'Sound is locked until the screen is tapped once after opening JANGE.');
+  $('ring-note').textContent = (entry.snoozed ? 'Snoozed alarm. ' : '') + (a.sound === 'silent' ? 'Visual alarm.' : playing ? '' : sys.sound === 'unsupported' ? 'This browser cannot play sound; visual alarm only.' : 'Sound is locked until the screen is tapped once after opening IMANE.');
   hud.setAttribute('data-alarm', '');
   if (!$('alarm-ring').open) $('alarm-ring').showModal();
   $('ring-dismiss').focus();
@@ -782,7 +782,7 @@ function shiftStatus(a, now) {
   if (a.covered) return 'Covered by a manual alarm at the same time';
   if (a.plan.off) return shiftStore.settings.enabled ? 'Alarm off for this shift' : 'Shift alarms are off';
   if (a.snoozeUntil) return 'Snoozed until ' + whenText(a.snoozeUntil, a.zone);
-  if (a.missedAt) return 'Missed: JANGE was closed, in the background or the iPad was asleep';
+  if (a.missedAt) return 'Missed: IMANE was closed, in the background or the iPad was asleep';
   const at = nextRing(a, now);
   return at === null ? 'Done' : relative(at - now);
 }
@@ -802,7 +802,7 @@ function renderShifts() {
     const when = el('div', 'si-date'); when.append(el('b', '', longDate(s.date)), el('span', 'si-type ' + s.type, SH.TYPES[s.type]));
     const info = el('div', 'si-info');
     info.append(el('span', 'si-hours', s.start ? s.start + (s.end ? ' – ' + s.end : '') + ' ' + (s.zone === 'Asia/Dubai' ? 'Dubai' : 'Kathmandu') + (s.note ? ' · ' + s.note : '') : working ? 'No start time' : (s.note || 'No alarm')));
-    if (working && !s.start) info.append(el('span', 'si-warn', 'No start time, so no alarm. Add the start time; JANGE never guesses it.'));
+    if (working && !s.start) info.append(el('span', 'si-warn', 'No start time, so no alarm. Add the start time; IMANE never guesses it.'));
     if (a) {
       const other = a.zone === 'Asia/Dubai' ? 'Asia/Kathmandu' : 'Asia/Dubai';
       info.append(el('span', 'si-alarm', 'Alarm ' + zoneTime(a.plan.at, a.zone) + ' ' + (a.zone === 'Asia/Dubai' ? 'Dubai' : 'Kathmandu') + ' · ' + zoneTime(a.plan.at, other) + ' ' + (other === 'Asia/Dubai' ? 'Dubai' : 'Kathmandu') + (a.plan.custom ? ' · custom' : '')));
@@ -863,7 +863,7 @@ $('shift-form').onsubmit = e => {
   e.preventDefault();
   const radio = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
   const type = radio('shift-type'), working = SH.WORKING.includes(type), start = $('shift-start').value || null, now = Date.now();
-  if (working && !start) { notice('Enter the shift start time. JANGE does not guess shift times.'); return; }
+  if (working && !start) { notice('Enter the shift start time. IMANE does not guess shift times.'); return; }
   const before = shiftStore.shifts.find(x => x.id === editingShift);
   const next = {id:editingShift || 'm-' + uid(), date:$('shift-date').value, type, start:working ? start : null, end:working ? ($('shift-end').value || null) : null, zone:radio('shift-zone'), note:$('shift-note').value.trim().slice(0, 80), source:before ? before.source : 'manual'};
   if (!SH.validShift(next)) { notice('Choose a valid date and times for the shift.'); return; }
@@ -938,7 +938,7 @@ function showTab(which) {
 $('tab-alarms').onclick = () => showTab('alarms');
 $('tab-shifts').onclick = () => showTab('shifts');
 
-/* Screen wake lock, so a desk-mounted iPad can keep showing JANGE (and keep
+/* Screen wake lock, so a desk-mounted iPad can keep showing IMANE (and keep
    alarms able to ring) without Auto-Lock. */
 let wakeLock = null, wakePending = false;
 function renderWake() {
@@ -948,7 +948,7 @@ function renderWake() {
   $('awake-switch').setAttribute('aria-checked', String(prefs.awake));
   $('awake-note').textContent = s === 'unsupported' || s === 'blocked'
     ? 'This browser did not grant a wake lock. For desk use set Settings → Display & Brightness → Auto-Lock → Never.'
-    : 'Uses the browser’s Screen Wake Lock while JANGE is open and in front. Alarms still cannot ring while the iPad is locked.';
+    : 'Uses the browser’s Screen Wake Lock while IMANE is open and in front. Alarms still cannot ring while the iPad is locked.';
 }
 async function applyWake() {
   const supported = 'wakeLock' in navigator;
@@ -1071,7 +1071,7 @@ function renderLoc() {
   }[sys.loc];
   note.hidden = !text;
   if (text) note.textContent = text;
-  $('loc-status').textContent = prefs.locMode === 'manual' ? 'Weather is shown for ' + name + '. Switch to Current location to follow the iPad.' : sys.loc === 'device' ? 'Following this iPad: ' + name + ' (rounded to about 5 km). Checked when JANGE opens or comes back, never in the background.' : 'Uses the iPad’s location only when you allow it, rounded to about 5 km. JANGE checks it when opened or brought back, never in the background.';
+  $('loc-status').textContent = prefs.locMode === 'manual' ? 'Weather is shown for ' + name + '. Switch to Current location to follow the iPad.' : sys.loc === 'device' ? 'Following this iPad: ' + name + ' (rounded to about 5 km). Checked when IMANE opens or comes back, never in the background.' : 'Uses the iPad’s location only when you allow it, rounded to about 5 km. IMANE checks it when opened or brought back, never in the background.';
 }
 function setPlace(next) {
   const old = lastWeather && lastWeather.place;
@@ -1326,7 +1326,7 @@ $('import-file').onchange = async e => {
     }
     renderTasks(); renderCalendar(); renderAlarms(); setSystems();
     notice('Backup restored. Existing items were kept.');
-  } catch { notice('Invalid backup. Choose a JANGE (or Jarvis) JSON backup under 2 MB.'); }
+  } catch { notice('Invalid backup. Choose an IMANE (or earlier IMANE or Jarvis) JSON backup under 2 MB.'); }
   finally { e.target.value = ''; }
 };
 
@@ -1357,7 +1357,7 @@ else {
 
 // One failing step must never stop the clocks or the service worker below.
 for (const step of [replan, renderTasks, renderCalendar, renderAlarms, renderShifts, renderSound, renderLoc, startClock, setSystems, applyWake]) {
-  try { step(); } catch (err) { console.error('JANGE startup step failed:', step.name, err); }
+  try { step(); } catch (err) { console.error('IMANE startup step failed:', step.name, err); }
 }
 if (storageBroken) notice('Saved data could not be read. Back up or restore your data in Settings.');
 refreshLocation(false);
@@ -1370,7 +1370,7 @@ if ('serviceWorker' in navigator) {
     sys.cache = 'ready'; setSystems();
     registration.addEventListener('updatefound', () => {
       const worker = registration.installing;
-      worker?.addEventListener('statechange', () => { if (worker.state === 'installed' && navigator.serviceWorker.controller) notice('A JANGE update is ready. Close and reopen the app to install.'); });
+      worker?.addEventListener('statechange', () => { if (worker.state === 'installed' && navigator.serviceWorker.controller) notice('An IMANE update is ready. Close and reopen the app to install.'); });
     });
   }).catch(() => { $('offline-ready').textContent = 'Offline cache unavailable · retry online'; sys.cache = 'error'; setSystems(); });
 } else { $('offline-ready').textContent = 'Offline mode needs HTTPS'; sys.cache = 'unsupported'; setSystems(); }

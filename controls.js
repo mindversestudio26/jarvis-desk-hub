@@ -92,7 +92,7 @@
     finally{if(mine===epoch||!session){busy=false;render();}}
   };
   window.addEventListener('jange:pc-state',()=>{if(session&&(!connected()||session.generation!==pcGeneration||session.url!==agent.url))clear('Control session cleared after the PC connection changed. Check any pending command on the PC.');else render();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)clear('Control key cleared while JANGE was in the background.');else render();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clear('Control key cleared while IMANE was in the background.');else render();});
   window.addEventListener('pagehide',()=>clear());
   setInterval(()=>{if(document.hidden)return;if(session&&!valid())clear('Control authorization expired or the PC is unreachable. Authorize again.');else render();},5000);
   render();

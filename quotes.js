@@ -1,4 +1,4 @@
-/* JANGE daily quote: a curated offline collection. Each entry is a documented
+/* IMANE daily quote: a curated offline collection. Each entry is a documented
    quotation (source kept in `src`, not shown on screen) with a Nepali meaning.
    Popular misattributions were left out deliberately. The order is fixed and
    one entry is shown per Dubai calendar day, so nothing repeats until the whole

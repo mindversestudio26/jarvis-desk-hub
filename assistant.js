@@ -26,7 +26,7 @@
     status.textContent = activities[model.activity] || 'Here with you';
     const locality = typeof place.name === 'string' ? place.name : 'Selected location';
     context.textContent = model.fresh ? locality+' · '+descriptions[model.condition]+' · current model' : locality+' · neutral · current weather unavailable';
-    scene.setAttribute('aria-label','JANGE holographic assistant. '+status.textContent+'. '+context.textContent+'. Voice features are not enabled.');
+    scene.setAttribute('aria-label','IMANE holographic assistant. '+status.textContent+'. '+context.textContent+'. Voice features are not enabled.');
     context.title = model.fresh ? 'Environment follows the selected weather location. Open-Meteo current model estimate; not an on-site sensor. Reading '+new Date(lastWeather.observedAt).toISOString() : 'Cached, old, offline or unverified readings do not drive environmental effects.';
     if (['wipe','alert'].includes(model.gesture) && previous?.gesture !== model.gesture) { clearTimeout(gestureTimer); gestureTimer = setTimeout(refresh,Math.max(1,model.gestureAt+5000-Date.now()+5)); }
     wakeRig();

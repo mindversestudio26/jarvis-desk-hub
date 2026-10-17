@@ -1,4 +1,4 @@
-# JANGE 3.3 — premium three-screen console
+# IMANE 3.3 — premium three-screen console
 
 ## Assessment and design choices
 
@@ -60,7 +60,7 @@ A separate security review found no new injection sinks, credential persistence,
 
 Published incrementally at the owner's request. First milestone adds local SVG UAE/Nepal flags, a seconds subdial driven by the existing clock tick, and a Nepali-only date inside the Kathmandu clock (the existing Gregorian update target remains hidden for compatibility).
 
-The second milestone restores the original live JANGE core between weather and shifts. The original task interaction, status and data targets remain intact. Static graphite gradients, champagne bevels, recessed clock faces, raised dock keys and pressed calendar cells provide physical depth without animated blur or WebGL. Core rings pause outside Home and when hidden; Calm and Reduce Motion stop decorative motion, including the busy avatar pulse.
+The second milestone restores the original live IMANE core between weather and shifts. The original task interaction, status and data targets remain intact. Static graphite gradients, champagne bevels, recessed clock faces, raised dock keys and pressed calendar cells provide physical depth without animated blur or WebGL. Core rings pause outside Home and when hidden; Calm and Reduce Motion stop decorative motion, including the busy avatar pulse.
 
 Touch navigation follows horizontal drags using one CSSOM transform per animation frame, direction locking, distance/velocity completion and a spring-back on cancellation. Buttons, controls, dialogs, calendar and nested scroll containers are excluded. Multitouch, backgrounding and navigation reset the gesture; trailing clicks are suppressed. Vertical scrolling and keyboard navigation remain available.
 

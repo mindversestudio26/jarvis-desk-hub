@@ -138,8 +138,10 @@ button { cursor: pointer; }
 .brand-mark, .core-avatar, .ring-emblem, .welcome-emblem { position: relative; display: inline-block; flex: none; }
 .brand-mark img, .core-avatar img, .ring-emblem img, .welcome-emblem img, .em-eyes { position: absolute; inset: 0; width: 100%; height: 100%; }
 .em-eyes circle { fill: var(--accent); opacity: .9; }
+/* The IMANE portrait emblem carries no painted eye glints (they belonged to the dog emblem). */
+.em-eyes { display: none; }
 .brand-mark { width: 40px; height: 40px; }
-.brand-word { width: 108px; height: 19px; color: var(--gold); }
+.brand-word { width: 97px; height: 19px; color: var(--gold); }
 .brand-sub { display: flex; align-items: baseline; gap: 7px; margin: -4px 0 2px; font: 600 9px/1.2 var(--font-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--text-3); }
 .brand-sub [lang="ne"], .welcome-np { font-family: "Kohinoor Devanagari", "Noto Sans Devanagari", "Nirmala UI", sans-serif; letter-spacing: .02em; text-transform: none; }
 .brand-sub [lang="ne"] { font-size: 12px; font-weight: 500; color: var(--text-2); }
@@ -878,7 +880,7 @@ dialog.ring-overlay::backdrop { background: #000; }
 .welcome-emblem img { opacity: 0; animation: wel-emblem 1.05s cubic-bezier(.2, .7, .2, 1) .25s both; }
 .welcome-emblem .em-glint { fill: var(--accent); opacity: 0; animation: wel-fade .3s ease-out 1.05s both; }
 @keyframes wel-emblem { from { opacity: 0; transform: scale(.92); filter: brightness(.35); } 60% { opacity: 1; } to { opacity: 1; transform: none; filter: none; } }
-.welcome-word { width: 190px; height: 34px; color: var(--gold); opacity: 0; animation: wel-rise .6s var(--ease-out) 1s both; }
+.welcome-word { width: 173px; height: 34px; color: var(--gold); opacity: 0; animation: wel-rise .6s var(--ease-out) 1s both; }
 .welcome-np { margin: -6px 0 0; font-size: 18px; color: var(--text-2); opacity: 0; animation: wel-fade .6s ease-out 1.15s both; }
 
 /* Boot of the desk itself starts as the welcome hands over. */

@@ -1,4 +1,6 @@
-# JANGE · जङ्गे — brand guide
+# IMANE · इमाने — brand guide
+
+The product was renamed from JANGE (जङ्गे) to IMANE (इमाने) on 17 October 2026. The wordmark now reads IMANE in the same geometric letterforms. The emblem is now a gold medallion of the approved assistant portrait (`brand/assistant/idle.webp`), exported by `python -I brand/portrait/export.py . <preview-dir>` into the existing `jange-emblem-512.webp`, `jange-head-160.webp` and app-icon files (names kept so markup and the service worker are unchanged). The German Shepherd material below is the historical JANGE identity; its vector SVGs remain for the record and are not used by the app.
 
 JANGE is named after the family's German Shepherd, who died about two years ago. The identity honours him through the breed, and only through the breed. No reference photograph was supplied, so no individual markings were invented. The emblem uses the black-and-tan traits every German Shepherd shares:
 
@@ -35,7 +37,7 @@ The first sketches tapered to a point and looked like a fox. They were redrawn a
 | `jange-emblem-ring.svg` | Emblem in its ring (icon artwork) |
 | `jange-emblem-mono.svg` | One-colour emblem: dark line and mask on paper |
 | `jange-wordmark.svg`, `jange-wordmark-mono.svg` | Wordmark only |
-| `jange-lockup-horizontal.svg` | Emblem + wordmark + जङ्गे on obsidian |
+| `jange-lockup-horizontal.svg` | Emblem + wordmark + इमाने on obsidian |
 | `jange-lockup-vertical.svg` | Stacked lockup on obsidian |
 | `jange-lockup-mono.svg` | Horizontal monochrome lockup |
 | `concepts/` | The three explored concepts, for the record |
@@ -60,7 +62,7 @@ Lockups:
 - logo-only (the emblem)
 - wordmark-only
 
-The Devanagari name जङ्गे is set in the system Devanagari font (Kohinoor Devanagari on iPad).
+The Devanagari name इमाने is set in the system Devanagari font (Kohinoor Devanagari on iPad).
 
 ## Colour
 
