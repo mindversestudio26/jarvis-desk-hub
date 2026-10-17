@@ -1,0 +1,119 @@
+/* Original portrait renderer. The adapter owns datasets, captions and click behavior.
+   Layout contract: --assistant-art-height (250px default) + 28px caption.
+   data-static=true / .assistant-static provide a motion-free fallback. */
+.living-scene{
+ --assistant-art-height:250px;--assistant-ink:#dce9df;--assistant-accent:#dfc18b;--assistant-wind:1;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ width:100%;min-width:0;isolation:isolate;color:var(--assistant-ink);
+}
+.living-scene .assistant-touch{
+ display:block;position:relative;width:100%;height:var(--assistant-art-height);min-width:44px;min-height:44px;
+ padding:0;margin:0;border:0;border-radius:22px;background:transparent;box-shadow:none;
+ color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.living-scene .assistant-touch:focus-visible{outline:1px solid #d9c08e;outline-offset:2px;background:#b3d9cd08}
+.living-scene .assistant-touch:active{background:#83d4cc06}
+.living-scene .assistant-portrait{display:block;width:100%;height:100%;overflow:visible}
+.living-scene .assistant-caption{
+ height:28px;min-height:28px;max-width:100%;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:2px;text-align:center;line-height:1.1;pointer-events:none;
+}
+.living-scene .assistant-status{font:500 10px/1.15 var(--font-ui,system-ui,sans-serif);letter-spacing:1.5px;text-transform:uppercase;color:var(--assistant-accent);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.living-scene .assistant-context{font:400 10px/1.15 var(--font-ui,system-ui,sans-serif);color:#9cb5b5;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.living-scene .assistant-person{transform-origin:160px 316px;animation:assistant-breathe 7s ease-in-out infinite}
+.living-scene .assistant-head{transform-origin:161px 199px}
+.living-scene .assistant-eyes{transform-origin:161px 142px;animation:assistant-blink 9s ease-in-out infinite}
+.living-scene .assistant-pose,.living-scene .assistant-weather,.living-scene .assistant-umbrella,
+.living-scene .assistant-ribbon,.living-scene .assistant-protective,.living-scene .assistant-beam,
+.living-scene .assistant-rain-covered,.living-scene .assistant-rain-uncovered,.living-scene .assistant-canopy-splashes,
+.living-scene .assistant-expression-soft,.living-scene .assistant-expression-concern{opacity:0;pointer-events:none}
+.living-scene .assistant-pose-idle{opacity:1}
+.living-scene .assistant-aura{opacity:.8;transition:opacity .5s ease}
+.living-scene .assistant-orbit{opacity:.75}
+.living-scene[data-phase=night] .assistant-stars{opacity:.8}
+.living-scene[data-phase=night] .assistant-aura{opacity:.55}
+.living-scene[data-phase=morning] .assistant-orbit,
+.living-scene[data-phase=evening] .assistant-orbit{stroke:#e8c28a;opacity:1}
+.living-scene[data-phase=morning] .assistant-plinth,
+.living-scene[data-phase=evening] .assistant-plinth{opacity:.85}
+.living-scene[data-condition=clear]:not([data-phase=night]) .assistant-sun{opacity:.65}
+.living-scene[data-condition=cloud] .assistant-cloud,
+.living-scene[data-condition=rain] .assistant-cloud,
+.living-scene[data-condition=storm] .assistant-cloud{opacity:1}
+.living-scene[data-condition=fog] .assistant-fog{opacity:1}
+.living-scene[data-condition=fog] .assistant-orbit{opacity:.3}
+.living-scene[data-condition=snow] .assistant-snow{opacity:.8}
+.living-scene[data-condition=heat]:is([data-phase=day],[data-phase=morning],[data-phase=evening]) .assistant-sun{opacity:1}
+.living-scene[data-condition=cold] .assistant-aura,
+.living-scene[data-condition=snow] .assistant-aura{opacity:.5}
+.living-scene[data-condition=rain]:not([data-gesture=umbrella]) .assistant-rain-uncovered,
+.living-scene[data-condition=storm]:not([data-gesture=umbrella]) .assistant-rain-uncovered{opacity:.8}
+.living-scene[data-gesture=umbrella] .assistant-pose-idle,
+.living-scene[data-gesture=wipe] .assistant-pose-idle,
+.living-scene[data-gesture=wrap] .assistant-pose-idle{opacity:0}
+.living-scene[data-gesture=umbrella] .assistant-pose-umbrella,
+.living-scene[data-gesture=umbrella] .assistant-umbrella{opacity:1}
+.living-scene[data-gesture=umbrella][data-condition=rain] .assistant-rain-covered,
+.living-scene[data-gesture=umbrella][data-condition=storm] .assistant-rain-covered,
+.living-scene[data-gesture=umbrella][data-condition=rain] .assistant-canopy-splashes,
+.living-scene[data-gesture=umbrella][data-condition=storm] .assistant-canopy-splashes{opacity:.9}
+.living-scene[data-gesture=wipe] .assistant-pose-wipe,
+.living-scene[data-gesture=wrap] .assistant-pose-wrap{opacity:1}
+.living-scene[data-gesture=wipe] .assistant-eyes{opacity:0}
+.living-scene[data-gesture=wipe] .assistant-expression-soft{opacity:1}
+.living-scene[data-gesture=wrap] .assistant-expression-concern,
+.living-scene[data-gesture=alert] .assistant-expression-concern,
+.living-scene[data-activity=error] .assistant-expression-concern{opacity:.8}
+.living-scene[data-gesture=alert] .assistant-protective,
+.living-scene[data-condition=storm] .assistant-protective,
+.living-scene[data-activity=error] .assistant-protective{opacity:1}
+.living-scene[data-condition=storm],.living-scene[data-activity=error]{--assistant-accent:#e4b978}
+.living-scene[data-condition=storm] .assistant-person,
+.living-scene[data-activity=error] .assistant-person{animation:none}
+.living-scene[data-direction=left]{--assistant-wind:-1}
+.living-scene[data-gesture=wind] .assistant-ribbon{opacity:.8;transform-origin:160px 220px;transform:scaleX(var(--assistant-wind));animation:assistant-ribbon 3.8s ease-in-out infinite}
+.living-scene[data-gesture=wind] .assistant-hair-tail{transform-origin:160px 135px;transform:scaleX(var(--assistant-wind));animation:assistant-hair 3.8s ease-in-out infinite}
+.living-scene[data-activity=attention] .assistant-head{animation:assistant-attention 1.4s ease-in-out both}
+.living-scene[data-activity=attention] .assistant-aura{opacity:1}
+.living-scene[data-activity=processing] .assistant-beam{opacity:.8;animation:assistant-scan 3.8s ease-in-out infinite}
+.living-scene[data-activity=connected] .assistant-plinth{stroke:#a4e3d4}
+.living-scene[data-activity=disconnected] .assistant-person{opacity:.73;animation:none}
+.living-scene[data-activity=disconnected] .assistant-plinth{opacity:.4}
+.living-scene[data-activity=disconnected]{--assistant-accent:#adc2bf}
+@keyframes assistant-breathe{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-1px) scaleY(1.006)}}
+@keyframes assistant-blink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
+@keyframes assistant-attention{0%,100%{transform:rotate(0)}45%,70%{transform:rotate(-2.5deg) translateX(-1px)}}
+@keyframes assistant-scan{0%,100%{transform:translateY(35px);opacity:.1}50%{transform:translateY(-32px);opacity:.65}}
+@keyframes assistant-ribbon{0%,100%{transform:scaleX(var(--assistant-wind)) rotate(-2deg)}50%{transform:scaleX(var(--assistant-wind)) rotate(5deg)}}
+@keyframes assistant-hair{0%,100%{transform:scaleX(var(--assistant-wind)) rotate(0)}50%{transform:scaleX(var(--assistant-wind)) rotate(-3deg)}}
+/* Pausing preserves the last frame. Static / Calm / Reduce Motion remove motion entirely. */
+.living-scene[data-paused=true] *,.living-scene[data-paused=true] *::before,.living-scene[data-paused=true] *::after{animation-play-state:paused!important;transition:none!important}
+.calm .living-scene *,.calm .living-scene *::before,.calm .living-scene *::after,
+.living-scene[data-static=true] *,.living-scene[data-static=true] *::before,.living-scene[data-static=true] *::after,
+.living-scene.assistant-static *,.living-scene.assistant-static *::before,.living-scene.assistant-static *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){
+ .living-scene *,.living-scene *::before,.living-scene *::after{animation:none!important;transition:none!important}
+}
+
+
+/* Coherent environmental motion: only the active condition has work to render. */
+.living-scene[data-condition=heat] .assistant-heat{opacity:1}
+.living-scene[data-condition=cold] .assistant-cold-air,.living-scene[data-condition=snow] .assistant-cold-air{opacity:1}
+.living-scene[data-condition=heat] .assistant-thermal{animation:assistant-thermal 4s ease-in-out infinite}
+.living-scene[data-condition=rain] .assistant-rain-strokes,.living-scene[data-condition=storm] .assistant-rain-strokes{animation:assistant-rain .9s linear infinite}
+.living-scene[data-gesture=umbrella] .assistant-canopy-splashes{animation:assistant-splash 1.8s ease-in-out infinite}
+.living-scene[data-gesture=wipe] .assistant-wiping-arm{transform-origin:220px 238px;animation:assistant-wipe 4.8s ease-in-out both}
+.living-scene[data-gesture=wrap][data-entry=true] .assistant-pose-wrap{transform-origin:160px 250px;animation:assistant-wrap 2s ease-out both}
+.living-scene[data-gesture=umbrella][data-entry=true] .assistant-umbrella{animation:assistant-unfold .65s ease-out both}
+.living-scene[data-direction=none] .assistant-ribbon,.living-scene[data-direction=none] .assistant-hair-tail{animation:none;transform:none}
+.living-scene[data-phase=night] .assistant-person{animation-duration:14s;opacity:.86}
+.living-scene[data-phase=night] .assistant-thermal{animation-duration:8s}
+@keyframes assistant-rain{from{transform:translate(2px,-8px);opacity:.3}to{transform:translate(-5px,18px);opacity:.85}}
+@keyframes assistant-splash{0%,100%{opacity:.4}50%{opacity:.85}}
+@keyframes assistant-thermal{0%,100%{transform:translateY(2px);opacity:.35}50%{transform:translateY(-5px);opacity:.65}}
+@keyframes assistant-wipe{0%{transform:rotate(6deg)}25%{transform:rotate(-3deg)}60%{transform:rotate(2deg)}85%,100%{transform:rotate(-1deg)}}
+@keyframes assistant-wrap{from{transform:translateY(5px) scaleX(1.04)}to{transform:translateY(0) scaleX(1)}}
+@keyframes assistant-unfold{from{opacity:0}to{opacity:1}}
+
+.living-scene[data-phase=night][data-condition=heat] .assistant-heat{opacity:.5}
+.living-scene[data-phase=night][data-activity=disconnected] .assistant-person{opacity:.65}

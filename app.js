@@ -159,6 +159,7 @@ function setBusy(key, on) {
     setTimeout(() => { if (!busy.size && Date.now() >= busyUntil) hud.removeAttribute('data-busy'); }, Math.max(0, busyUntil - Date.now()));
   }
   if (busy.size) hud.setAttribute('data-busy', '');
+  window.dispatchEvent(new Event('jange:context'));
 }
 function row(id, s, text) { const li = $(id); li.dataset.s = s; li.querySelector('b').textContent = text; }
 function clockText(t) { return dubai(new Date(t), {hour:'2-digit', minute:'2-digit', hourCycle:'h23'}); }
@@ -194,6 +195,7 @@ function setSystems() {
   $('core-state').textContent = title;
   $('core-detail').textContent = detail;
   updateCoreLabel();
+  window.dispatchEvent(new Event('jange:context'));
 }
 function restart(node, cls) { node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls); }
 const ripple = () => restart($('ripple'), 'go');
@@ -1037,7 +1039,7 @@ async function weather() {
     if (!r.ok) throw Error();
     const body = await r.json();
     if (!validWeather(body.current)) throw Error();
-    lastWeather = {current:body.current, daily:body.daily, fetched:Date.now(), place:{name:target.name, lat:target.lat, lon:target.lon, source:target.source}};
+    lastWeather = window.JangeAssistantState ? window.JangeAssistantState.normalizeObservation(body, {name:target.name, lat:target.lat, lon:target.lon, source:target.source}, Date.now()) : {current:body.current,daily:body.daily,fetched:Date.now(),place:{...target}};
     weatherTime = Date.now();
     paintWeather(lastWeather, false);
     restart(document.querySelector('.link-env'), 'flash');
@@ -1075,6 +1077,7 @@ function setPlace(next) {
   const old = lastWeather && lastWeather.place;
   const moved = !validPlace(old) || Math.abs(old.lat - next.lat) > .001 || Math.abs(old.lon - next.lon) > .001 || old.name !== next.name;
   place = next;
+  window.dispatchEvent(new Event('jange:context'));
   $('wx-place').textContent = next.name;
   if (moved || Date.now() - weatherTime > 900000) weather();
 }
