@@ -64,3 +64,9 @@ Existing unit, browser, console and read-only integration suites cover monitorin
 - No credentials generated/read, live controls activated, tailnet rules changed, or real Windows actions performed for this implementation.
 
 The changes add only small static frontend files and use the existing monitoring cadence; no extra permanent polling runs for controls. Result polling is bounded to five reads per command. No physical iPad frame-rate measurement was performed.
+
+## Approved activation (2026-10-17)
+
+The owner approved frontend deployment and companion activation with Notepad as the sole launch application. Activation exposed a PowerShell argument-grouping error that the mocked installer did not detect; both quoted path expressions were corrected and a paths-with-spaces/argument-boundary regression was added. Both failed attempts restored the previous monitoring runtime. The corrected activation succeeded.
+
+Verified on the installed companion: localhost-only listener, authenticated private HTTPS control capability, Notepad-only application list, rejection of the monitoring credential on control routes, and working monitoring through the same HTTPS connection. The encrypted monitoring credential hash and Tailscale Serve configuration were unchanged across successful activation. No tailnet access rules were modified. No actual Lock, Sleep, Restart, Shutdown or Launch command was executed. Physical iPad authorization remains a user step.

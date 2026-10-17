@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 if (Get-CompanionProcess) { Write-Host 'Companion is already running.'; return }
 $cfg = Get-CompanionConfig
 $pythonw = Join-Path $App 'venv\Scripts\pythonw.exe'
-$arguments = @('"' + (Join-Path $App 'agent.py') + '"', '--port', $cfg.port, '--origin', $cfg.origin, '--host', $cfg.host)
+$arguments = @(('"' + (Join-Path $App 'agent.py') + '"'), '--port', $cfg.port, '--origin', $cfg.origin, '--host', $cfg.host)
 
 # Credentials and the spawned process are cleaned up even when loading or PID writes fail.
 $proc = $null
@@ -27,7 +27,7 @@ try {
                 if ($elevated) {
                     Write-Warning 'Elevated session: starting monitoring only. Start unelevated to use controls.'
                 } else {
-                    $arguments += @('--control-config', '"' + $ControlConfigFile + '"')
+                    $arguments += @('--control-config', ('"' + $ControlConfigFile + '"'))
                     $env:JANGE_CONTROL_TOKEN = Get-ControlToken
                 }
             }

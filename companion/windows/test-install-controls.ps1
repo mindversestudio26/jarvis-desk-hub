@@ -10,6 +10,29 @@ $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('jange-installer-mock-'+[Guid]::
 New-Item -ItemType Directory -Path $testRoot | Out-Null
 function icacls { $global:LASTEXITCODE=0 }
 function Assert-Mock($condition,$message){if(-not $condition){throw $message}}
+# Evaluate only the two argument assignments from start.ps1, never its startup code.
+& {
+ $startTokens=$null; $startErrors=$null
+ $startAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'start.ps1'),[ref]$startTokens,[ref]$startErrors)
+ Assert-Mock ($startErrors.Count -eq 0) 'start.ps1 syntax error'
+ $assignments=@($startAst.FindAll({param($n)
+  $n -is [Management.Automation.Language.AssignmentStatementAst] -and
+  $n.Left -is [Management.Automation.Language.VariableExpressionAst] -and
+  $n.Left.VariablePath.UserPath -eq 'arguments'
+ },$true))
+ Assert-Mock ($assignments.Count -eq 2) 'Expected exactly two startup argument assignments'
+ $App='C:\Mock User\Jange Companion'
+ $ControlConfigFile=Join-Path $App 'controls.json'
+ $cfg=[pscustomobject]@{port=8765;origin='https://example.test';host='pc.example.ts.net'}
+ . ([scriptblock]::Create($assignments[0].Extent.Text))
+ $expected=@(('"'+(Join-Path $App 'agent.py')+'"'),'--port','8765','--origin',$cfg.origin,'--host',$cfg.host)
+ Assert-Mock ($arguments.Count -eq 7 -and ($arguments -join '|') -eq ($expected -join '|')) 'Monitoring argument boundaries changed'
+ . ([scriptblock]::Create($assignments[1].Extent.Text))
+ $expected+=@('--control-config',('"'+$ControlConfigFile+'"'))
+ Assert-Mock ($arguments.Count -eq 9 -and ($arguments -join '|') -eq ($expected -join '|')) 'Control argument boundaries changed'
+ Assert-Mock (-not ($arguments -contains '"')) 'Standalone quote argument'
+ Write-Output 'PASS startup-argument-boundaries (paths with spaces)'
+}
 $common=@'
 $App=$global:ControlInstallMock.App
 $TokenFile=Join-Path $App 'mock-read-token'
