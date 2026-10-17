@@ -164,7 +164,7 @@
     return { shifts: next, overrides: nextOverrides };
   }
 
-  /* The roster that ships with JANGE (roster.js) as shift entries. Ids match a
+  /* The roster that ships with IMANE (roster.js) as shift entries. Ids match a
      calendar import of the same roster, so applying both never duplicates a
      shift. Anything malformed is skipped, never guessed. */
   const ROSTER_KINDS = {

@@ -13,7 +13,7 @@ for(const [engine,name] of [[chromium,'chromium'],[webkit,'webkit']]){
  await ctx.route('https://api.open-meteo.com/**',r=>rejectWeather?r.abort():r.fulfill({json:{timezone:'Asia/Dubai',utc_offset_seconds:14400,current,daily:{weather_code:[95],time:['2026-10-17'],temperature_2m_max:[40],temperature_2m_min:[25]}}}));
  await ctx.route('**/roster.js',r=>r.fulfill({contentType:'application/javascript',body:'/* no test alarms */'}));
  const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));ctx.setDefaultTimeout(10000);
- await p.clock.install({time:new Date('2026-10-17T08:00:00Z')});await p.goto(base);await p.clock.pauseAt(new Date('2026-10-17T08:00:01Z'));
+ await p.clock.install({time:new Date('2026-10-17T08:00:00Z')});await p.goto(base);await p.clock.pauseAt(new Date('2026-10-17T08:00:10Z'));
  await p.waitForFunction(()=>window.JangeAssistant?.getState()?.fresh);await p.clock.runFor(3000);await p.waitForFunction(()=>document.querySelector('.living-scene').classList.contains('has-realistic-portrait') && [...document.querySelectorAll('.assistant-photo')].every(i=>i.complete && i.naturalWidth===600));
  await p.evaluate(()=>{const b=document.createElement('div');b.textContent='DEMONSTRATION · synthetic weather fixtures';b.style.position='fixed';b.style.top='0';b.style.right='0';b.style.fontSize='10px';b.style.color='#d9c08e';b.style.zIndex='99';document.body.append(b);});
  const scene=p.locator('.living-scene');const state=()=>p.evaluate(()=>JangeAssistant.getState());

@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07080a">
-<meta name="description" content="JANGE (जङ्गे): a personal desk assistant interface.">
+<meta name="description" content="IMANE (इमाने): a personal desk assistant interface.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="JANGE">
+<meta name="apple-mobile-web-app-title" content="IMANE">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net https://*.ts.net; object-src 'none'; base-uri 'self'; form-action 'self'">
-<title>JANGE · जङ्गे</title>
+<title>IMANE · इमाने</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
 <link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
@@ -39,7 +39,7 @@
 </head>
 <body>
 <svg class="sprite" aria-hidden="true" focusable="false">
-  <symbol id="jange-wordmark" viewBox="0 0 255.2 44.6"><path d="M6.6 28.3V30.3C6.6 37.3 11.6 42.3 18.6 42.3H26.6C33.6 42.3 38.6 37.3 38.6 30.3V2.3M53.6 42.3L74.6 2.3L95.6 42.3M110.6 42.3V2.3L148.6 42.3V2.3M203.6 11.3C201.6 5.8 196.6 2.3 189.6 2.3H177.6C169.9 2.3 163.6 8.6 163.6 16.3V28.3C163.6 36 169.9 42.3 177.6 42.3H189.6C197.3 42.3 203.6 36 203.6 28.3V23.3H186.6M250.6 2.3H218.6V42.3H250.6M218.6 22.3H243.6" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linejoin="miter" stroke-miterlimit="10"/></symbol>
+  <symbol id="jange-wordmark" viewBox="0 0 227.2 44.6"><path d="M4.6 2.3V42.3M19.6 42.3V2.3L42.6 32.3L65.6 2.3V42.3M80.6 42.3L101.6 2.3L122.6 42.3M137.6 42.3V2.3L175.6 42.3V2.3M222.6 2.3H190.6V42.3H222.6M190.6 22.3H215.6" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linejoin="miter" stroke-miterlimit="10"/></symbol>
   <symbol id="i-focus" viewBox="0 0 24 24"><path d="M3.5 7l2 2 3.5-3.5M12 7.5h8.5M3.5 15.5l2 2 3.5-3.5M12 16h8.5"/></symbol>
   <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></symbol>
@@ -75,12 +75,12 @@
 
 <div id="welcome" class="welcome" aria-hidden="true">
   <div class="welcome-mark"><span class="welcome-ring"></span><span class="welcome-ring r2"></span><span class="welcome-emblem"><img src="brand/jange-emblem-512.webp" alt="" width="150" height="150" decoding="async" fetchpriority="high"><svg class="em-eyes" viewBox="0 0 1000 1000" aria-hidden="true"><circle class="em-glint" cx="397" cy="409" r="8"/><circle class="em-glint" cx="589" cy="409" r="8"/></svg></span></div>
-  <svg class="welcome-word" viewBox="0 0 255.2 44.6"><use href="#jange-wordmark"/></svg>
-  <p class="welcome-np" lang="ne">जङ्गे</p>
+  <svg class="welcome-word" viewBox="0 0 227.2 44.6"><use href="#jange-wordmark"/></svg>
+  <p class="welcome-np" lang="ne">इमाने</p>
 </div>
 
 <main class="hud" id="hud" data-net="online" data-wx="loading" data-pc="off" data-store="ok">
-  <h1 class="sr-only">JANGE · जङ्गे — personal desk assistant</h1>
+  <h1 class="sr-only">IMANE · इमाने — personal desk assistant</h1>
 
   <header class="band">
     <article class="clock-readout dubai" aria-label="Dubai time">
@@ -94,8 +94,8 @@
     </article>
 
     <div class="crown">
-      <a class="brand" href="./" aria-label="JANGE home"><span class="brand-mark" aria-hidden="true"><img src="brand/jange-head-160.webp" alt="" width="40" height="40" decoding="async"><svg class="em-eyes" viewBox="0 0 1000 1000" aria-hidden="true"><circle cx="359" cy="537" r="16"/><circle cx="624" cy="537" r="16"/></svg></span><svg class="brand-word" viewBox="0 0 255.2 44.6" aria-hidden="true"><use href="#jange-wordmark"/></svg></a>
-      <p class="brand-sub"><span lang="ne">जङ्गे</span><span aria-hidden="true">·</span>Personal assistant · 3.1</p>
+      <a class="brand" href="./" aria-label="IMANE home"><span class="brand-mark" aria-hidden="true"><img src="brand/jange-head-160.webp" alt="" width="40" height="40" decoding="async"><svg class="em-eyes" viewBox="0 0 1000 1000" aria-hidden="true"><circle cx="359" cy="537" r="16"/><circle cx="624" cy="537" r="16"/></svg></span><svg class="brand-word" viewBox="0 0 227.2 44.6" aria-hidden="true"><use href="#jange-wordmark"/></svg></a>
+      <p class="brand-sub"><span lang="ne">इमाने</span><span aria-hidden="true">·</span>Personal assistant · 3.1</p>
       <p id="greeting" class="greeting">Good day</p>
       <p class="crown-date"><span id="today-line">—</span><span class="sep" aria-hidden="true">·</span><span id="week-line">—</span></p>
       <div class="chips"><span id="network" class="chip">Online</span><span id="offline-ready" class="chip">Preparing offline</span></div>
@@ -142,7 +142,7 @@
     </article>
   </section>
 
-  <section class="core-stage" aria-label="JANGE core">
+  <section class="core-stage" aria-label="IMANE core">
     <div class="core-wrap">
     <span class="bus bus-left" aria-hidden="true"></span>
     <span class="bus bus-right" aria-hidden="true"></span>
@@ -291,7 +291,7 @@
   <form method="dialog" class="panel-head"><p class="label"><span class="idx">A</span><span id="alarms-title">Alarms</span><span class="label-sub">Stored on this iPad</span></p><button class="close" aria-label="Close alarms"><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
   <div class="panel-body">
     <div class="alarm-limits" role="note">
-      <p><b>A supplementary desk alarm, not a guaranteed wake-up.</b> JANGE rings only while it is open and in front on this iPad with the screen on. Keep important alarms on your iPhone. iPadOS pauses web pages in the background, behind another app or when the iPad locks; an alarm due then cannot sound and is shown as missed.</p>
+      <p><b>A supplementary desk alarm, not a guaranteed wake-up.</b> IMANE rings only while it is open and in front on this iPad with the screen on. Keep important alarms on your iPhone. iPadOS pauses web pages in the background, behind another app or when the iPad locks; an alarm due then cannot sound and is shown as missed.</p>
       <div class="limits-row">
         <span id="sound-status" class="status-chip off">Sound locked</span>
         <button id="sound-test" class="ghost small" type="button">Test sound</button>
@@ -345,7 +345,7 @@
           <div class="segmented"><label><input type="radio" name="shift-alarm" value="auto" checked> Calculated</label><label><input type="radio" name="shift-alarm" value="custom"> Custom time</label><label><input type="radio" name="shift-alarm" value="off"> Off</label></div>
           <div class="af-field shift-alarm-time"><label for="shift-alarm-time">Custom alarm time</label><input id="shift-alarm-time" type="time"></div>
         </fieldset>
-        <p class="af-summary">Working shifts need a start time; JANGE never guesses one. Days off, holidays and travel have no alarm.</p>
+        <p class="af-summary">Working shifts need a start time; IMANE never guesses one. Days off, holidays and travel have no alarm.</p>
         <div class="line"><button class="primary wide" type="submit">Save shift</button><button type="button" id="shift-cancel" class="ghost">Cancel</button></div>
       </form>
     </div>
@@ -382,7 +382,7 @@
 </dialog>
 
 <dialog id="settings" class="panel" aria-labelledby="settings-title">
-  <form method="dialog" class="panel-head"><p class="label"><span class="idx">S</span><span id="settings-title">JANGE settings</span></p><button class="close" aria-label="Close settings"><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
+  <form method="dialog" class="panel-head"><p class="label"><span class="idx">S</span><span id="settings-title">IMANE settings</span></p><button class="close" aria-label="Close settings"><svg aria-hidden="true"><use href="#i-close"/></svg></button></form>
   <div class="panel-body settings-body">
     <p>Dubai and Kathmandu clocks share the device clock. The calendar uses Dubai time. Keep <b>Settings → General → Date &amp; Time → Set Automatically</b> on.</p>
     <h3>Motion</h3>
@@ -401,12 +401,12 @@
       <label><input type="radio" name="loc-mode" value="auto" checked> Current location</label>
       <label><input type="radio" name="loc-mode" value="manual"> Chosen city</label>
     </div>
-    <p id="loc-status" class="muted">Uses the iPad&#8217;s location only when you allow it, rounded to about 5 km. JANGE checks it when opened or brought back, never in the background.</p>
+    <p id="loc-status" class="muted">Uses the iPad&#8217;s location only when you allow it, rounded to about 5 km. IMANE checks it when opened or brought back, never in the background.</p>
     <form id="city-form" class="entry city-form"><label class="sr-only" for="city-input">Search a city</label><input id="city-input" maxlength="60" placeholder="Search a city" autocomplete="off"><button class="primary" type="submit">Search</button></form>
     <div class="city-quick"><button type="button" class="text-btn" data-city="sharjah">Sharjah</button><button type="button" class="text-btn" data-city="dubai">Dubai</button><button type="button" class="text-btn" data-city="kathmandu">Kathmandu</button></div>
     <ul id="city-results" class="city-results"></ul>
     <h3>Display</h3>
-    <div class="switch-row"><span id="awake-label">Keep the screen awake while JANGE is open</span><button id="awake-switch" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="awake-label"></button></div>
+    <div class="switch-row"><span id="awake-label">Keep the screen awake while IMANE is open</span><button id="awake-switch" class="switch" type="button" role="switch" aria-checked="false" aria-labelledby="awake-label"></button></div>
     <p id="awake-note" class="muted">Uses the browser's Screen Wake Lock when available. Otherwise set Settings → Display &amp; Brightness → Auto-Lock → Never for desk use.</p>
     <h3>Dial key</h3>
     <p class="core-legend dial-key"><span class="lg dxb">Dubai time</span><span class="lg ktm">Kathmandu time</span><span class="lg alarm">Alarm</span><span class="lg sun">Daylight at the weather location</span><span class="lg focus">Focus tasks done</span></p>
@@ -422,13 +422,13 @@
     <p id="connect-result" role="status"></p>
     <h3>Local data</h3>
     <p class="muted">Tasks, events and alarms stay in this Safari installation. Keep a JSON backup for recovery.</p>
-    <label for="import-file">Restore a JANGE or Jarvis backup (merges with existing items)</label>
+    <label for="import-file">Restore an IMANE, IMANE or Jarvis backup (merges with existing items)</label>
     <input id="import-file" type="file" accept="application/json,.json">
     <p id="data-result" class="dialog-notice" data-notice role="status"></p>
     <h3>Install on iPad</h3>
-    <p class="muted">Open the live site in Safari → Share → Add to Home Screen → Add. Open JANGE once online so offline files can be saved. The home-screen name and icon update when you add it again.</p>
+    <p class="muted">Open the live site in Safari → Share → Add to Home Screen → Add. Open IMANE once online so offline files can be saved. The home-screen name and icon update when you add it again.</p>
     <h3>Assistant</h3>
-    <p class="muted">Voice activation (“Hey Jange”) is not enabled. It needs a reliable on-device wake-word engine and will be added separately; JANGE never listens in the background today.</p>
+    <p class="muted">Voice activation (“Hey Imane”) is not enabled. It needs a reliable on-device wake-word engine and will be added separately; IMANE never listens in the background today.</p>
   </div>
 </dialog>
 </body>

@@ -1,4 +1,4 @@
-/* JANGE console: moves the live application DOM; never duplicates its IDs. */
+/* IMANE console: moves the live application DOM; never duplicates its IDs. */
 (() => {
   'use strict';
   if (window.JangeConsole) return;
