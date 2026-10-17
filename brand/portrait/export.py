@@ -61,7 +61,9 @@ def palette(img):
     return img.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.FLOYDSTEINBERG)
 
 
-medal(FULL, 1024).resize((512, 512), Image.LANCZOS).save(ROOT / "brand/jange-emblem-512.webp", quality=86, method=6)
+master = medal(FULL, 1024)
+master.save(ROOT / "brand/jange-emblem-1024.png", optimize=True)
+master.resize((512, 512), Image.LANCZOS).save(ROOT / "brand/jange-emblem-512.webp", quality=86, method=6)
 medal(FACE, 640, fade_from=.78).resize((160, 160), Image.LANCZOS).filter(ImageFilter.UnsharpMask(radius=.7, percent=50, threshold=1)).save(ROOT / "brand/jange-head-160.webp", quality=90, method=6)
 palette(icon(512)).save(ROOT / "icon-512.png", optimize=True)
 icon(192).save(ROOT / "icon-192.png", optimize=True)
@@ -76,5 +78,5 @@ for name, px in [("brand/jange-head-160.webp", 60), ("brand/jange-head-160.webp"
 for name, px in [("icon-512.png", 180), ("icon-180.png", 120), ("favicon-32.png", 32)]:
     im = Image.open(ROOT / name).convert("RGB").resize((px, px), Image.LANCZOS); sheet.paste(im, (x, 340 - px)); x += px + 30
 sheet.save(PREVIEW / "sheet.png")
-for name in ["brand/jange-emblem-512.webp", "brand/jange-head-160.webp", "icon-512.png", "icon-192.png", "icon-180.png", "icon-maskable-512.png", "favicon-32.png"]:
+for name in ["brand/jange-emblem-1024.png", "brand/jange-emblem-512.webp", "brand/jange-head-160.webp", "icon-512.png", "icon-192.png", "icon-180.png", "icon-maskable-512.png", "favicon-32.png"]:
     print(f"{name:30} {(ROOT / name).stat().st_size:>8,} bytes {Image.open(ROOT / name).size}")

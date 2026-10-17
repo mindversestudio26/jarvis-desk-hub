@@ -136,10 +136,7 @@ button { cursor: pointer; }
 /* The realistic gold emblem is an image; its eye glints are a small overlay that keeps the
    live-state colour (cyan online, ember offline). */
 .brand-mark, .core-avatar, .ring-emblem, .welcome-emblem { position: relative; display: inline-block; flex: none; }
-.brand-mark img, .core-avatar img, .ring-emblem img, .welcome-emblem img, .em-eyes { position: absolute; inset: 0; width: 100%; height: 100%; }
-.em-eyes circle { fill: var(--accent); opacity: .9; }
-/* The IMANE portrait emblem carries no painted eye glints (they belonged to the dog emblem). */
-.em-eyes { display: none; }
+.brand-mark img, .core-avatar img, .ring-emblem img, .welcome-emblem img { position: absolute; inset: 0; width: 100%; height: 100%; }
 .brand-mark { width: 40px; height: 40px; }
 .brand-word { width: 97px; height: 19px; color: var(--gold); }
 .brand-sub { display: flex; align-items: baseline; gap: 7px; margin: -4px 0 2px; font: 600 9px/1.2 var(--font-ui); letter-spacing: .24em; text-transform: uppercase; color: var(--text-3); }
@@ -586,7 +583,6 @@ button { cursor: pointer; }
 .core-avatar { position: relative; display: block; width: 46px; height: 46px; }
 .core-avatar::after { content: ""; position: absolute; inset: -5px; border: 1px solid rgba(217, 192, 142, .35); border-radius: 50%; }
 .hud[data-busy] .core-avatar::after { border-color: rgba(111, 195, 207, .6); animation: avatar-pulse 1.4s ease-in-out infinite; }
-.hud[data-net="offline"] .em-eyes circle, .hud[data-store="error"] .em-eyes circle { fill: var(--warn); }
 .hud[data-net="offline"] .core-avatar::after, .hud[data-store="error"] .core-avatar::after { border-color: rgba(224, 145, 95, .5); }
 .hud[data-pc="unreachable"] .core-avatar::after, .hud[data-pc="auth"] .core-avatar::after { border-style: dashed; }
 .core-state { display: inline-flex; align-items: center; gap: 9px; margin-top: 7px; font: 17px/1.1 var(--font-display); letter-spacing: .16em; text-transform: uppercase; color: var(--text); }
@@ -878,7 +874,6 @@ dialog.ring-overlay::backdrop { background: #000; }
 .welcome-ring.r2 { inset: 14px; border-color: rgba(111, 195, 207, .35); border-style: dashed; animation-delay: .25s; }
 .welcome-emblem { width: 150px; height: 150px; }
 .welcome-emblem img { opacity: 0; animation: wel-emblem 1.05s cubic-bezier(.2, .7, .2, 1) .25s both; }
-.welcome-emblem .em-glint { fill: var(--accent); opacity: 0; animation: wel-fade .3s ease-out 1.05s both; }
 @keyframes wel-emblem { from { opacity: 0; transform: scale(.92); filter: brightness(.35); } 60% { opacity: 1; } to { opacity: 1; transform: none; filter: none; } }
 .welcome-word { width: 173px; height: 34px; color: var(--gold); opacity: 0; animation: wel-rise .6s var(--ease-out) 1s both; }
 .welcome-np { margin: -6px 0 0; font-size: 18px; color: var(--text-2); opacity: 0; animation: wel-fade .6s ease-out 1.15s both; }
