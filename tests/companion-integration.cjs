@@ -50,6 +50,7 @@ async function until(fn, label) { for (let n = 0; n < 150; n++) { if (await fn()
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.goto('http://127.0.0.1:' + server.address().port + '/');
+    await page.getByRole('button', {name:'PC', exact:true}).click();
     const pair = async t => {
       await page.locator('#connect-open').click();
       await page.locator('#agent-url').fill('https://' + HOST);

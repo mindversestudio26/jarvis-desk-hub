@@ -1,6 +1,6 @@
-# JANGE · जङ्गे — personal desk assistant (3.1)
+# JANGE · जङ्गे — personal desk assistant (3.3)
 
-JANGE is a dependency-free static desk interface for an iPad 7th Generation, designed as a fixed 1080 × 810 CSS-pixel landscape canvas. It is named after the family's German Shepherd; its emblem honours him through the breed (see [brand/README.md](brand/README.md)). The repository, URL, storage keys and cache names keep their original `jarvis` identifiers so existing installs and data carry over. No build step, account, API key or paid service is required.
+JANGE is a dependency-free static desk interface for an iPad 7th Generation, designed around a 1080 × 810 CSS-pixel landscape viewport with flowing portrait and phone layouts. It is named after the family's German Shepherd; its emblem honours him through the breed (see [brand/README.md](brand/README.md)). The repository, URL, storage keys and cache names keep their original `jarvis` identifiers so existing installs and data carry over. No build step, account, API key or paid service is required.
 
 ## Install on iPad
 
@@ -13,8 +13,8 @@ JANGE is a dependency-free static desk interface for an iPad 7th Generation, des
 
 ## Features
 
-- **Split-flap clocks** for Dubai and Kathmandu in the crown band, always visible: matte graphite tiles with a split, brass hinge pins and shaded 3D leaves. A digit flips only when it changes (minutes first), snaps to the right time after Safari resumes, and supports 24- or 12-hour display. Each clock shows its next alarm (with the shift it belongs to).
-- **JANGE core**: a watch-like 24-hour dial (noon at the top) with Dubai/Kathmandu markers, alarm markers, the daylight arc for the weather location, a seconds needle and a focus ring; the German Shepherd emblem is the assistant avatar and its state follows real conditions only (online, acquiring data, offline, PC link unavailable). Tap the core for focus tasks.
+- **Split-flap clocks** for Dubai and Kathmandu on the Home screen: matte graphite tiles with a split, brass hinge pins and shaded 3D leaves. A digit flips only when it changes (minutes first), snaps to the right time after Safari resumes, and supports 24- or 12-hour display. Each clock shows its next alarm (with the shift it belongs to).
+- **Three-screen console**: Home for time, weather, shifts and hourly quotes; Windows for real telemetry; Planner for BS/Gregorian dates and local planning. Swipe noninteractive content, use top navigation or keyboard arrows. The previous radar remains an internal compatibility target, no longer a visible focal point.
 - **Hourly quote**: one documented quotation per Dubai hour with its author and Nepali meaning, from an offline collection of 60 with recorded sources. Selection is deterministic, updates after wake, and does not repeat until all 60 entries have been shown.
 - **Weather where you are**: Open-Meteo weather for the iPad's location when you allow it (rounded to about 5 km, read on open/foreground only, never tracked), a chosen city otherwise, Sharjah by default. Temperature, feels-like, humidity, wind, high/low, sunrise/sunset, UV; saved readings are labelled when offline.
 - **Alarms** (supplementary, not a guaranteed wake-up): once, daily, weekdays, weekends or custom days in Dubai or Kathmandu time; synthesised chimes, full-screen ringing with Snooze and Dismiss, missed-alarm reporting, reload/foreground recovery, Add to Calendar (.ics) for important ones. They ring only while JANGE is open in front with the screen on — keep important alarms on your iPhone.
@@ -84,3 +84,9 @@ The `jarvis.desk.v2` storage key, task/event schema, legacy `jarvis_tasks` migra
 See [3.0 design decisions](docs/jarvis-3-design.md) and [regression test instructions](tests/README.md). The landscape desk fits 1080 × 810, 1080 × 740 (Safari with toolbars) and 1024 × 768 without scrolling; on shorter screens the agenda list clips rather than the page scrolling. Portrait and phone layouts scroll.
 
 Windows Playwright WebKit reports an internal engine error for simulated service-worker offline navigation, and it composites in software, so its frame rate is not representative of an iPad. Chromium verifies offline reload and the upgrade from the installed 2.0 build (`9ddff13`); both Chromium and WebKit verify clocks, split-flap transitions, rollover/resume, persistence, backup restore, weather states, touch targets and layout. Physical iPadOS 18.7.3 frame rate, Safari offline behaviour and private companion pairing remain device checks.
+
+## Premium console (3.3)
+
+Home, PC and Planner can be switched using the top buttons, horizontal swipes on noninteractive areas, or Left/Right arrow keys. The last page is remembered. Planner supports BS, Gregorian and Dual (BS month with Gregorian correspondence), keeping all saved event dates in ISO Gregorian format. BS dates cover 1943-04-14 through 2027-04-13 only; see [calendar sources](docs/calendar-sources.md). Existing calendar/task/alarm dialogs remain the editors. PC controls remain unavailable until a separate authenticated backend is implemented.
+
+See [design and compatibility notes](docs/premium-console.md). Run `node tests/console.cjs` for the new navigation, calendar, hourly wake, viewport and touch-target checks in Chromium and WebKit.

@@ -8,7 +8,8 @@ const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const out = path.resolve(process.env.JARVIS_TEST_OUTPUT || path.join(root, 'test-results'));
 fs.mkdirSync(out, { recursive: true });
-const BASELINES = { '9ddff13': 'Jarvis 2.0', '4d91835': 'Jarvis 3.0' }; // builds already installed on devices
+const CURRENT_CACHE = fs.readFileSync(path.join(root, 'sw.js'), 'utf8').match(/const CACHE='([^']+)'/)[1];
+const BASELINES = { '660c924': 'JANGE hourly quotes', '9ddff13': 'Jarvis 2.0', '4d91835': 'Jarvis 3.0' }; // builds already installed on devices
 const fixture = {
   current: { temperature_2m: 31, relative_humidity_2m: 45, apparent_temperature: 34.6, is_day: 1, weather_code: 0, wind_speed_10m: 8, wind_direction_10m: 300, time: '2026-10-16T22:15' },
   daily: { time: ['2026-10-16'], temperature_2m_max: [36.2], temperature_2m_min: [26.8], sunrise: ['2026-10-16T06:14'], sunset: ['2026-10-16T17:48'], uv_index_max: [7.4] },
@@ -104,12 +105,12 @@ async function checkBrowser(engine, name, baseURL) {
 
     // Core reflects real local state: first open task, completion ring, task badge.
     assert.equal(await page.locator('#core-focus').innerText(), 'Preserve my existing task');
-    assert.equal(await page.locator('#core-progress').innerText(), '0 / 1 COMPLETE');
-    assert.equal(await page.locator('#core-state').innerText(), 'ONLINE');
+    assert.equal(await page.locator('#core-progress').textContent(), '0 / 1 complete');
+    assert.equal(await page.locator('#core-state').textContent(), 'Online');
     assert.equal(await page.locator('#task-count').innerText(), '1');
 
     // Tasks: safe rendering, completion, persistence.
-    await page.locator('#core').click();
+    await page.locator('#tasks-open').click();
     assert.match(await page.locator('#tasks').innerText(), /Preserve my existing task/);
     const attack = '<img src=x onerror=alert(1)>';
     await page.locator('#task-input').fill(attack);
@@ -164,6 +165,7 @@ async function checkBrowser(engine, name, baseURL) {
     assert.equal(await page.evaluate(() => document.documentElement.classList.contains('calm')), true);
 
     // Companion security boundary and honest telemetry.
+    await page.evaluate(() => JangeConsole.navigate('pc'));
     await page.locator('#agent-url').fill('https://evil.example');
     await page.locator('#agent-token').fill('a'.repeat(40));
     await page.locator('#connect-form .primary').click();
@@ -236,6 +238,7 @@ async function checkBrowser(engine, name, baseURL) {
     }
 
     // Weather failure keeps the saved reading, clearly labelled.
+    await page.getByRole('button', { name: 'Home', exact: true }).click();
     await until(async () => (await page.locator('#temperature').innerText()) === '31°' && await page.locator('#weather-retry').isEnabled());
     await context.unroute('https://api.open-meteo.com/**');
     await context.route('https://api.open-meteo.com/**', route => route.abort());
@@ -246,7 +249,7 @@ async function checkBrowser(engine, name, baseURL) {
     // Offline state is visible in the core without touching data.
     await page.evaluate(() => dispatchEvent(new Event('offline')));
     // The browser still reports online, so the handler sets offline directly from the event.
-    assert.equal(await page.locator('#core-state').innerText(), 'OFFLINE');
+    assert.equal(await page.locator('#core-state').textContent(), 'Offline');
     assert.match(await page.locator('#network').innerText(), /Offline/i);
     await page.evaluate(() => dispatchEvent(new Event('online')));
 
@@ -269,7 +272,7 @@ async function checkBrowser(engine, name, baseURL) {
       await offlinePage.reload();
       assert.equal(await offlinePage.locator('.task-row').count(), 3);
       assert.match(await offlinePage.locator('#network').innerText(), /Offline/i);
-      assert.equal(await offlinePage.locator('#core-state').innerText(), 'OFFLINE');
+      assert.equal(await offlinePage.locator('#core-state').textContent(), 'Offline');
       await offlinePage.waitForFunction(() => document.fonts.check('12px Michroma')); // display font served offline
       assert.equal(await offlinePage.locator('#kathmandu-clock').count(), 1);
       await offlineContext.close();
@@ -281,7 +284,7 @@ async function checkBrowser(engine, name, baseURL) {
       await page.setViewportSize({ width, height });
       await page.locator('#calendar-open').click();
       const geometry = await page.evaluate(() => {
-        const box = s => [...document.querySelectorAll(s)].map(e => e.getBoundingClientRect()).map(r => ({ width: r.width, height: r.height }));
+        const box = s => [...document.querySelectorAll(s)].filter(e => e.getClientRects().length).map(e => e.getBoundingClientRect()).map(r => ({ width: r.width, height: r.height }));
         return {
           width: document.documentElement.scrollWidth,
           height: document.documentElement.scrollHeight,
@@ -413,11 +416,11 @@ async function upgradeTest(baseURL, baseline) {
     await page.reload();
     // The 2.0 weather cache (current only) must remain readable by 3.0.
     await page.waitForFunction(() => !!localStorage.getItem('jarvis.weather.v1'));
-    assert.equal(await page.locator('#alarms-open').count(), 0);
+    assert.equal(await page.locator('#console-home').count(), 0);
     serveBaseline = null;
     await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
     await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration()).waiting);
-    assert.equal(await page.locator('#alarms-open').count(), 0, 'Old open client not force-reloaded');
+    assert.equal(await page.locator('#console-home').count(), 0, 'Old open client not force-reloaded');
     await page.close();
     // Let the browser finish activation after the old document detaches. No
     // document in this origin is opened while the waiting worker takes over.
@@ -443,10 +446,10 @@ async function upgradeTest(baseURL, baseline) {
     await page.waitForSelector('#alarms-open');
     assert.match(await text(page, '#tasks'), /Preserve my existing task/);
     const caches = await page.evaluate(async () => globalThis.caches.keys());
-    assert(caches.includes('jarvis-desk-v3.2.3'));
-    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), ['jarvis-desk-v3.2.3'], 'Old shell caches removed');
+    assert(caches.includes(CURRENT_CACHE));
+    assert.deepEqual(caches.filter(k => k.startsWith('jarvis-desk-')), [CURRENT_CACHE], 'Old shell caches removed');
     assert.equal(await page.title(), 'JANGE · जङ्गे');
-    results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to 3.1 service-worker upgrade, preserved storage and weather cache, no forced reload, offline 3.1, old cache cleanup' });
+    results.push({ engine: 'chromium', result: 'PASS', scenario: baseline + ' (' + BASELINES[baseline] + ') to current console service-worker upgrade, preserved storage and weather cache, no forced reload, offline console, old cache cleanup' });
     await context.close();
   } finally { serveBaseline = null; await browser.close(); }
 }

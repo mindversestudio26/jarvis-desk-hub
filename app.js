@@ -251,6 +251,10 @@ function renderQuote(day, hour) {
   $('quote-text').textContent = '“' + q.q + '”';
   $('quote-author').textContent = q.a;
   $('quote-ne').textContent = q.ne;
+  if (!document.hidden && !reducedMotion.matches && !root.classList.contains('calm')) {
+    $('daily-quote').getAnimations().forEach(a => a.cancel());
+    $('daily-quote').animate([{opacity:.3},{opacity:1}], {duration:240, easing:'ease-out'});
+  }
 }
 
 /* Split-flap tiles. A digit flips only when its own value changes; the static

@@ -37,3 +37,9 @@ python -m unittest discover -s companion -v
 ```
 
 Fixtures are test data only. The production app continues to display `—` for unavailable PC sensor readings and has no active control operations.
+
+## Three-screen console verification
+
+`node tests/console.cjs` exercises Chromium and WebKit: hourly rollover and foreground recovery, remembered page, keyboard and swipe exclusions, BS/Gregorian date identity, calendar range and focus, six-row months, 44px targets and screenshots at 1080×810, 1080×740, 1024×768, portrait and phone widths. Screenshots and JSON results are written under ignored `test-results/`.
+
+The browser suite upgrades installed 2.0, 3.0 and hourly-quote releases to the current service-worker cache, preserving data. The companion suite starts an isolated read-only instance with a random in-memory test token and proxies the test tailnet URL; it does not activate controls or reconfigure the deployed companion.
