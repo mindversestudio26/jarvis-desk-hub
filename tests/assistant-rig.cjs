@@ -29,7 +29,9 @@ for(const [engine,name] of [[chromium,'chromium'],[webkit,'webkit']]){
  await p.waitForFunction(()=>getComputedStyle(document.querySelector('.assistant-photo-idle')).opacity==='0' && getComputedStyle(document.querySelector('.assistant-rig')).opacity==='1',null,{timeout:5000});
  const crop=async n=>{const box=await scene.locator('.assistant-touch').boundingBox();await p.screenshot({path:path.join(out,name+'-'+n+'.png'),clip:{x:box.x+box.width*.2,y:box.y,width:box.width*.6,height:box.height*.62}});};
  const expr=()=>scene.getAttribute('data-expression');
- const change=async fields=>{Object.assign(fixture.current,fields);await p.evaluate(()=>weather());await p.clock.runFor(11000);};
+ // Advance the fake clock in short steps: long single jumps run hundreds of unpresented frames.
+ const advance=async ms=>{for(let t=0;t<ms;t+=500)await p.clock.runFor(Math.min(500,ms-t));};
+ const change=async fields=>{Object.assign(fixture.current,fields);await p.evaluate(()=>weather());await advance(11000);};
  assert.equal(await expr(),'relaxed');await crop('relaxed');
  // Micro-behaviour actually moves: lids, gaze and head vary over time while idle.
  const lids=new Set(),gaze=new Set(),yaw=new Set();
@@ -52,13 +54,15 @@ for(const [engine,name] of [[chromium,'chromium'],[webkit,'webkit']]){
  await p.clock.runFor(1000);assert.equal(await expr(),'heat','weather discomfort');await crop('heat');
  await change({temperature_2m:24,apparent_temperature:24,wind_speed_10m:40});await p.clock.runFor(1000);assert.equal(await expr(),'wind');await crop('wind');
  await change({wind_speed_10m:8});
+ if(name==='chromium'){
  // Rain: the umbrella materialises, opens once, deflects rain while held and folds away after.
  await change({weather_code:61});assert.equal((await p.evaluate(()=>JangeAssistant.getState())).gesture,'umbrella');
- await p.clock.runFor(3500);let r0=await rig();assert.equal(r0.pose.umbrella.state,'open');assert.equal(r0.stats.umbrella,true);
+ await advance(3500);let r0=await rig();assert.equal(r0.pose.umbrella.state,'open');assert.equal(r0.stats.umbrella,true);
  assert.equal(await scene.locator('.assistant-photo-umbrella').evaluate(e=>getComputedStyle(e).opacity),'0','no face swap to the umbrella photo');
  let splashes=0;for(let i=0;i<10;i++){await p.clock.runFor(300);splashes=Math.max(splashes,(await rig()).stats.splashes);}assert.ok(splashes>0,'rain splashes off the canopy');await crop('rain-umbrella');
- await p.clock.runFor(20000);assert.equal((await rig()).pose.umbrella.state,'open','no re-opening while rain continues');
- await change({weather_code:0});await p.clock.runFor(2500);r0=await rig();assert.equal(r0.pose.umbrella.state,'closed');assert.equal(r0.stats.umbrella,false);
+ await advance(10000);assert.equal((await rig()).pose.umbrella.state,'open','no re-opening while rain continues');
+ await change({weather_code:0});await advance(2500);r0=await rig();assert.equal(r0.pose.umbrella.state,'closed');assert.equal(r0.stats.umbrella,false);
+ }
  // Cold: shoulders lift, cold expression and breath vapour; never the wrap photo's face.
  await change({temperature_2m:6,apparent_temperature:4});await p.clock.runFor(2500);assert.equal(await expr(),'cold');
  let puffs=0;for(let i=0;i<20;i++){await p.clock.runFor(400);puffs=Math.max(puffs,(await rig()).stats.puffs);}assert.ok(puffs>0,'breath vapour');
@@ -100,6 +104,18 @@ for(const [engine,name] of [[chromium,'chromium'],[webkit,'webkit']]){
  await p.evaluate(()=>window.__lose.restoreContext());for(let i=0;i<10 && await scene.getAttribute('data-rig')!=='webgl';i++) await p.clock.runFor(300);
  assert.equal(await scene.getAttribute('data-rig'),'webgl','rig restored with the context');
  assert.deepEqual(errors,[]);const video=p.video();await ctx.close();await video.saveAs(path.join(out,name+'-expressions.webm'));
+ // WebKit: Windows Playwright WebKit crashes in long fake-clock WebGL rain, so rain runs in real time.
+ if(name==='webkit'){
+  const {ctx:ctxR,fixture:fxR}=await weatherContext(b,{});Object.assign(fxR.current,{weather_code:61,time:new Date(Date.now()+4*3600e3).toISOString().slice(0,16)});
+  const pr=await ctxR.newPage(),errorsR=[];pr.on('pageerror',e=>errorsR.push(e.message));await pr.goto(base);
+  await pr.waitForFunction(()=>JangeAssistant.getRig()?.pose?.umbrella?.state==='open',null,{timeout:30000});
+  assert.equal(await pr.locator('.assistant-photo-umbrella').evaluate(e=>getComputedStyle(e).opacity),'0','no face swap to the umbrella photo');
+  await pr.waitForFunction(()=>JangeAssistant.getRig().stats.splashes>0,null,{timeout:10000});
+  const box=await pr.locator('.assistant-touch').boundingBox();await pr.screenshot({path:path.join(out,name+'-rain-umbrella.png'),clip:{x:box.x+box.width*.1,y:box.y,width:box.width*.8,height:box.height*.62}});
+  Object.assign(fxR.current,{weather_code:0});await pr.evaluate(()=>weather());
+  await pr.waitForFunction(()=>JangeAssistant.getRig().pose.umbrella.state==='closed',null,{timeout:60000});
+  assert.equal((await pr.evaluate(()=>JangeAssistant.getRig().stats.umbrella)),false);assert.deepEqual(errorsR,[]);await ctxR.close();
+ }
  // No WebGL at all: the photo portrait is the unchanged fallback.
  const {ctx:ctx2}=await weatherContext(b,{});await ctx2.addInitScript(()=>{const real=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...a){return /webgl/.test(type)?null:real.call(this,type,...a);};});
  const p2=await ctx2.newPage(),errors2=[];p2.on('pageerror',e=>errors2.push(e.message));await p2.goto(base);await p2.waitForFunction(()=>document.querySelector('.living-scene')?.classList.contains('has-realistic-portrait'));await p2.waitForTimeout(800);

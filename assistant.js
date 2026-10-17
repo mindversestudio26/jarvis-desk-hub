@@ -35,7 +35,7 @@
   // at a reduced ambient rate for breathing/drift, and stop entirely when hidden or static.
   const rigApi = window.JangeAssistantRig, motionApi = window.JangeAssistantMotion;
   let rig = null, motion = null, rigFrame = 0, rigTimer = 0, rigResize = null;
-  let rigQueued = 0, rigResume = false, rigLast = 0, loadedAt = 0, lastInput = 0, rigStarting = false;
+  let rigQueued = 0, rigResume = false, rigLast = 0, loadedAt = 0, lastInput = 0, rigStarting = false, softwareGL = false;
   // Creating a GL context and compiling shaders can block the main thread for a moment on slow
   // renderers, so the rig starts only once the page has loaded and the user has paused (1.5 s
   // without touch, pointer, key or wheel input), in an idle period where the browser offers one.
@@ -76,8 +76,11 @@
     rig = rigApi.create({canvas:scene.querySelector('.assistant-rig'), idle, blink, arms, onLost:dropRig});
     if (!rig) return;
     scene.classList.toggle('rig-arms', !!rig.info.arms);
-    // Software rasterisers (no GPU) get the quiet tier straight away instead of a frame probe.
-    if (/swiftshader|llvmpipe|software|basic render/i.test(rig.info.renderer || '')) { scene.dataset.quality = 'quiet'; qualityDone = true; }
+    // Software rasterisers get the quiet tier straight away instead of a frame probe. WebKit on
+    // Windows exists only as a software-composited test build (Safari ships on Apple platforms).
+    const ua = navigator.userAgent || '';
+    const softwareCompositor = /Windows/.test(ua) && /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg\//.test(ua);
+    if (softwareCompositor || /swiftshader|llvmpipe|software|basic render/i.test(rig.info.renderer || '')) { softwareGL = true; scene.dataset.quality = 'quiet'; qualityDone = true; }
     motion = motionApi.create({seed:(Date.now() ^ 0x5bd1e995) >>> 0, reducedMotion:!motionAllowed(), quality:scene.dataset.quality === 'quiet' ? 'quiet' : 'full'});
     scene.classList.add('has-rig'); scene.dataset.rig = 'webgl';
     if (typeof ResizeObserver === 'function') { rigResize = new ResizeObserver(() => { if (rig) { rig.resize(); wakeRig(); } }); rigResize.observe(scene.querySelector('.assistant-rig')); }
@@ -120,7 +123,7 @@
     // Timers wake a little early because the following animation frame adds up to one vsync.
     const later = ms => { rigTimer = setTimeout(() => { rigFrame = requestAnimationFrame(rigStep); }, ms); };
     if (pose.rate === 'fast') rigFrame = requestAnimationFrame(rigStep);
-    else if (pose.rate === 'steady') later(26);
+    else if (pose.rate === 'steady') later(scene.dataset.quality === 'quiet' ? 58 : 26);
     else if (pose.rate === 'ambient') later(58);
     else if (Number.isFinite(pose.nextAt)) later(Math.min(1000, Math.max(16, pose.nextAt-now-8)));
     else later(1000);
@@ -147,7 +150,7 @@
     if(qualityDone || !scene.classList.contains('has-realistic-portrait')) return;
     probeDelay=setTimeout(()=>{
       const intervals=[];let last=performance.now();
-      function finish(quality) {cancelAnimationFrame(probeFrame);clearTimeout(probeTimeout);scene.dataset.quality=quality;qualityDone=true;rigOptions();}
+      function finish(quality) {cancelAnimationFrame(probeFrame);clearTimeout(probeTimeout);scene.dataset.quality=softwareGL ? 'quiet' : quality;qualityDone=true;rigOptions();}
       function sample(now) {
         if(!visible()) return;
         intervals.push(now-last);last=now;

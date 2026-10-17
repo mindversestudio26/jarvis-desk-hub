@@ -72,3 +72,5 @@ The previous system cross-faded five whole photographs (idle, blink, umbrella, w
 - **Mouth:** there is no open-mouth texture, so lip parting is limited to a subtle seam stretch.
 - **Voice:** voice is not implemented, so there are no speaking or listening states.
 - **Measurements:** Windows Playwright engines (SwiftShader Chromium, software-composited WebKit) are not an iPad proxy. Smoothness, battery and thermals need the physical iPad.
+- **Test environment:** under Playwright's fake clock, Windows WebKit crashes after a long simulated rain or storm (roughly 45 s of fake time). Real-time rain and storm ran crash-free, including a 4-minute storm. So the WebKit rig test skips the long continuing-rain hold, which Chromium and the unit tests cover. The rig submits at most one GPU frame per real rendering frame (`document.timeline`), and the tests advance the fake clock in 500 ms steps.
+- **Start-up:** on slow renderers, creating the context and compiling the shaders takes about 0.3–1 s once, so the rig starts only after load, 1.5 s after the last input, in an idle period. The photo portrait shows until then.

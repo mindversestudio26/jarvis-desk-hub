@@ -492,8 +492,9 @@ void main() {
     let program, layer, color, buffers = [], textures = [], lost = false, dpr = 1, maxDpr = 2, view = [1, 1, 0, 0], scale = 1, lastPose = null;
     let bodyBuf = {}, colorBuf = null, colorCap = 0, enabled = [], stats = {arms:0, umbrella:false, drops:0, splashes:0, puffs:0};
     const loc = {}, lloc = {}, cloc = {}, armBuf = {};
+    const attribCache = new Map(); let programIds = 0;
     const link = (vs, fs) => {
-      const p = gl.createProgram(); gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+      const p = gl.createProgram(); p.__id = 'p'+(++programIds)+':'; gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
       if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('link: '+gl.getProgramInfoLog(p));
       return p;
     };
@@ -505,7 +506,10 @@ void main() {
       for (const l of enabled) gl.disableVertexAttribArray(l);
       enabled = [];
       for (const [name, buf, size, stride, offset] of list) {
-        const l = gl.getAttribLocation(prog, name); if (l < 0) continue;
+        // Locations are cached: on out-of-process GPUs each query is a synchronous round trip.
+        const key = prog.__id+name; let l = attribCache.get(key);
+        if (l === undefined) { l = gl.getAttribLocation(prog, name); attribCache.set(key, l); }
+        if (l < 0) continue;
         gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, size, gl.FLOAT, false, stride || 0, offset || 0); enabled.push(l);
       }
     }
@@ -592,7 +596,7 @@ void main() {
       stats = {arms:(wipeAlpha > 0 ? 1 : 0)+(grip && grip.alpha > 0 ? 1 : 0)+(wrapAlpha > 0 ? 2 : 0), umbrella:!!umb, drops:rain.drops, splashes:rain.splashes, puffs:rain.puffs};
     }
     function draw() {
-      if (!frame || lost || gl.isContextLost()) return false;
+      if (!frame || lost) return false;
       const {pose, wipeAlpha, grip, wrapAlpha} = frame;
       const f = pose.face, hd = pose.head, b = pose.body, H = data.HEAD, B = data.BODY, L = pose.light, lim = data.LIMITS, A = data.ARMS;
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -624,16 +628,22 @@ void main() {
       return true;
     }
     const handleV = new Float32Array(HANDLES*4), dispV = new Float32Array(HANDLES*4);
-    let taskBusy = false, flushQueued = false;
-    const channel = typeof MessageChannel === 'function' ? new MessageChannel() : null;
-    if (channel) channel.port1.onmessage = () => { taskBusy = false; if (flushQueued) { flushQueued = false; draw(); } };
+    // One GPU submission per rendering frame. The animation timeline advances only when the
+    // browser actually renders, so extra simulation steps inside one frame (a throttled tab
+    // catching up, a test clock) update state but submit just the latest frame, next frame.
+    let alive = true, lastFrame = null, pending = false, flush = 0;
+    const frameTime = () => { const t = root.document && root.document.timeline ? root.document.timeline.currentTime : null; return typeof t === 'number' ? t : null; };
+    function submit() { lastFrame = frameTime(); pending = false; return draw(); }
     function render(pose) {
-      if (lost || gl.isContextLost()) return false;
+      // Loss arrives as the webglcontextlost event; polling isContextLost() per frame would cost a
+      // synchronous GPU-process round trip on WebKit.
+      if (lost) return false;
       compute(pose);
-      if (!channel) return draw();
-      if (taskBusy) { flushQueued = true; return true; }
-      taskBusy = true; channel.port2.postMessage(0);
-      return draw();
+      const t = frameTime();
+      if (t === null || t !== lastFrame) return submit();
+      pending = true;
+      if (!flush && root.requestAnimationFrame) flush = root.requestAnimationFrame(() => { flush = 0; if (alive && pending && frameTime() !== lastFrame) submit(); });
+      return true;
     }
     function destroy() {
       // A lost context is left for the browser to restore; a live one is released.
@@ -653,8 +663,8 @@ void main() {
     })();
     // Diagnostics: re-render the last pose and read the frame back (bottom-up RGBA rows).
     function capture() {
-      if (!lastPose || lost || gl.isContextLost()) return null;
-      compute(lastPose); draw();
+      if (!lastPose || lost) return null;
+      compute(lastPose); submit();
       const pixels = new Uint8Array(canvas.width*canvas.height*4);
       gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
       return {width:canvas.width, height:canvas.height, pixels, view:view.slice(), scale:scale*dpr};
@@ -662,10 +672,10 @@ void main() {
     return Object.freeze({
       render, resize, info, capture,
       setMaxPixelRatio(v) { maxDpr = Math.max(1, Math.min(2, v)); return resize(); },
-      get lost() { return lost || gl.isContextLost(); },
+      get lost() { return lost; },
       get lastPose() { return lastPose; },
       get stats() { return Object.assign({}, stats); },
-      destroy() { canvas.removeEventListener('webglcontextlost', onLost); if (channel) channel.port1.onmessage = null; destroy(); }
+      destroy() { canvas.removeEventListener('webglcontextlost', onLost); alive = false; if (flush && root.cancelAnimationFrame) root.cancelAnimationFrame(flush); destroy(); }
     });
   }
   return Object.freeze({create, buildMesh, buildArms, handles, headPoint, polygonWeight, HANDLES});
