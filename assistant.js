@@ -30,8 +30,44 @@
     context.title = model.fresh ? 'Environment follows the selected weather location. Open-Meteo current model estimate; not an on-site sensor. Reading '+new Date(lastWeather.observedAt).toISOString() : 'Cached, old, offline or unverified readings do not drive environmental effects.';
     if (['wipe','alert'].includes(model.gesture) && previous?.gesture !== model.gesture) { clearTimeout(gestureTimer); gestureTimer = setTimeout(refresh,Math.max(1,model.gestureAt+5000-Date.now()+5)); }
   }
+  // One bounded frame sample selects quieter rendering on slow engines; no perpetual frame loop.
+  let qualityDone=false, probeFrame=0, probeTimeout=0, probeDelay=0, blinkTimer=0, blinkEnd=0;
+  const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
+  function motionAllowed() {return !motionPreference.matches && !document.documentElement.classList.contains('calm') && !document.body.classList.contains('calm') && scene.dataset.static!=='true' && !scene.classList.contains('assistant-static');}
+  function stopMotionWork() {
+    cancelAnimationFrame(probeFrame);clearTimeout(probeTimeout);clearTimeout(probeDelay);
+    clearTimeout(blinkTimer);clearTimeout(blinkEnd);scene.classList.remove('portrait-blinking');
+  }
+  function quietBlink() {
+    if(!visible()) return;
+    if(scene.dataset.quality==='quiet' && scene.dataset.static!=='true' && !scene.classList.contains('assistant-static') && !['umbrella','wipe','wrap','alert'].includes(model?.gesture) && model?.condition!=='storm' && !matchMedia('(prefers-reduced-motion: reduce)').matches && !document.documentElement.classList.contains('calm') && !document.body.classList.contains('calm')) {
+      scene.classList.add('portrait-blinking');blinkEnd=setTimeout(()=>scene.classList.remove('portrait-blinking'),130);
+    }
+    blinkTimer=setTimeout(quietBlink,7900);
+  }
+  function startMotionWork() {
+    stopMotionWork();if(!visible() || !motionAllowed()) return;
+    blinkTimer=setTimeout(quietBlink,7900);
+    if(qualityDone || !scene.classList.contains('has-realistic-portrait')) return;
+    probeDelay=setTimeout(()=>{
+      const intervals=[];let last=performance.now();
+      function finish(quality) {cancelAnimationFrame(probeFrame);clearTimeout(probeTimeout);scene.dataset.quality=quality;qualityDone=true;}
+      function sample(now) {
+        if(!visible()) return;
+        intervals.push(now-last);last=now;
+        if(intervals.length>=40) {const sorted=intervals.slice(5).sort((a,b)=>a-b);finish(sorted[Math.floor(sorted.length/2)]>40?'quiet':'full');}
+        else probeFrame=requestAnimationFrame(sample);
+      }
+      probeTimeout=setTimeout(()=>finish('quiet'),4500);probeFrame=requestAnimationFrame(sample);
+    },1200);
+  }
+  scene.addEventListener('jange:portrait-ready',startMotionWork);
+  motionPreference.addEventListener('change',startMotionWork);
+  let motionWasAllowed=motionAllowed();
+  const motionObserver=new MutationObserver(()=>{const allowed=motionAllowed();if(allowed!==motionWasAllowed){motionWasAllowed=allowed;startMotionWork();}});
+  for(const node of [document.documentElement,document.body,scene]) motionObserver.observe(node,{attributes:true,attributeFilter:['class','data-static']});
   function schedule() {
-    clearInterval(timer); refresh();
+    clearInterval(timer); refresh();startMotionWork();
     if (visible()) timer = setInterval(refresh,10000);
     else { clearTimeout(attentionTimer);clearTimeout(gestureTimer);clearTimeout(settleTimer);attentionUntil=0; }
   }
@@ -40,7 +76,7 @@
   });
   window.addEventListener('jange:context',refresh);
   document.addEventListener('visibilitychange',schedule);
-  window.addEventListener('pagehide',()=>{clearInterval(timer);clearTimeout(attentionTimer);clearTimeout(gestureTimer);clearTimeout(settleTimer);scene.dataset.paused='true';});
+  window.addEventListener('pagehide',()=>{stopMotionWork();clearInterval(timer);clearTimeout(attentionTimer);clearTimeout(gestureTimer);clearTimeout(settleTimer);scene.dataset.paused='true';});
   new MutationObserver(schedule).observe(host,{attributes:true,attributeFilter:['data-active-page']});
   window.JangeAssistant = Object.freeze({refresh,getState:()=>model ? JSON.parse(JSON.stringify(model)) : null});
   schedule();

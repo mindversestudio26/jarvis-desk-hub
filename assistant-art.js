@@ -35,6 +35,7 @@
  <g class="assistant-weather assistant-sun" fill="none" stroke="#e4bc7d"><circle cx="258" cy="97" r="14" stroke-opacity=".55"/><path d="M258 74V69M258 120V125M235 97H230M281 97H286M242 81L238 77M274 113L278 117" stroke-opacity=".5"/></g>
  <g class="assistant-weather assistant-snow" fill="none" stroke="#c4ecee" stroke-width="1"><path d="M63 123V139M56 127L70 135M56 135L70 127M263 162V178M256 166L270 174M256 174L270 166M75 222V234M70 225L80 231M70 231L80 225"/></g>
  <g class="assistant-weather assistant-fog" fill="none" stroke="#a8cfce" stroke-opacity=".28"><path d="M27 211H103M225 222H293M37 230H91M234 243H280"/></g>
+ <g class="assistant-photo-wind" fill="none" stroke="#acd7d5" stroke-width=".8"><path d="M18 173Q39 160 62 171M25 190Q48 178 69 187M252 216Q279 203 300 211M247 234Q269 225 291 231"/></g>
  <g class="assistant-person">
   <g class="assistant-hair-back" fill="url(#__ID__hair)" stroke="#5eaaaa" stroke-width=".7">
    <path d="M125 100Q107 125 112 169Q115 195 97 226Q115 235 143 221L186 222Q216 218 222 194Q204 178 207 143Q214 100 180 84Z"/>
@@ -127,6 +128,15 @@
     touch.type='button';touch.className='assistant-touch';
     touch.setAttribute('aria-label','Activate assistant attention');
     touch.innerHTML=art.replace(/__ID__/g,'jange-art-'+(++serial)+'-');
+    const portrait=doc.createElement('span');portrait.className='assistant-photo-motion';
+    for(const pose of ['idle','blink','umbrella','wipe','wrap']) {
+      const img=doc.createElement('img');img.className='assistant-photo assistant-photo-'+pose;
+      img.src='brand/assistant/'+pose+'.webp';img.alt='';img.width=600;img.height=800;img.decoding='async';img.draggable=false;
+      img.addEventListener('load',()=>scene.classList.add('portrait-loaded-'+pose));
+      if(pose==='idle') {img.addEventListener('load',()=>{scene.classList.add('has-realistic-portrait');scene.dispatchEvent(new Event('jange:portrait-ready'));});img.addEventListener('error',()=>scene.classList.remove('has-realistic-portrait'));}
+      portrait.append(img);
+    }
+    touch.prepend(portrait);
     const caption=doc.createElement('div');caption.className='assistant-caption';
     const status=doc.createElement('span');status.className='assistant-status';status.textContent='Assistant';
     const context=doc.createElement('span');context.className='assistant-context';context.textContent='Ready';

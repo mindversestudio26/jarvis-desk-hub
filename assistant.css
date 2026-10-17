@@ -117,3 +117,54 @@
 
 .living-scene[data-phase=night][data-condition=heat] .assistant-heat{opacity:.5}
 .living-scene[data-phase=night][data-activity=disconnected] .assistant-person{opacity:.65}
+
+
+/* Photographic cutouts use bounded transform/opacity motion; never distort facial anatomy. */
+.assistant-photo-motion{position:absolute;inset:0;display:block;pointer-events:none;opacity:0;transform-origin:50% 86%;-webkit-mask-image:linear-gradient(#000 78%,transparent 100%);mask-image:linear-gradient(#000 78%,transparent 100%)}
+.has-realistic-portrait .assistant-photo-motion{opacity:1;animation:portrait-breath 8.4s steps(18,end) infinite}
+.assistant-photo{position:absolute;inset:0;margin:auto;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:0;transition:opacity .22s ease;pointer-events:none}
+.assistant-photo-idle{opacity:1}
+.has-realistic-portrait .assistant-person,.has-realistic-portrait .assistant-umbrella{display:none}
+.has-realistic-portrait .assistant-portrait{position:relative;pointer-events:none}
+.has-realistic-portrait.portrait-loaded-blink .assistant-photo-blink{animation:portrait-blink 7.7s linear infinite;transition:none}
+.has-realistic-portrait.portrait-loaded-umbrella[data-gesture=umbrella] .assistant-photo-idle,
+.has-realistic-portrait.portrait-loaded-wipe[data-gesture=wipe] .assistant-photo-idle,
+.has-realistic-portrait.portrait-loaded-wrap[data-gesture=wrap] .assistant-photo-idle,
+.has-realistic-portrait.portrait-loaded-umbrella[data-condition=storm] .assistant-photo-idle{opacity:0}
+.has-realistic-portrait.portrait-loaded-umbrella[data-gesture=umbrella] .assistant-photo-umbrella,
+.has-realistic-portrait.portrait-loaded-umbrella[data-condition=storm] .assistant-photo-umbrella,
+.has-realistic-portrait.portrait-loaded-wipe[data-gesture=wipe] .assistant-photo-wipe,
+.has-realistic-portrait.portrait-loaded-wrap[data-gesture=wrap] .assistant-photo-wrap{opacity:1}
+.has-realistic-portrait.portrait-loaded-umbrella[data-gesture=umbrella] .assistant-photo-blink,
+.has-realistic-portrait.portrait-loaded-wipe[data-gesture=wipe] .assistant-photo-blink,
+.has-realistic-portrait.portrait-loaded-wrap[data-gesture=wrap] .assistant-photo-blink,
+.has-realistic-portrait.portrait-loaded-umbrella[data-condition=storm] .assistant-photo-blink{animation:none;opacity:0}
+.has-realistic-portrait[data-activity=attention] .assistant-photo-motion{animation:portrait-attention 2.5s ease-in-out both}
+.has-realistic-portrait[data-activity=disconnected] .assistant-photo-motion{opacity:.72}
+.has-realistic-portrait[data-phase=night] .assistant-photo-motion{opacity:.87}
+.has-realistic-portrait .assistant-rain-uncovered,.has-realistic-portrait .assistant-rain-covered{clip-path:inset(0 0 0 0)}
+.has-realistic-portrait .assistant-rain-strokes{clip-path:polygon(0 0,19% 0,19% 100%,0 100%,0 0,100% 0,100% 100%,84% 100%,84% 0)}
+.has-realistic-portrait .assistant-canopy-splashes{display:none}
+@keyframes portrait-breath{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-.65px) scale(1.003)}}
+@keyframes portrait-attention{0%,100%{transform:rotate(0)}35%,60%{transform:rotate(-.45deg) translateY(-.5px)}}
+@keyframes portrait-blink{0%,45%,48%,100%{opacity:0}46%,47%{opacity:1}}
+
+.assistant-photo-blink{clip-path:inset(31% 31% 57% 31%)}
+.has-realistic-portrait[data-activity=processing] .assistant-plinth{animation:portrait-processing 2.4s ease-in-out infinite}
+@keyframes portrait-processing{0%,100%{opacity:.35}50%{opacity:1}}
+
+.assistant-photo-wind{opacity:0}
+.has-realistic-portrait[data-condition=wind] .assistant-photo-wind{opacity:.6}
+.has-realistic-portrait[data-condition=wind][data-direction=left] .assistant-photo-wind{animation:portrait-wind-left 3.7s ease-in-out infinite}
+.has-realistic-portrait[data-condition=wind][data-direction=right] .assistant-photo-wind{animation:portrait-wind-right 3.7s ease-in-out infinite}
+@keyframes portrait-wind-left{0%,100%{transform:translateX(3px);opacity:.25}50%{transform:translateX(-3px);opacity:.6}}
+@keyframes portrait-wind-right{0%,100%{transform:translateX(-3px);opacity:.25}50%{transform:translateX(3px);opacity:.6}}
+
+/* Exclude a neighboring atlas canopy pixel at the otherwise empty upper-left margin. */
+.assistant-photo-wipe{clip-path:polygon(6% 0,100% 0,100% 100%,0 100%,0 44%,6% 44%)}
+/* Keep real poses readable on measured slow renderers; occasional blink is bounded by the adapter. */
+.living-scene[data-quality=quiet] *{animation:none!important}
+.has-realistic-portrait.portrait-loaded-blink[data-quality=quiet].portrait-blinking .assistant-photo-blink{opacity:1}
+
+.calm .assistant-photo-blink,.living-scene[data-static=true] .assistant-photo-blink,.living-scene.assistant-static .assistant-photo-blink{opacity:0!important}
+@media(prefers-reduced-motion:reduce){.living-scene .assistant-photo-blink{opacity:0!important}}
